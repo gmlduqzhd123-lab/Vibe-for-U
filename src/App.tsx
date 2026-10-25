@@ -477,7 +477,7 @@ export default function App() {
           <span>
             <b>뚝딱 바이브</b>
             <strong>
-              공작소<span className="brand-dot">.</span>
+              공작소
             </strong>
           </span>
         </button>

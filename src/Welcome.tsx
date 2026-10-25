@@ -403,7 +403,7 @@ export function Home({
           <h1>
             퀴즈·이야기·타이머를
             <br />
-            만들고 고치며 배워요.
+            만들고 고치며 배워요
           </h1>
           <p className="welcome-lead">
             코드를 몰라도, 작은 앱을 눌러 보고 규칙 하나를 고칠 수 있어요.
