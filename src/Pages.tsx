@@ -361,8 +361,74 @@ export function MissionDetail({
     </>
   );
 }
-export function Teacher({ create }: { create: (m: Mission) => void }) {
+export function Teacher({
+  create,
+  go,
+  copy,
+}: {
+  create: (m: Mission) => void;
+  go: Navigate;
+  copy: (text: string) => void;
+}) {
   const [tab, setTab] = useState("lessons");
+  const [cardKind, setCardKind] = useState<Kind | "all">("all");
+  const lessonMissions = [
+    "quiz-1",
+    "quiz-1",
+    "story-1",
+    "quiz-4",
+    "quiz-3",
+    "quiz-1",
+    "story-4",
+    "timer-4",
+  ];
+  const classroomCards: { kind: Kind; action: string; expected: string }[] = [
+    {
+      kind: "quiz",
+      action: "같은 정답을 세 번 누르기",
+      expected: "한 문제의 점수는 한 번만 반영된다.",
+    },
+    {
+      kind: "quiz",
+      action: "마지막 문제까지 풀기",
+      expected: "마지막 문제 뒤에 최종 점수와 결과가 나온다.",
+    },
+    {
+      kind: "quiz",
+      action: "다시 시작하기",
+      expected: "점수 0점·첫 문제·답하지 않은 상태로 돌아간다.",
+    },
+    {
+      kind: "story",
+      action: "두 갈림길 모두 가 보기",
+      expected: "각 선택이 의도한 장면으로 연결되고 모든 결말에 도달한다.",
+    },
+    {
+      kind: "story",
+      action: "처음으로 돌아가기",
+      expected: "시작 장면으로 돌아가고 지나온 길이 비워진다.",
+    },
+    {
+      kind: "timer",
+      action: "시작을 연속으로 누르기",
+      expected: "타이머 하나만 실행되고 시간이 두 배로 줄지 않는다.",
+    },
+    {
+      kind: "timer",
+      action: "일시정지 후 기다렸다가 재개하기",
+      expected: "멈춘 동안 남은 시간이 유지되고 그 지점부터 이어진다.",
+    },
+    {
+      kind: "timer",
+      action: "0초가 된 뒤 기다리기",
+      expected: "0초보다 작아지지 않고 종료 안내가 한 번 나온다.",
+    },
+    {
+      kind: "timer",
+      action: "초기화한 다음 다시 시작하기",
+      expected: "설정한 시간·정지 상태로 돌아간 뒤 다시 실행된다.",
+    },
+  ];
   useEffect(() => {
     let closed: HTMLDetailsElement[] = [];
     const expand = () => {
@@ -434,6 +500,30 @@ export function Teacher({ create }: { create: (m: Mission) => void }) {
                 <Icon name="chevron" />
               </summary>
               <div className="lesson-body">
+                <div className="lesson-actions no-print">
+                  <b>
+                    이 차시에 연결한 미션 ·{" "}
+                    {missions.find((m) => m.id === lessonMissions[i])!.title}
+                  </b>
+                  <div className="button-row">
+                    <button onClick={() => go(`mission/${lessonMissions[i]}`)}>
+                      미션 안내 열기 <Icon name="arrow" size={16} />
+                    </button>
+                    <button
+                      onClick={() =>
+                        copy(
+                          `${location.href.split("#")[0]}#/mission/${lessonMissions[i]}`,
+                        )
+                      }
+                    >
+                      <Icon name="copy" size={16} />
+                      학생용 미션 주소 복사
+                    </button>
+                  </div>
+                  <small>
+                    주소에는 미션만 들어가요. 학생의 기록은 각자 기기에 남아요.
+                  </small>
+                </div>
                 <p>
                   <b>준비물</b> {l.materials}
                 </p>
@@ -477,32 +567,56 @@ export function Teacher({ create }: { create: (m: Mission) => void }) {
             검사할까?”를 물어보세요.
           </p>
           <h2>인쇄용 검사 카드</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>검사 행동</th>
-                <th>기대한 결과</th>
-                <th>실제 결과 / 판정</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                "같은 정답을 세 번 누르기",
-                "마지막 문제까지 풀기",
-                "두 갈림길 모두 가 보기",
-                "시작을 연속으로 누르기",
-                "일시정지 후 기다리기",
-                "0초가 된 뒤 기다리기",
-                "초기화한 다음 다시 시작하기",
-              ].map((t) => (
-                <tr key={t}>
-                  <td>{t}</td>
-                  <td className="write-space"> </td>
-                  <td>□ 확인 □ 수정 필요 □ 미확인</td>
+          <label className="field no-print">
+            <span>검사표 프로젝트</span>
+            <select
+              value={cardKind}
+              onChange={(e) => setCardKind(e.target.value as Kind | "all")}
+            >
+              <option value="all">모든 프로젝트</option>
+              <option value="quiz">퀴즈</option>
+              <option value="story">갈림길 이야기</option>
+              <option value="timer">타이머</option>
+            </select>
+          </label>
+          <p>
+            기대한 결과는 정상 규칙의 예시예요. 작품의 약속에 맞게 조정해서
+            사용하고, 실제 결과는 직접 관찰한 뒤 적어 주세요.
+          </p>
+          <div
+            className="table-scroll"
+            tabIndex={0}
+            role="region"
+            aria-label="검사표 · 좌우 방향키로 이동해 읽기"
+          >
+            <table>
+              <thead>
+                <tr>
+                  <th>검사 행동</th>
+                  <th>기대한 결과</th>
+                  <th>실제 결과 / 판정</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {classroomCards
+                  .filter((c) => cardKind === "all" || c.kind === cardKind)
+                  .map((c) => (
+                    <tr key={c.action}>
+                      <td>
+                        <small>{kindNames[c.kind]}</small>
+                        <br />
+                        {c.action}
+                      </td>
+                      <td>{c.expected}</td>
+                      <td className="write-space">
+                        실제: __________________
+                        <br />□ 확인 □ 수정 필요 □ 미확인
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
           <h3>수정과 재검사</h3>
           <p>발생 상황: _____________________</p>
           <p>바꾼 규칙과 이유: _____________________</p>
@@ -517,7 +631,12 @@ export function Teacher({ create }: { create: (m: Mission) => void }) {
             프롬프트 길이, 코드 줄 수, 장식의 양으로 이해도를 평가하지 않습니다.
             실제 기록과 설명을 근거로 단계와 의견을 적습니다.
           </p>
-          <div className="table-scroll">
+          <div
+            className="table-scroll"
+            tabIndex={0}
+            role="region"
+            aria-label="과정 평가표 · 좌우 방향키로 이동해 읽기"
+          >
             <table>
               <thead>
                 <tr>

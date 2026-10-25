@@ -67,6 +67,7 @@ export type Snapshot = {
   config: Config;
   revision: string;
   promise: PromiseData;
+  goalReviewed?: boolean;
   originalPrompt: string;
   arrangedPrompt: string;
   prediction: string;
@@ -154,7 +155,7 @@ export function correctionPrompt(c: Snapshot["change"]) {
 export function stageDone(d: Snapshot) {
   const current = d.checks.filter((c) => c.revision === d.revision);
   return [
-    Object.values(d.promise).every((x) => x.trim()),
+    Object.values(d.promise).every((x) => x.trim()) && d.goalReviewed !== false,
     Boolean(d.originalPrompt.trim() && d.arrangedPrompt.trim()),
     Boolean(d.prediction.trim() && d.runRevision === d.revision),
     current.some(
@@ -194,6 +195,7 @@ export function makeWork(mission: Mission, normal = false): Work {
   const stamp = now();
   const draft: Snapshot = {
     title: normal ? `나의 ${kindNames[mission.kind]}` : mission.title,
+    goalReviewed: false,
     config,
     revision: uid(),
     promise: {

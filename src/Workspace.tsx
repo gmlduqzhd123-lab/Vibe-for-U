@@ -1,15 +1,15 @@
-import { useState } from "react";
-import { autoChecks } from "./engines";
+import { useEffect, useRef, useState } from "react";
+import { Inspection } from "./Inspection";
+import { configSummary, updatePrediction } from "./learning";
 import {
   arrangePrompt,
   correctionPrompt,
   stageDone,
   aiStatus,
   uid,
-  now,
   LIMITS,
 } from "./model";
-import type { Work, Snapshot, Mode, Mission, Check, Version } from "./model";
+import type { Work, Snapshot, Mode, Mission, Version } from "./model";
 import type { Navigate } from "./Pages";
 import { Field, Hint, Icon, Pill } from "./ui";
 import { Settings } from "./Settings";
@@ -53,35 +53,26 @@ export function Workspace({
 }: Props) {
   const d = w.draft;
   const done = stageDone(d);
+  const predictionRef = useRef<HTMLDivElement>(null);
+  const focusWhenReady = useRef(false);
+  useEffect(() => {
+    if (step === 2 && focusWhenReady.current) {
+      predictionRef.current?.querySelector("textarea")?.focus();
+      focusWhenReady.current = false;
+    }
+  }, [step]);
+  const focusPrediction = () => {
+    if (step === 2) predictionRef.current?.querySelector("textarea")?.focus();
+    else {
+      focusWhenReady.current = true;
+      go(`work/${w.id}/2`);
+    }
+  };
   const [versionLabel, setVersionLabel] = useState("");
-  const [selected, setSelected] = useState<string[]>([]);
   const [compareA, setCompareA] = useState(w.versions[0]?.id ?? "");
   const [compareB, setCompareB] = useState("current");
   const checks = d.checks.filter((c) => c.revision === d.revision);
-  const oldCount = d.checks.length - checks.length;
   const patch = (p: Partial<Snapshot>) => edit((s) => ({ ...s, ...p }));
-  const addChecks = (rows: Check[]) => {
-    if (d.checks.length + rows.length > LIMITS.checks) {
-      message(
-        "한 작품의 검사 기록은 100개까지예요. 백업 후 선택한 검사 기록을 삭제해 주세요.",
-      );
-      return;
-    }
-    patch({ checks: [...d.checks, ...rows] });
-  };
-  const manualCards = () =>
-    addChecks(
-      m.tests.map((t) => ({
-        id: uid(),
-        label: t.label,
-        expected: t.expected,
-        actual: "",
-        source: m.id === "story-4" ? "peer" : "self",
-        status: "pending",
-        revision: d.revision,
-        at: now(),
-      })),
-    );
   const change = (key: keyof Snapshot["change"], v: string) =>
     patch({ change: { ...d.change, [key]: v } });
   const a = w.versions.find((v) => v.id === compareA)?.data ?? d;
@@ -123,7 +114,7 @@ export function Workspace({
       <div className="workspace-meta">
         <span>
           <span className="status-dot" />
-          {w.editingLabel} · 설정 {d.revision.slice(0, 6)}
+          {w.editingLabel} · 실행 화면도 이 설정을 사용해요
         </span>
         {(d.config.kind === "quiz" &&
           (d.config.scoring === "attempt" || !d.config.resetScore)) ||
@@ -261,6 +252,10 @@ export function Workspace({
           </div>
           {step === 0 ? (
             <>
+              <div className="note">
+                아래 내용은 시작 예시예요. 내 생각에 맞게 고치고, 아래의 ‘이
+                약속으로 만들기’를 눌러 확인해요.
+              </div>
               <Field
                 max={LIMITS.short}
                 label="작품 제목"
@@ -309,7 +304,10 @@ export function Workspace({
                   max={LIMITS.promise}
                   placeholder={hint}
                   onChange={(v) =>
-                    patch({ promise: { ...d.promise, [key]: v } })
+                    patch({
+                      promise: { ...d.promise, [key]: v },
+                      goalReviewed: false,
+                    })
                   }
                 />
               ))}
@@ -368,13 +366,15 @@ export function Workspace({
           {step === 2 ? (
             <>
               <div className="prompt-question">{m.prediction}</div>
-              <Field
-                area
-                label="실행 전 나의 예상"
-                value={d.prediction}
-                placeholder="이렇게 누르면… 이렇게 될 것 같아요. 왜냐하면…"
-                onChange={(v) => patch({ prediction: v })}
-              />
+              <div ref={predictionRef}>
+                <Field
+                  area
+                  label="실행 전 나의 예상"
+                  value={d.prediction}
+                  placeholder="이렇게 누르면… 이렇게 될 것 같아요. 왜냐하면…"
+                  onChange={(v) => edit((s) => updatePrediction(s, v))}
+                />
+              </div>
               <h3>설정과 규칙</h3>
               <p className="muted small">
                 설정을 바꾸면 새 설정 버전이 생겨요. 이전 검사 기록은 보존되며
@@ -395,233 +395,50 @@ export function Workspace({
                 <b>이번 수정 과제</b>
                 <p>{m.task}</p>
               </div>
-              <div className="button-row">
-                <button
-                  className="primary"
-                  onClick={() => addChecks(autoChecks(d.config, d.revision))}
-                >
-                  <Icon name="check" />
-                  현재 설정 자동 검사
+              <Inspection
+                draft={d}
+                mission={m}
+                onChange={(checks) => patch({ checks })}
+                message={message}
+                deleteChecks={deleteChecks}
+              />
+              <h3>바꾼 내용과 이유를 남겨요</h3>
+              <Field
+                label="바꾸려는 동작"
+                value={d.change.behavior}
+                placeholder="예: 한 번 답한 문제는 다시 채점하지 않게 바꿨어요."
+                onChange={(v) => change("behavior", v)}
+              />
+              <Field
+                area
+                label="왜 이렇게 수정했나요?"
+                value={d.change.reason}
+                placeholder="문제가 없었다면, 무엇을 더 좋게 바꾸었거나 그대로 둔 이유를 적어도 좋아요."
+                onChange={(v) => change("reason", v)}
+              />
+              <details className="correction-extra">
+                <summary>수정 요청문을 보낼 때 · 자세한 기록</summary>
+                {(
+                  [
+                    ["situation", "어떤 상황에서 생긴 문제인가요?"],
+                    ["expected", "기대한 결과"],
+                    ["actual", "실제 결과"],
+                    ["keep", "그대로 유지할 동작"],
+                    ["retest", "수정 후 다시 할 검사"],
+                  ] as const
+                ).map(([key, label]) => (
+                  <Field
+                    key={key}
+                    label={label}
+                    value={d.change[key]}
+                    onChange={(v) => change(key, v)}
+                  />
+                ))}
+                <button onClick={() => copy(correctionPrompt(d.change))}>
+                  <Icon name="copy" />
+                  수정 요청문 복사
                 </button>
-                <button onClick={manualCards}>미션 직접 확인 카드 추가</button>
-                <button
-                  onClick={() =>
-                    addChecks([
-                      {
-                        id: uid(),
-                        label: "나의 검사",
-                        expected: "",
-                        actual: "",
-                        source: "self",
-                        status: "pending",
-                        revision: d.revision,
-                        at: now(),
-                      },
-                    ])
-                  }
-                >
-                  나의 검사 추가
-                </button>
-                <button
-                  onClick={() =>
-                    addChecks([
-                      {
-                        id: uid(),
-                        label: "친구·교사 의견",
-                        expected: "직접 사용한 뒤 의견 듣기",
-                        actual: "",
-                        source: "peer",
-                        status: "pending",
-                        revision: d.revision,
-                        at: now(),
-                      },
-                    ])
-                  }
-                >
-                  친구·교사 의견 추가
-                </button>
-              </div>
-              <p className="small muted">
-                자동 검사는 템플릿의 동작만 확인해요. 문장의 의미와 창의성은
-                사람이 살펴봐요. 이전 설정의 기록 {oldCount}개는 아래
-                버전·포트폴리오에서 확인할 수 있어요.
-              </p>
-              {checks.length === 0 ? (
-                <div className="empty compact">
-                  아직 이 설정에서 검사하지 않았어요. 자동 검사와 직접 확인
-                  카드를 추가해 보세요.
-                </div>
-              ) : (
-                checks.map((c) => (
-                  <div key={c.id} className={`check-card ${c.status}`}>
-                    <div className="check-card-head">
-                      <label className="checkbox">
-                        <input
-                          type="checkbox"
-                          checked={selected.includes(c.id)}
-                          aria-label={`${c.label} 기록 선택`}
-                          onChange={(e) =>
-                            setSelected((s) =>
-                              e.target.checked
-                                ? [...s, c.id]
-                                : s.filter((id) => id !== c.id),
-                            )
-                          }
-                        />
-                        <b>{c.label}</b>
-                      </label>
-                      <Pill
-                        tone={
-                          c.source === "auto"
-                            ? "purple"
-                            : c.source === "self"
-                              ? "green"
-                              : "orange"
-                        }
-                      >
-                        {c.source === "auto"
-                          ? "자동 검사"
-                          : c.source === "self"
-                            ? "학습자 직접 확인"
-                            : "친구·교사 의견"}
-                      </Pill>
-                    </div>
-                    <p>
-                      <b>기대</b> {c.expected}
-                    </p>
-                    {c.source === "auto" ? (
-                      <p>
-                        <b>실제</b> {c.actual} ·{" "}
-                        <strong>
-                          {c.status === "pass"
-                            ? "통과"
-                            : c.status === "fail"
-                              ? "수정 필요"
-                              : "미확인"}
-                        </strong>
-                      </p>
-                    ) : (
-                      <>
-                        <Field
-                          max={LIMITS.short}
-                          label="검사 이름"
-                          value={c.label}
-                          onChange={(v) =>
-                            patch({
-                              checks: d.checks.map((t) =>
-                                t.id === c.id ? { ...t, label: v } : t,
-                              ),
-                            })
-                          }
-                        />
-                        <Field
-                          area
-                          label={`${c.label} 기대한 결과`}
-                          value={c.expected}
-                          max={LIMITS.checkText}
-                          onChange={(v) =>
-                            patch({
-                              checks: d.checks.map((t) =>
-                                t.id === c.id
-                                  ? { ...t, expected: v, status: "pending" }
-                                  : t,
-                              ),
-                            })
-                          }
-                        />
-                        <Field
-                          area
-                          label={`${c.label} 실제 결과`}
-                          value={c.actual}
-                          max={LIMITS.checkText}
-                          onChange={(v) =>
-                            patch({
-                              checks: d.checks.map((t) =>
-                                t.id === c.id
-                                  ? {
-                                      ...t,
-                                      actual: v,
-                                      status: v.trim() ? t.status : "pending",
-                                    }
-                                  : t,
-                              ),
-                            })
-                          }
-                        />
-                        <label className="field">
-                          <span>{c.label} 확인 상태</span>
-                          <select
-                            value={c.status}
-                            onChange={(e) => {
-                              if (
-                                e.target.value !== "pending" &&
-                                (!c.actual.trim() ||
-                                  !c.expected.trim() ||
-                                  !c.label.trim())
-                              ) {
-                                message(
-                                  "검사 이름, 기대한 결과와 직접 관찰한 실제 결과를 먼저 적어 주세요.",
-                                );
-                                return;
-                              }
-                              patch({
-                                checks: d.checks.map((t) =>
-                                  t.id === c.id
-                                    ? {
-                                        ...t,
-                                        status: e.target
-                                          .value as Check["status"],
-                                      }
-                                    : t,
-                                ),
-                              });
-                            }}
-                          >
-                            <option value="pending">아직 확인하지 않음</option>
-                            <option value="pass">직접 확인함</option>
-                            <option value="fail">수정할 점이 있음</option>
-                          </select>
-                        </label>
-                      </>
-                    )}
-                  </div>
-                ))
-              )}
-              {selected.length ? (
-                <button
-                  className="danger-text"
-                  onClick={() => {
-                    deleteChecks(selected);
-                    setSelected([]);
-                  }}
-                >
-                  선택한 학습 기록 {selected.length}개 삭제
-                </button>
-              ) : null}
-              <h3>수정의 이유를 남겨요</h3>
-              {(
-                [
-                  ["situation", "어떤 상황에서 생긴 문제인가요?"],
-                  ["expected", "기대한 결과"],
-                  ["actual", "실제 결과"],
-                  ["behavior", "바꾸려는 동작"],
-                  ["keep", "그대로 유지할 동작"],
-                  ["retest", "수정 후 다시 할 검사"],
-                  ["reason", "왜 이렇게 수정했나요?"],
-                ] as const
-              ).map(([key, label]) => (
-                <Field
-                  area={key === "reason"}
-                  key={key}
-                  label={label}
-                  value={d.change[key]}
-                  onChange={(v) => change(key, v)}
-                />
-              ))}
-              <button onClick={() => copy(correctionPrompt(d.change))}>
-                <Icon name="copy" />
-                수정 요청문 복사
-              </button>
+              </details>
               <button className="subtle" onClick={() => go(`work/${w.id}/2`)}>
                 설정으로 돌아가 수정하기 <Icon name="arrow" />
               </button>
@@ -674,7 +491,7 @@ export function Workspace({
               {done[step]
                 ? "이 단계의 기록이 채워졌어요."
                 : [
-                    "빈 약속을 채워 주세요.",
+                    "예시를 읽고, 내 약속을 정한 뒤 아래 버튼으로 확인해 주세요.",
                     "원문과 정리한 요청문을 모두 적어 주세요.",
                     "예상을 적고 현재 설정의 앱을 눌러 보세요.",
                     "직접 관찰·수정 이유를 적고, 미확인·수정 필요 항목을 다시 검사해요.",
@@ -684,12 +501,20 @@ export function Workspace({
             <button
               className="primary"
               onClick={() =>
-                step < 4
-                  ? go(`work/${w.id}/${step + 1}`)
-                  : saveVersion(versionLabel || "설명과 성찰 기록")
+                step === 0
+                  ? Object.values(d.promise).every((v) => v.trim())
+                    ? (patch({ goalReviewed: true }), go(`work/${w.id}/1`))
+                    : message("빈 만들기 약속을 먼저 채워 주세요.")
+                  : step < 4
+                    ? go(`work/${w.id}/${step + 1}`)
+                    : saveVersion(versionLabel || "설명과 성찰 기록")
               }
             >
-              {step < 4 ? "다음 단계" : "이 과정 버전으로 저장"}
+              {step === 0
+                ? "이 약속으로 만들기"
+                : step < 4
+                  ? "다음 단계"
+                  : "이 과정 버전으로 저장"}
               <Icon name="arrow" size={17} />
             </button>
           </div>
@@ -700,11 +525,20 @@ export function Workspace({
             <h2>직접 해 보는 작은 앱</h2>
             <Pill tone="paper">기본 연습</Pill>
           </div>
+          {!d.prediction.trim() ? (
+            <div className="prediction-nudge">
+              <b>누르기 전에, 어떻게 될지 예상해 볼까요?</b>
+              <p>예상을 적은 다음 직접 실행하면 과정 기록으로 남아요.</p>
+              <button onClick={focusPrediction}>
+                먼저 예상 적기 <Icon name="arrow" size={16} />
+              </button>
+            </div>
+          ) : null}
           <Preview
-            key={`${w.id}:${d.revision}:${step}:${d.activity}`}
+            key={`${w.id}:${d.revision}:${d.config.kind === "timer" ? step : "stable"}`}
             config={d.config}
             onRun={() => {
-              if (d.runRevision !== d.revision)
+              if (d.prediction.trim() && d.runRevision !== d.revision)
                 patch({ runRevision: d.revision });
             }}
           />
@@ -805,6 +639,11 @@ export function Workspace({
                 }
                 개
               </p>
+              <ul className="config-summary">
+                {configSummary(v.data.config).map((line, k) => (
+                  <li key={k}>{line}</li>
+                ))}
+              </ul>
               <p>예상: {v.data.prediction || "미기록"}</p>
               <p className="preserve">
                 원문: {v.data.originalPrompt || "미기록"}

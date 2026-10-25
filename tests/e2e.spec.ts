@@ -71,6 +71,9 @@ test("첫 방문 → 요청·예상 → 중복 점수 발견·수정 → 재검�
   await page
     .getByLabel("왜 이렇게 수정했나요?", { exact: true })
     .fill("이미 답한 문제인지 기억해야 중복 점수를 막을 수 있어요.");
+  await page
+    .getByText("수정 요청문을 보낼 때 · 자세한 기록", { exact: true })
+    .click();
   await page.getByLabel("기대한 결과", { exact: true }).fill("1점");
   await page.getByLabel("실제 결과", { exact: true }).fill("3점");
   await page.getByText("수정 버전 · 비교와 복원", { exact: true }).click();
@@ -95,9 +98,6 @@ test("첫 방문 → 요청·예상 → 중복 점수 발견·수정 → 재검�
     .getByRole("button", { name: "현재 설정 자동 검사", exact: true })
     .click();
   await expect(page.locator(".check-card.fail")).toHaveCount(0);
-  await page
-    .getByRole("button", { name: "미션 직접 확인 카드 추가", exact: true })
-    .click();
   const self = page
     .locator(".check-card")
     .filter({ hasText: "학습자 직접 확인" });
@@ -537,11 +537,147 @@ test("키보드로 시작하고 입력·단계 이동", async ({ page }) => {
     page.getByLabel("내가 처음 쓴 요청문 (원문)", { exact: true }),
   ).toBeVisible();
 });
+test("학생 UX: 약속 확인·예상 수정·단계 이동 상태·한 번에 검사 준비", async ({
+  page,
+}) => {
+  await mission(page, "quiz-1");
+  const stages = page
+    .getByRole("navigation", { name: "학습 단계" })
+    .getByRole("button");
+  await expect(stages.nth(0)).toContainText("기록할 내용 있음");
+  await page
+    .getByRole("button", { name: "이 약속으로 만들기", exact: true })
+    .click();
+  await expect(stages.nth(0)).toContainText("기록 완료");
+  await page
+    .getByRole("button", { name: "먼저 예상 적기", exact: true })
+    .click();
+  await expect(
+    page.getByRole("textbox", { name: "실행 전 나의 예상", exact: true }),
+  ).toBeFocused();
+  await page
+    .getByRole("textbox", { name: "실행 전 나의 예상", exact: true })
+    .fill("정답을 누르면 1점이 될 것 같아요.");
+  await page.getByRole("button", { name: /1\s*햇빛과 물/ }).click();
+  await expect(page.getByTestId("score")).toHaveText("1점");
+  await step(page, 3);
+  await expect(page.getByTestId("score")).toHaveText("1점");
+  await page
+    .getByRole("button", { name: "현재 설정 자동 검사", exact: true })
+    .click();
+  const cards = page
+    .locator(".check-card")
+    .filter({ hasText: "학습자 직접 확인" });
+  await expect(cards).toHaveCount(2);
+  await cards
+    .first()
+    .getByRole("textbox", { name: "정답 선택 실제 결과", exact: true })
+    .fill("정답 안내와 1점을 보았어요.");
+  await cards.first().getByRole("combobox").selectOption("pass");
+  await page
+    .getByRole("button", { name: "현재 설정 자동 검사", exact: true })
+    .click();
+  await expect(page.locator(".check-card")).toHaveCount(6);
+  await expect(
+    cards
+      .first()
+      .getByRole("textbox", { name: "정답 선택 실제 결과", exact: true }),
+  ).toHaveValue("정답 안내와 1점을 보았어요.");
+  await expect(cards.first().getByRole("combobox")).toHaveValue("pass");
+  await step(page, 2);
+  await expect(page.getByTestId("score")).toHaveText("1점");
+  await page
+    .getByRole("textbox", { name: "실행 전 나의 예상", exact: true })
+    .fill("같은 답을 다시 눌러도 1점일 것 같아요.");
+  await expect(stages.nth(2)).toContainText("기록할 내용 있음");
+  await page.getByRole("button", { name: /1\s*햇빛과 물/ }).click();
+  await expect(stages.nth(2)).toContainText("기록 완료");
+  await expect(page.getByTestId("score")).toHaveText("1점");
+});
+test("교사 UX: 차시에서 미션 안내·학생 주소 복사·프로젝트 검사표", async ({
+  page,
+  context,
+}) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  await page.goto("#/teacher");
+  const lesson = page.locator(".lesson").nth(4);
+  await lesson.locator("summary").click();
+  await lesson
+    .getByRole("button", { name: "학생용 미션 주소 복사", exact: true })
+    .click();
+  const copied = await page.evaluate(() => navigator.clipboard.readText());
+  expect(copied).toBe(
+    new URL("#/mission/quiz-3", test.info().project.use.baseURL!).href,
+  );
+  await lesson
+    .getByRole("button", { name: "미션 안내 열기", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", {
+      name: "어라? 점수가 또 올라가요!",
+      exact: true,
+    }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "교사 자료실", exact: true }).click();
+  await page
+    .getByRole("button", { name: "검사표 · 짝 활동", exact: true })
+    .click();
+  await page
+    .getByRole("combobox", { name: "검사표 프로젝트", exact: true })
+    .selectOption("quiz");
+  await expect(page.locator("table tbody tr")).toHaveCount(3);
+  await expect(page.locator("table")).toContainText(
+    "한 문제의 점수는 한 번만 반영된다.",
+  );
+  await page.setViewportSize({ width: 360, height: 640 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  const audit = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+    .analyze();
+  expect(audit.violations).toEqual([]);
+  await page.screenshot({
+    path: "test-results/evidence/teacher-cards-mobile.png",
+    fullPage: true,
+  });
+});
+test("포트폴리오 UX: 사람이 읽는 규칙 요약과 인쇄에서 원본 데이터 제외", async ({
+  page,
+}) => {
+  await mission(page, "quiz-3");
+  await step(page, 3);
+  await page
+    .getByRole("button", { name: "현재 설정 자동 검사", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "과정 포트폴리오", exact: true })
+    .click();
+  await expect(page.locator(".config-summary").first()).toContainText(
+    "정답을 누를 때마다",
+  );
+  await expect(page.locator(".portfolio")).toContainText("현재 편집본");
+  const technical = page.locator(".portfolio-version details").first();
+  await technical.locator("summary").click();
+  await expect(technical.locator("pre")).toBeVisible();
+  await page.emulateMedia({ media: "print" });
+  await expect(technical).toBeHidden();
+  await expect(page.locator(".config-summary").first()).toBeVisible();
+  await page.pdf({
+    path: "test-results/evidence/portfolio-ux-print.pdf",
+    format: "A4",
+    printBackground: true,
+  });
+  await page.emulateMedia({ media: "screen" });
+});
 test("직접 검사 작성·선택 기록 삭제·작품 삭제 범위와 대화상자 접근성", async ({
   page,
 }) => {
   await mission(page);
   await step(page, 3);
+  await page.getByText("검사 카드·친구 의견 더하기", { exact: true }).click();
   await page
     .getByRole("button", { name: "나의 검사 추가", exact: true })
     .click();

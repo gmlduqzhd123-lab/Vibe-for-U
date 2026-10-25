@@ -566,7 +566,7 @@ export default function App() {
           ) : parts[0] === "mission" && mission ? (
             <MissionDetail mission={mission} create={create} share={copy} />
           ) : parts[0] === "teacher" ? (
-            <Teacher create={create} />
+            <Teacher create={create} go={go} copy={copy} />
           ) : parts[0] === "library" ? (
             <Library
               works={visible}

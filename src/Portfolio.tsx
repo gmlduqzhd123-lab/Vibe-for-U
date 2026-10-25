@@ -2,6 +2,7 @@ import type { Work } from "./model";
 import { aiStatus, kindNames, stageDone, correctionPrompt } from "./model";
 import { Icon, Pill } from "./ui";
 import type { Navigate } from "./Pages";
+import { configSummary, revisionLabel } from "./learning";
 const text = (v: string) => v || "아직 기록하지 않았어요.";
 export function Portfolio({
   work: w,
@@ -38,8 +39,7 @@ export function Portfolio({
           <Pill tone="green">{kindNames[w.kind]} · 과정 기록</Pill>
           <h1>{d.title || "제목 없는 작품"}</h1>
           <p>
-            {w.editingLabel} · 설정 {d.revision.slice(0, 6)} ·{" "}
-            {new Date(w.updatedAt).toLocaleString("ko-KR")}
+            {w.editingLabel} · {new Date(w.updatedAt).toLocaleString("ko-KR")}
           </p>
           <div className="badges">
             {stageDone(d).map((done, i) => (
@@ -101,11 +101,16 @@ export function Portfolio({
             사용자가 기록한 내용입니다.
           </p>
           {d.checks.length ? (
-            <div className="table-scroll">
+            <div
+              className="table-scroll"
+              tabIndex={0}
+              role="region"
+              aria-label="학습 검사 기록표 · 좌우 방향키로 이동해 읽기"
+            >
               <table>
                 <thead>
                   <tr>
-                    <th>설정 / 출처</th>
+                    <th>검사한 작품 / 출처</th>
                     <th>검사와 기대</th>
                     <th>실제 결과</th>
                     <th>판정</th>
@@ -115,8 +120,7 @@ export function Portfolio({
                   {d.checks.map((c) => (
                     <tr key={c.id}>
                       <td>
-                        {c.revision.slice(0, 6)}
-                        {c.revision === d.revision ? " (현재)" : " (이전)"}
+                        {revisionLabel(w, c.revision)}
                         <br />
                         {c.source === "auto"
                           ? "자동 검사"
@@ -155,9 +159,7 @@ export function Portfolio({
               <h3>
                 V{i + 1} · {v.label}
               </h3>
-              <p>
-                설정 {v.data.revision.slice(0, 6)} · {v.reason}
-              </p>
+              <p>저장한 이유: {v.reason}</p>
               <p>수정 이유: {text(v.data.change.reason)}</p>
               <p>
                 해당 설정 검사:{" "}
@@ -169,7 +171,15 @@ export function Portfolio({
                   )
                   .join(" / ") || "미기록"}
               </p>
-              <p>설정: {JSON.stringify(v.data.config)}</p>
+              <ul className="config-summary">
+                {configSummary(v.data.config).map((line, k) => (
+                  <li key={k}>{line}</li>
+                ))}
+              </ul>
+              <details className="no-print">
+                <summary>원본 설정 데이터 보기</summary>
+                <pre>{JSON.stringify(v.data.config, null, 2)}</pre>
+              </details>
             </div>
           ))}
         </section>

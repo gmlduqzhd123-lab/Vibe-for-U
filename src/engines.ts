@@ -1,10 +1,12 @@
-import { now, uid } from "./model";
+import { now, uid, LIMITS } from "./model";
 import type {
   Check,
   Config,
   QuizConfig,
   StoryConfig,
   TimerConfig,
+  Mission,
+  Snapshot,
 } from "./model";
 export type QuizState = {
   index: number;
@@ -228,4 +230,34 @@ export function autoChecks(c: Config, revision: string): Check[] {
     revision,
     at: now(),
   }));
+}
+export function missionChecks(m: Mission, revision: string): Check[] {
+  return m.tests.map((t) => ({
+    id: uid(),
+    label: t.label,
+    expected: t.expected,
+    actual: "",
+    source: m.id === "story-4" ? "peer" : "self",
+    status: "pending",
+    revision,
+    at: now(),
+  }));
+}
+export function prepareInspection(d: Snapshot, m: Mission): Check[] {
+  const retained = d.checks.filter(
+    (c) => c.revision !== d.revision || c.source !== "auto",
+  );
+  const currentManual = retained.some(
+    (c) => c.revision === d.revision && c.source !== "auto",
+  );
+  const result = [
+    ...retained,
+    ...autoChecks(d.config, d.revision),
+    ...(currentManual ? [] : missionChecks(m, d.revision)),
+  ];
+  if (result.length > LIMITS.checks)
+    throw new Error(
+      "검사 기록은 100개까지예요. 파일로 백업한 뒤 필요 없는 기록을 선택해 삭제해 주세요.",
+    );
+  return result;
 }

@@ -299,6 +299,9 @@ function validateSnapshot(v: unknown, kind: Kind): Snapshot {
     config,
     revision: str(d.revision, "설정 버전", 80),
     promise,
+    ...(d.goalReviewed === undefined
+      ? {}
+      : { goalReviewed: bool(d.goalReviewed, "만들기 약속 확인") }),
     originalPrompt: str(d.originalPrompt, "원문"),
     arrangedPrompt: str(d.arrangedPrompt, "정리 요청문"),
     prediction: str(d.prediction, "예상"),

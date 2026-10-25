@@ -2600,6 +2600,118 @@ pre {
     animation: none !important;
   }
 }
+.table-scroll:focus-visible {
+  outline: 3px solid #9e7eda;
+  outline-offset: 3px;
+}
+.inspection-guide {
+  background: #f1f5ed;
+  border: 1px solid #dce5d4;
+  border-radius: 11px;
+  padding: 17px;
+  margin: 0 0 18px;
+  color: #42543e;
+}
+.inspection-guide h3 {
+  font-size: 15px;
+  margin-bottom: 9px;
+}
+.inspection-guide ol {
+  padding-left: 20px;
+  font-size: 12px;
+  line-height: 1.9;
+  margin: 0;
+}
+.inspection-guide p {
+  font-size: 12px;
+  margin: 12px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid #d7e0d1;
+}
+.manual-heading {
+  margin-top: 24px;
+}
+.auto-results,
+.extra-checks,
+.correction-extra {
+  padding: 12px 15px;
+  border: 1px solid #ddd5e5;
+  background: #faf7fc;
+  border-radius: 10px;
+  margin: 17px 0;
+}
+.auto-results > summary,
+.extra-checks > summary,
+.correction-extra > summary,
+.check-edit > summary {
+  font-size: 12px;
+}
+.check-edit {
+  border-bottom: 1px dashed #e0d6e7;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+}
+.prediction-nudge {
+  padding: 18px 22px;
+  background: #faf5e7;
+  border-bottom: 1px solid #eadfc8;
+  color: #6d5429;
+}
+.prediction-nudge b {
+  font-size: 12px;
+}
+.prediction-nudge p {
+  font-size: 11px;
+  margin: 6px 0 10px;
+}
+.prediction-nudge button {
+  font-size: 11px;
+  min-height: 38px;
+}
+.lesson-actions {
+  background: #f5f1f9;
+  border: 1px solid #e6ddef;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+.lesson-actions > b {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 10px;
+  color: #644b7a;
+}
+.lesson-actions small {
+  display: block;
+  margin-top: 8px;
+  color: #6b5d75;
+}
+.lesson-actions button {
+  font-size: 12px;
+}
+.config-summary {
+  padding-left: 19px;
+  margin: 12px 0;
+  color: #62516d;
+  font-size: 12px;
+  line-height: 1.9;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 640px) {
+  .lesson-actions .button-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .printable table {
+    min-width: 610px;
+  }
+  .inspection-guide {
+    padding: 15px;
+  }
+  .config-summary {
+    font-size: 12px;
+  }
+}
 .field > label {
   font-weight: 650;
   color: #68596f;

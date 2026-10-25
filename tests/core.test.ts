@@ -13,6 +13,7 @@ import {
   tickTimer,
   pauseTimer,
   reachable,
+  prepareInspection,
 } from "../src/engines";
 import {
   clearWorks,
@@ -25,6 +26,75 @@ import {
   backupFiles,
   jsonBytes,
 } from "../src/storage";
+import {
+  updatePrediction,
+  configSummary,
+  revisionLabel,
+} from "../src/learning";
+describe("학생·교사 UX 회귀", () => {
+  it("새 작품은 약속을 확인하기 전 완료하지 않고 옛 기록의 상태는 유지한다", () => {
+    const d = makeWork(missions[0]).draft;
+    expect(stageDone(d)[0]).toBe(false);
+    d.goalReviewed = true;
+    expect(stageDone(d)[0]).toBe(true);
+    delete d.goalReviewed;
+    expect(stageDone(d)[0]).toBe(true);
+    const [w] = parseImport(exportJSON([makeWork(missions[0])]));
+    expect(w.draft.goalReviewed).toBe(false);
+  });
+  it("예상을 고치면 다시 실행해야 완료되며 원래 관찰·검사 기록은 보존한다", () => {
+    const d = makeWork(missions[0]).draft;
+    d.prediction = "처음 예상";
+    d.runRevision = d.revision;
+    d.checks = autoChecks(d.config, d.revision);
+    const next = updatePrediction(d, "다른 예상");
+    expect(next.runRevision).toBe("");
+    expect(next.checks).toEqual(d.checks);
+    expect(stageDone(next)[2]).toBe(false);
+    expect(updatePrediction(d, d.prediction).runRevision).toBe(d.revision);
+  });
+  it("검사 한 번으로 자동·직접 카드가 생기고 재검사에서 관찰을 보존하며 중복하지 않는다", () => {
+    const d = makeWork(missions[2]).draft;
+    d.checks = prepareInspection(d, missions[2]);
+    const manual = d.checks.filter((c) => c.source !== "auto");
+    expect(manual).toHaveLength(2);
+    manual[0].actual = "3점이 되었다";
+    manual[0].status = "fail";
+    const count = d.checks.length;
+    const next = prepareInspection(d, missions[2]);
+    expect(next).toHaveLength(count);
+    expect(next.find((c) => c.id === manual[0].id)).toEqual(manual[0]);
+    d.checks = next;
+    d.revision = "new";
+    if (d.config.kind !== "quiz") throw Error();
+    d.config.scoring = "once";
+    const after = prepareInspection(d, missions[2]);
+    expect(after.filter((c) => c.revision !== "new")).toHaveLength(count);
+    expect(
+      after
+        .filter((c) => c.revision === "new" && c.source === "auto")
+        .every((c) => c.status === "pass"),
+    ).toBe(true);
+  });
+  it("새 확인 필드의 잘못된 자료형은 거절하고 이전 버전·원문은 보존한다", () => {
+    const w = makeWork(missions[0]);
+    delete w.draft.goalReviewed;
+    delete w.versions[0].data.goalReviewed;
+    w.draft.originalPrompt = "옛 요청문";
+    expect(parseImport(exportJSON([w]))[0].draft).toEqual(w.draft);
+    (w.draft as unknown as { goalReviewed: string }).goalReviewed = "yes";
+    expect(() => parseImport(exportJSON([w]))).toThrow("참/거짓");
+  });
+  it("인쇄용 설정 설명이 현재 규칙과 일치하고 사람에게 읽히는 버전 이름을 쓴다", () => {
+    const w = makeWork(missions[2]);
+    expect(configSummary(w.draft.config).join(" ")).toContain("누를 때마다");
+    expect(revisionLabel(w, w.draft.revision)).toBe("현재 편집본");
+    w.draft.revision = "new";
+    expect(revisionLabel(w, w.versions[0].data.revision)).toContain(
+      "시작 작품",
+    );
+  });
+});
 describe("시범: 중복 점수 발견 → 수정 → 버전·검사 저장 → 복원", () => {
   beforeEach(async () => {
     await clearWorks();
