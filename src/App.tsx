@@ -23,7 +23,7 @@ import { Home, Library, Missions, MissionDetail, Teacher } from "./Pages";
 import { Workspace } from "./Workspace";
 import { Portfolio } from "./Portfolio";
 import { Icon, Mascot, Empty, Field } from "./ui";
-import { Explore, Prepare, QuickTry } from "./Welcome";
+import { Explore, Prepare, QuickTry, LessonLanding } from "./Welcome";
 import "./Welcome.css";
 const SharePage = lazy(() => import("./SharePage"));
 function getSetting<T>(key: string, fallback: T): T {
@@ -447,7 +447,9 @@ export default function App() {
   };
   const visible = works.filter((w) => !hidden.includes(w.id));
   const lastWork = visible.find((w) => w.id === lastId);
-  const navActive = ["home", "explore", "try", "share"].includes(parts[0])
+  const navActive = ["home", "explore", "try", "share", "lesson"].includes(
+    parts[0],
+  )
     ? "home"
     : ["teacher", "prepare"].includes(parts[0])
       ? "teacher"
@@ -595,6 +597,8 @@ export default function App() {
             <QuickTry go={go} create={create} />
           ) : parts[0] === "prepare" ? (
             <Prepare go={go} />
+          ) : parts[0] === "lesson" && /^[1-8]$/.test(parts[1] ?? "") ? (
+            <LessonLanding number={Number(parts[1])} go={go} />
           ) : parts[0] === "share" ? (
             <Suspense
               fallback={<p role="status">소개 카드를 준비하고 있어요…</p>}

@@ -157,6 +157,34 @@ test("교사 입구의 차시·활동지·교과 연결과 고치기 전후 예�
     .getByRole("button", { name: "국어 활동 안내 열기", exact: true })
     .click();
   await expect(page).toHaveURL(/#\/mission\/story-1$/);
+  const linkedMissions = [
+    "quiz-1",
+    "quiz-1",
+    "story-1",
+    "quiz-4",
+    "quiz-3",
+    "quiz-1",
+    "story-4",
+    "timer-4",
+  ];
+  for (let number = 1; number <= 8; number++) {
+    await page.goto(`#/lesson/${number}`);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+      new RegExp(`^${number}차시 `),
+    );
+    await expect(
+      page.getByRole("link", {
+        name: `${number}차시 활동지 열기 · 2쪽 · 새 탭`,
+        exact: true,
+      }),
+    ).toHaveAttribute("href", new RegExp(`student-lesson-0${number}.pdf$`));
+    await page
+      .getByRole("button", { name: "오늘의 미션 안내 열기 →", exact: true })
+      .click();
+    await expect(page).toHaveURL(
+      new RegExp(`#/mission/${linkedMissions[number - 1]}$`),
+    );
+  }
   await page.goto("#/home");
   await page
     .getByRole("button", { name: "같은 정답 세 번 비교하기", exact: true })
@@ -218,7 +246,7 @@ test("소개 카드 10종의 QR·PNG 다운로드·복사 대안·인쇄", async
     /8차시 새 문제에 적용하기/,
   );
   await expect(page.getByLabel("복사할 내용", { exact: true })).toHaveValue(
-    /#\/mission\/timer-4/,
+    /#\/lesson\/8/,
   );
   await page.keyboard.press("Escape");
   await page.emulateMedia({ media: "print" });
@@ -239,7 +267,14 @@ test("새 입구 네 화면은 휴대전화·태블릿·PC에서 넘침과 접�
   page.on("pageerror", (error) => errors.push(error.message));
   for (const width of [360, 768, 1440]) {
     await page.setViewportSize({ width, height: 1000 });
-    for (const route of ["home", "explore", "prepare", "try", "share"]) {
+    for (const route of [
+      "home",
+      "explore",
+      "prepare",
+      "try",
+      "share",
+      "lesson/2",
+    ]) {
       await page.goto(`#/${route}`);
       await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
       expect(

@@ -605,6 +605,76 @@ export function Prepare({ go }: { go: Go }) {
   );
 }
 
+export function LessonLanding({ number, go }: { number: number; go: Go }) {
+  const lesson = lessons[number - 1];
+  return (
+    <div className="welcome-home">
+      <div className="page-heading">
+        <div>
+          <span className="eyebrow">오늘의 학생 활동 · 40분</span>
+          <h1>
+            {number}차시 {lesson.title}
+          </h1>
+          <p>오늘 할 일을 확인하고, 활동지를 준비한 뒤 미션을 시작해요.</p>
+        </div>
+        <button onClick={() => go("home")}>홈으로</button>
+      </div>
+      <section className="panel">
+        <h2>오늘의 목표</h2>
+        <p>{lesson.goal}</p>
+        <div className="starter-timeline">
+          <div>
+            <b>함께 생각하기 5분</b>
+            <p>{lesson.intro}</p>
+          </div>
+          <div>
+            <b>직접 해 보기 30분</b>
+            <p>{lesson.activity}</p>
+          </div>
+          <div>
+            <b>배운 점 말하기 5분</b>
+            <p>{lesson.close}</p>
+          </div>
+        </div>
+        {number === 2 || number === 7 ? (
+          <p className="note">
+            지난 시간 작품이 있으면 내 작품 선반에서 열어 이어가요. 아직 작품이
+            없다면 연결된 미션에서 새로 시작할 수 있어요.
+          </p>
+        ) : null}
+        {number === 6 ? (
+          <p className="note">
+            외부 AI 도구는 선생님·성인이 조작해요. 나는 요청과 예상, 실제로 본
+            결과를 기록해요.
+          </p>
+        ) : null}
+        <div className="button-row">
+          <button
+            className="primary"
+            onClick={() => go(`mission/${lessonMissionIds[number - 1]}`)}
+          >
+            오늘의 미션 안내 열기 →
+          </button>
+          {number === 2 || number === 7 ? (
+            <button onClick={() => go("library")}>지난 작품 이어하기</button>
+          ) : null}
+          <a
+            className="resource-link"
+            href={materialUrl(
+              `student-lesson-${String(number).padStart(2, "0")}.pdf`,
+            )}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {number}차시 활동지 열기 · 2쪽 · 새 탭
+          </a>
+        </div>
+      </section>
+      <LearningWords />
+    </div>
+  );
+}
+
 export function QuickTry({ go, create }: { go: Go; create: Create }) {
   const [phase, setPhase] = useState(0);
   const [prediction, setPrediction] = useState("");

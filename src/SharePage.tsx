@@ -28,7 +28,7 @@ export default function SharePage({
     ...lessons.map((lesson, index) => ({
       id: `lesson-${index + 1}`,
       title: `${index + 1}차시 ${lesson.title}`,
-      detail: "미션 안내에서 목표를 읽고 이 미션 시작하기를 눌러요.",
+      detail: "오늘의 목표와 활동지를 보고, 연결된 미션에서 시작해요.",
     })),
   ];
   const selected = destinations.find((item) => item.id === selection)!;

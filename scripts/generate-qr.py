@@ -4,8 +4,7 @@ import json
 from reportlab.graphics.barcode.qrencoder import QRCode, QRErrorCorrectLevel
 
 BASE = 'https://gmlduqzhd123-lab.github.io/Vibe-for-U/'
-MISSIONS = ['quiz-1', 'quiz-1', 'story-1', 'quiz-4', 'quiz-3', 'quiz-1', 'story-4', 'timer-4']
-routes = [('home', 'home'), ('try', 'try')] + [(f'lesson-{i+1}', f'mission/{mission}') for i, mission in enumerate(MISSIONS)]
+routes = [('home', 'home'), ('try', 'try')] + [(f'lesson-{i}', f'lesson/{i}') for i in range(1, 9)]
 result = {}
 for key, route in routes:
     url = BASE + '#/' + route
