@@ -458,7 +458,9 @@ export default function App() {
         : "missions";
   const step = Math.max(0, Math.min(4, Number(parts[2]) || 0));
   return (
-    <div className={`app mode-${mode}`}>
+    <div
+      className={`app mode-${mode}${parts[0] === "home" ? " home-screen" : ""}`}
+    >
       <a
         className="skip-link"
         href="#main-content"
@@ -476,9 +478,7 @@ export default function App() {
           </span>
           <span>
             <b>뚝딱 바이브</b>
-            <strong>
-              공작소
-            </strong>
+            <strong>공작소</strong>
           </span>
         </button>
         <span className="sidebar-label">나의 작은 앱 만들기</span>
@@ -586,9 +586,7 @@ export default function App() {
               <p>이 기기의 작품을 불러오고 있어요…</p>
             </div>
           ) : parts[0] === "home" ? (
-            <Home
-              {...{ mode, setMode, works: visible, lastWork, go, create }}
-            />
+            <Home {...{ mode, setMode, lastWork, go, create }} />
           ) : parts[0] === "missions" ? (
             <Missions filter={parts[1]} works={visible} go={go} />
           ) : parts[0] === "explore" ? (

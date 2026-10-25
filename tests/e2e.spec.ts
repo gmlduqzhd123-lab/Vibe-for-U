@@ -33,6 +33,7 @@ test("첫 방문 → 요청·예상 → 중복 점수 발견·수정 → 재검�
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("");
+  await page.locator(".role-home-menu summary").click();
   await page
     .getByRole("button", { name: "첫 작품 만들기", exact: true })
     .click();
@@ -344,9 +345,7 @@ test("다음 사용자·선택 삭제·전체 삭제가 다른 앱의 데이터�
   await page
     .getByRole("button", { name: "다음 사용자로 시작", exact: true })
     .click();
-  await page
-    .getByRole("button", { name: "이어서 학습하기", exact: true })
-    .click();
+  await page.getByRole("link", { name: "이어서 만들기", exact: true }).click();
   await expect(page.locator(".work-card")).toHaveCount(0);
   await page.reload();
   await expect(page.locator(".work-card")).toHaveCount(0);
@@ -363,7 +362,11 @@ test("다음 사용자·선택 삭제·전체 삭제가 다른 앱의 데이터�
   await expect(page.getByRole("dialog")).toContainText("작품 1개");
   await page.getByRole("button", { name: "대상 삭제", exact: true }).click();
   await expect(
-    page.getByRole("heading", { level: 1, name: /퀴즈·이야기·타이머/ }),
+    page.getByRole("heading", {
+      level: 1,
+      name: "누가 사용하나요",
+      exact: true,
+    }),
   ).toBeVisible();
   expect(
     await page.evaluate(() => localStorage.getItem("another-app:keep")),
@@ -478,7 +481,7 @@ for (const size of [
     });
     await page.goto("");
     await expect(
-      page.getByRole("button", { name: "첫 작품 만들기", exact: true }),
+      page.getByRole("link", { name: "학생으로 시작", exact: true }),
     ).toBeVisible();
     expect(
       await page.evaluate(
@@ -518,6 +521,8 @@ test("키보드로 시작하고 입력·단계 이동", async ({ page }) => {
   ).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(page.locator("main")).toBeFocused();
+  await page.locator(".role-home-menu summary").focus();
+  await page.keyboard.press("Enter");
   const first = page.getByRole("button", {
     name: "첫 작품 만들기",
     exact: true,

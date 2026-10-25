@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { lessons, missions, quiz, story, timer } from "./data";
 import { answerQuiz, initialQuiz } from "./engines";
-import { stageDone } from "./model";
-import type { Kind, Mission, Mode, QuizConfig, Work } from "./model";
+import type { Kind, Mission, QuizConfig } from "./model";
 import { Preview } from "./Preview";
-import { Icon, Mascot, Pill } from "./ui";
+import { Icon, Pill } from "./ui";
 
 type Go = (path: string) => void;
 type Create = (
@@ -378,169 +377,7 @@ export function TeacherStarter({
   );
 }
 
-export function Home({
-  mode,
-  setMode,
-  works,
-  lastWork,
-  go,
-  create,
-}: {
-  mode: Mode;
-  setMode: (mode: Mode) => void;
-  works: Work[];
-  lastWork?: Work;
-  go: Go;
-  create: Create;
-}) {
-  return (
-    <div className="welcome-home">
-      <section className="welcome-hero">
-        <div>
-          <span className="eyebrow">
-            뚝딱 바이브 공작소 · 처음 만나는 코딩의 원리
-          </span>
-          <h1>
-            퀴즈·이야기·타이머를
-            <br />
-            만들고 고치며 배워요
-          </h1>
-          <p className="welcome-lead">
-            코드를 몰라도, 작은 앱을 눌러 보고 규칙 하나를 고칠 수 있어요.
-            <br className="desktop-br" /> 예상하고 확인하며 내 생각을 설명하는
-            연습을 해요.
-          </p>
-          <div className="entry-grid">
-            <button
-              className="entry-button student"
-              onClick={() => go("explore")}
-            >
-              <Icon name="play" size={25} />
-              <span>
-                <b>학생 체험하기</b>
-                <small>예제부터 눌러보고 3분 도전</small>
-              </span>
-              <Icon name="arrow" />
-            </button>
-            <button
-              className="entry-button teacher"
-              onClick={() => go("prepare")}
-            >
-              <Icon name="book" size={25} />
-              <span>
-                <b>교사 수업 준비</b>
-                <small>40분 수업과 활동지 바로 준비</small>
-              </span>
-              <Icon name="arrow" />
-            </button>
-          </div>
-          <div className="button-row welcome-secondary">
-            <button className="text-button" onClick={() => create(missions[0])}>
-              첫 작품 만들기 <Icon name="arrow" size={16} />
-            </button>
-            <button
-              className="text-button"
-              onClick={() =>
-                lastWork ? go(`work/${lastWork.id}/0`) : go("library")
-              }
-            >
-              이어서 학습하기
-            </button>
-            <span>가입 없이 · 기록은 내 기기에</span>
-          </div>
-        </div>
-        <div className="welcome-mascot">
-          <Mascot />
-          <span>“먼저 해 보고, 하나씩 고쳐요!”</span>
-        </div>
-      </section>
-      <DemoLab go={go} />
-      <section className="quick-invite panel">
-        <div>
-          <Pill tone="orange">3분 첫 체험</Pill>
-          <h2>같은 정답을 세 번 누르면 몇 점일까요?</h2>
-          <p>예상 → 이상한 점수 발견 → 규칙 하나 수정 → 같은 행동으로 확인</p>
-        </div>
-        <button className="primary" onClick={() => go("try")}>
-          3분 체험 시작 <Icon name="arrow" />
-        </button>
-      </section>
-      <LearningPath />
-      <SubjectLinks go={go} />
-      <BeforeAfter go={go} />
-      <TeacherStarter go={go} />
-      <LearningWords />
-      <section className="panel share-invite">
-        <div>
-          <h2>함께 써 볼 친구와 선생님에게</h2>
-          <p>앱 소개와 차시별 미션을 QR 카드로 인쇄하거나 이미지로 나눠요.</p>
-        </div>
-        <button onClick={() => go("share")}>
-          QR 소개 카드 만들기 <Icon name="arrow" />
-        </button>
-      </section>
-      <section className="mode-strip">
-        <div>
-          <Icon name="spark" />
-          <div>
-            <b>나에게 맞는 안내를 골라요</b>
-            <span>
-              작품과 기록은 유지해요. 교사 자료는 모두에게 열려 있어요.
-            </span>
-          </div>
-        </div>
-        <div className="segmented" aria-label="사용자 모드">
-          <button
-            aria-pressed={mode === "child"}
-            className={mode === "child" ? "active" : ""}
-            onClick={() => setMode("child")}
-          >
-            어린이 모드
-          </button>
-          <button
-            aria-pressed={mode === "adult"}
-            className={mode === "adult" ? "active" : ""}
-            onClick={() => setMode("adult")}
-          >
-            일반 입문자 모드
-          </button>
-        </div>
-      </section>
-      <div className="button-row">
-        <button onClick={() => go("missions")}>
-          모든 미션 보기 <Icon name="grid" />
-        </button>
-        <button onClick={() => go("teacher")}>
-          전체 교사 자료 열기 <Icon name="book" />
-        </button>
-      </div>
-      {works.length ? (
-        <div className="local-progress">
-          <span>
-            지금까지 만든 작품 <b>{works.length}개</b>
-          </span>
-          <span>
-            모든 단계 기록 완료{" "}
-            <b>
-              {
-                works.filter((work) => stageDone(work.draft).every(Boolean))
-                  .length
-              }
-              개
-            </b>
-          </span>
-          <button className="text-button" onClick={() => go("library")}>
-            내 작품 열기 →
-          </button>
-        </div>
-      ) : null}
-      <p className="privacy-line">
-        <Icon name="shield" size={15} /> 기본 연습은 준비된 코드와 규칙을
-        사용해요. 실제 AI 제작은 교사·성인과 별도로 진행해요.
-      </p>
-    </div>
-  );
-}
+export { RoleHome as Home } from "./RoleHome";
 
 export function Explore({ go }: { go: Go }) {
   return (
@@ -573,6 +410,7 @@ export function Explore({ go }: { go: Go }) {
         </button>
       </section>
       <LearningPath />
+      <BeforeAfter go={go} />
       <LearningWords />
     </div>
   );

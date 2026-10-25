@@ -9,9 +9,16 @@ test("첫 화면의 역할 입구와 세 예제는 작품을 만들지 않고 �
   await page.clock.install();
   await page.goto("#/home");
   await expect(page.getByRole("heading", { level: 1 })).toContainText(
-    "퀴즈·이야기·타이머",
+    "누가 사용하나요",
   );
-  await page.getByRole("button", { name: /학생 체험하기/ }).click();
+  await expect(page.locator("[data-home-action]")).toHaveCount(2);
+  await expect(page.locator(".sidebar")).toBeHidden();
+  await expect(page.locator(".topbar")).toBeHidden();
+  await page.getByRole("link", { name: "학생으로 시작", exact: true }).click();
+  await expect(page).toHaveURL(/#\/try$/);
+  await page
+    .getByRole("button", { name: "다른 완성 예제 눌러보기", exact: true })
+    .click();
   await expect(page).toHaveURL(/#\/explore$/);
   const demo = page.locator(".demo-lab");
   await demo.getByRole("button", { name: /1\s*햇빛과 물/ }).click();
@@ -43,6 +50,47 @@ test("첫 화면의 역할 입구와 세 예제는 작품을 만들지 않고 �
   await expect(demo.locator(".timer-end")).toContainText("5초가 끝났어요");
   await page.goto("#/library");
   await expect(page.locator(".work-card")).toHaveCount(0);
+});
+
+test("간소화 홈의 전체 메뉴·안내 모드·기존 작품 이어하기", async ({ page }) => {
+  await page.goto("#/home");
+  const summary = page.locator(".role-home-menu summary");
+  await summary.focus();
+  await page.keyboard.press("Enter");
+  await expect(
+    page.getByRole("link", { name: "QR 소개 카드", exact: true }),
+  ).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(summary).toBeFocused();
+  await expect(page.locator(".role-home-menu-panel")).toBeHidden();
+  await summary.click();
+  await page
+    .getByRole("combobox", { name: "안내 모드", exact: true })
+    .selectOption("adult");
+  await page
+    .getByRole("heading", { name: "누가 사용하나요", exact: true })
+    .click();
+  await expect(page.locator(".role-home-menu-panel")).toBeHidden();
+  await page.reload();
+  await summary.click();
+  await expect(
+    page.getByRole("combobox", { name: "안내 모드", exact: true }),
+  ).toHaveValue("adult");
+  await page
+    .getByRole("button", { name: "첫 작품 만들기", exact: true })
+    .click();
+  const workUrl = page.url();
+  await page
+    .getByLabel("작품 제목", { exact: true })
+    .fill("홈을 바꿔도 이어갈 작품");
+  await expect(page.getByText("기기에 저장됨", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "공작소 홈", exact: true }).click();
+  await expect(page.locator("[data-home-action]")).toHaveCount(2);
+  await page.getByRole("link", { name: "이어서 만들기", exact: true }).click();
+  await expect(page).toHaveURL(workUrl);
+  await expect(page.getByLabel("작품 제목", { exact: true })).toHaveValue(
+    "홈을 바꿔도 이어갈 작품",
+  );
 });
 
 test("3분 체험의 예상·세 번 재현·규칙 수정·재검사와 작품 이어가기", async ({
@@ -139,7 +187,7 @@ test("교사 입구의 차시·활동지·교과 연결과 고치기 전후 예�
   page,
 }) => {
   await page.goto("#/home");
-  await page.getByRole("button", { name: /교사 수업 준비/ }).click();
+  await page.getByRole("link", { name: "교사로 시작", exact: true }).click();
   await expect(page).toHaveURL(/#\/prepare$/);
   const selector = page.getByRole("combobox", {
     name: "준비할 차시",
@@ -185,7 +233,7 @@ test("교사 입구의 차시·활동지·교과 연결과 고치기 전후 예�
       new RegExp(`#/mission/${linkedMissions[number - 1]}$`),
     );
   }
-  await page.goto("#/home");
+  await page.goto("#/explore");
   await page
     .getByRole("button", { name: "같은 정답 세 번 비교하기", exact: true })
     .click();
