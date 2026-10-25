@@ -1,0 +1,17 @@
+{
+  "id": "/Vibe-for-U/",
+  "name": "뚝딱 바이브 공작소",
+  "short_name": "바이브 공작소",
+  "description": "퀴즈·이야기·타이머를 만들고 고치며 코딩의 원리를 배우는 교육용 웹앱",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f2eb",
+  "theme_color": "#f5f2eb",
+  "lang": "ko",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -3037,3 +3037,18 @@ pre {
     overflow-wrap: anywhere;
   }
 }
+
+/* 엽쌤 공통 하단 문구 (화면마다 한 번만 보이게) */
+.page-footer {
+  flex-wrap: wrap;
+}
+.page-footer .ys-credit {
+  flex-basis: 100%;
+  margin: 6px 0 0;
+  font-size: 11px;
+}
+.page-footer .ys-credit a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

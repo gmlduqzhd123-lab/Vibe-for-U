@@ -660,6 +660,12 @@ export default function App() {
         <footer className="page-footer no-print">
           <span>뚝딱 바이브 공작소</span>
           <span>정답을 만드는 시간보다, 생각을 키우는 시간.</span>
+          <p className="ys-credit">
+            © 2026 엽쌤. All rights reserved. ·{" "}
+            <a href="https://gmlduqzhd123-lab.github.io/YScode/" target="_blank" rel="noopener">
+              엽쌤의 다른 앱 보기 →
+            </a>
+          </p>
         </footer>
       </div>
       <input
