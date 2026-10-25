@@ -984,6 +984,113 @@ main {
   flex-direction: column;
   gap: 14px;
 }
+.classroom-materials {
+  margin-bottom: 24px;
+}
+.materials-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.materials-heading h2 {
+  margin-bottom: 6px;
+}
+.materials-heading p {
+  color: var(--muted);
+  margin: 0;
+}
+.materials-heading > a {
+  flex-shrink: 0;
+}
+.materials-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.material-card {
+  min-width: 0;
+  padding: 18px;
+  background: #faf8fd;
+  border: 1px solid #e6ddef;
+  border-radius: 12px;
+}
+.material-pages {
+  display: block;
+  color: var(--purple-dark);
+  font-size: 12px;
+  margin-bottom: 7px;
+}
+.material-card h3 {
+  font-size: 17px;
+}
+.material-card p {
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+.resource-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 42px;
+  border: 1px solid #d7cce7;
+  border-radius: 9px;
+  padding: 9px 12px;
+  background: white;
+  color: var(--purple-dark);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.5;
+}
+.resource-link:hover {
+  background: #f2eef9;
+  border-color: #b6a3d2;
+}
+.resource-link.primary {
+  background: var(--purple-dark);
+  border-color: var(--purple-dark);
+  color: white;
+}
+.resource-link.primary:hover {
+  background: #4d387d;
+}
+.materials-help {
+  margin: 16px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+.lesson-worksheet {
+  border-top: 1px solid #e0d5e9;
+  margin-top: 14px;
+  padding-top: 14px;
+}
+.lesson-worksheet > b {
+  display: block;
+  margin-bottom: 9px;
+}
+@media (max-width: 900px) {
+  .materials-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 640px) {
+  .materials-heading {
+    flex-direction: column;
+  }
+  .materials-heading > a,
+  .material-card .button-row > a,
+  .lesson-worksheet .button-row > a {
+    width: 100%;
+  }
+  .material-card .button-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
 summary {
   cursor: pointer;
   min-height: 34px;

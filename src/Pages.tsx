@@ -3,6 +3,24 @@ import { missions, lessons, rubric } from "./data";
 import { kindNames, stageDone } from "./model";
 import type { Kind, Mission, Mode, Work } from "./model";
 import { Empty, Icon, Mascot, Pill } from "./ui";
+const materialPath = (filename: string) =>
+  `${import.meta.env.BASE_URL}materials/${filename}`;
+const classroomDocuments = [
+  {
+    id: "teacher-guide",
+    title: "교사용 사용 안내서",
+    description: "앱 사용법, 차시별 시간표와 발문, 과정 평가, 저장·백업 안내",
+    pages: 14,
+    downloadName: "뚝딱_바이브_교사용_사용_안내서",
+  },
+  {
+    id: "student-worksheets",
+    title: "차시별 학생 활동지 전체",
+    description: "1~8차시 예상·관찰·수정·재검사 기록지 · 차시마다 앞뒤 2쪽",
+    pages: 16,
+    downloadName: "뚝딱_바이브_차시별_학생_활동지",
+  },
+];
 export type Navigate = (path: string) => void;
 export function Home({
   mode,
@@ -462,7 +480,7 @@ export function Teacher({
           <p>40분 × 8차시. 아이의 생각과 검사 과정을 함께 살펴보세요.</p>
         </div>
         <button onClick={() => window.print()}>
-          <Icon name="print" />이 자료 인쇄
+          <Icon name="print" />화면 안내 인쇄
         </button>
       </div>
       <div className="note">
@@ -486,6 +504,60 @@ export function Teacher({
         ))}
       </div>
       {tab === "lessons" ? (
+        <>
+        <section
+          className="panel classroom-materials no-print"
+          aria-labelledby="classroom-materials-title"
+        >
+          <div className="materials-heading">
+            <div>
+              <h2 id="classroom-materials-title">수업 자료 내려받기</h2>
+              <p>초등 5~6학년 기준 · 40분씩 8차시 · PDF로 인쇄하고 Word로 수정하세요.</p>
+            </div>
+            <a
+              className="resource-link"
+              href={materialPath("classroom-materials.zip")}
+              download="뚝딱_바이브_8차시_수업자료.zip"
+            >
+              <Icon name="download" size={17} /> 모두 받기 · ZIP
+            </a>
+          </div>
+          <div className="materials-grid">
+            {classroomDocuments.map((document) => (
+              <article className="material-card" key={document.id}>
+                <span className="material-pages">{document.pages}쪽 · PDF / Word</span>
+                <h3>{document.title}</h3>
+                <p>{document.description}</p>
+                <div className="button-row">
+                  <a
+                    className="resource-link primary"
+                    href={materialPath(`${document.id}.pdf`)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`${document.title} PDF 열기 (새 탭)`}
+                  >PDF 열기 <Icon name="arrow" size={15} /></a>
+                  <a
+                    className="resource-link"
+                    href={materialPath(`${document.id}.pdf`)}
+                    download={`${document.downloadName}.pdf`}
+                    aria-label={`${document.title} PDF 내려받기`}
+                  ><Icon name="download" size={15} /> PDF 내려받기</a>
+                  <a
+                    className="resource-link"
+                    href={materialPath(`${document.id}.docx`)}
+                    download={`${document.downloadName}.docx`}
+                    aria-label={`${document.title} Word 수정본 내려받기`}
+                  >Word 수정본</a>
+                </div>
+              </article>
+            ))}
+          </div>
+          <p className="materials-help">
+            오늘 쓸 활동지만 필요하면 아래 차시를 펼쳐 받으세요. 한 면당 한 쪽으로
+            인쇄하고, 양면 인쇄는 긴 쪽 넘김을 선택하세요. 6차시 외부 AI 도구는
+            교사·성인이 조작해요.
+          </p>
+        </section>
         <div className="lessons">
           {lessons.map((l, i) => (
             <details className="panel lesson" key={l.title} open={i === 0}>
@@ -523,6 +595,24 @@ export function Teacher({
                   <small>
                     주소에는 미션만 들어가요. 학생의 기록은 각자 기기에 남아요.
                   </small>
+                  <div className="lesson-worksheet">
+                    <b>{i + 1}차시 학생 활동지 · 앞뒤 2쪽</b>
+                    <div className="button-row">
+                      <a
+                        className="resource-link"
+                        href={materialPath(`student-lesson-${String(i + 1).padStart(2, "0")}.pdf`)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`${i + 1}차시 학생 활동지 PDF 열기 (새 탭)`}
+                      >활동지 PDF 열기 <Icon name="arrow" size={15} /></a>
+                      <a
+                        className="resource-link"
+                        href={materialPath(`student-lesson-${String(i + 1).padStart(2, "0")}.pdf`)}
+                        download={`뚝딱_바이브_${i + 1}차시_학생_활동지.pdf`}
+                        aria-label={`${i + 1}차시 학생 활동지 내려받기`}
+                      ><Icon name="download" size={15} /> 활동지 내려받기</a>
+                    </div>
+                  </div>
                 </div>
                 <p>
                   <b>준비물</b> {l.materials}
@@ -554,6 +644,7 @@ export function Teacher({
             </details>
           ))}
         </div>
+        </>
       ) : null}
       {tab === "cards" ? (
         <div className="panel printable">
