@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>홈 간소화 시안 3종 비교</title>
+    <link rel="icon" href="../favicon.svg" />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #eeedf1;
+        color: #302f38;
+        font-family: "Malgun Gothic", system-ui, sans-serif;
+      }
+      header {
+        background: #fff;
+        border-bottom: 1px solid #ddd6e5;
+        padding: 20px 26px;
+        display: flex;
+        gap: 20px;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
+      h1 {
+        font-size: 19px;
+        margin: 0 0 7px;
+      }
+      p {
+        margin: 0;
+        color: #716778;
+        font-size: 12px;
+      }
+      .controls {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      button,
+      a {
+        font: inherit;
+        font-size: 13px;
+        border: 1px solid #ddd3e8;
+        border-radius: 9px;
+        background: #fff;
+        color: #5d478f;
+        padding: 10px 14px;
+        cursor: pointer;
+        text-decoration: none;
+      }
+      button[aria-pressed="true"] {
+        background: #5d478f;
+        color: #fff;
+        border-color: #5d478f;
+      }
+      button:focus-visible,
+      a:focus-visible {
+        outline: 3px solid #a98bcf;
+        outline-offset: 3px;
+      }
+      .toolbar {
+        max-width: 1280px;
+        margin: 18px auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 0 20px;
+        flex-wrap: wrap;
+      }
+      .toolbar p {
+        font-size: 13px;
+        line-height: 1.6;
+      }
+      .stage {
+        margin: 0 auto 22px;
+        max-width: calc(100% - 32px);
+        overflow: auto;
+        border: 1px solid #ddd5e6;
+        border-radius: 14px;
+        background: white;
+        box-shadow: 0 8px 28px #2c203a12;
+      }
+      iframe {
+        display: block;
+        border: 0;
+        width: 100%;
+        height: 850px;
+        background: #faf9f6;
+      }
+      .stage.mobile {
+        width: 392px;
+      }
+      .stage.desktop {
+        width: 1280px;
+      }
+      @media (max-width: 650px) {
+        header {
+          padding: 17px;
+        }
+        .toolbar {
+          padding: 0 17px;
+        }
+        .stage {
+          max-width: calc(100% - 24px);
+        }
+        .stage.desktop iframe {
+          width: 1280px;
+        }
+        button,
+        a {
+          font-size: 12px;
+          padding: 9px 11px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div>
+        <h1>홈 간소화 시안 3종</h1>
+        <p>비교용 시안 · 각 시작 버튼은 현재 앱의 해당 기능으로 연결됩니다</p>
+      </div>
+      <div class="controls" role="group" aria-label="홈 시안 선택">
+        <button data-concept="a" aria-pressed="true">1안 역할 선택형</button
+        ><button data-concept="b" aria-pressed="false">2안 체험 집중형</button
+        ><button data-concept="c" aria-pressed="false">3안 작품 선택형</button>
+      </div>
+    </header>
+    <div class="toolbar">
+      <p id="explanation" role="status">
+        첫 선택 2개 · 학생은 체험으로, 교사는 수업 준비로 바로 이동
+      </p>
+      <div class="controls">
+        <button data-size="desktop" aria-pressed="true">PC 화면</button
+        ><button data-size="mobile" aria-pressed="false">모바일 화면</button
+        ><a
+          id="standalone"
+          href="a.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          >시안만 크게 보기 ↗</a
+        >
+      </div>
+    </div>
+    <div class="stage desktop" id="stage">
+      <iframe
+        id="preview"
+        src="a.html"
+        title="1안 역할 선택형 미리보기"
+      ></iframe>
+    </div>
+    <script>
+      const info = {
+        a: [
+          "1안 역할 선택형",
+          "첫 선택 2개 · 학생은 체험으로, 교사는 수업 준비로 바로 이동",
+        ],
+        b: [
+          "2안 체험 집중형",
+          "첫 선택 1개 · 처음 온 사람은 3분 체험부터 시작",
+        ],
+        c: [
+          "3안 작품 선택형",
+          "첫 선택 3개 · 만들고 싶은 작품을 바로 골라 시작",
+        ],
+      };
+      document.querySelectorAll("[data-concept]").forEach((button) =>
+        button.addEventListener("click", () => {
+          const id = button.dataset.concept;
+          document
+            .querySelectorAll("[data-concept]")
+            .forEach((item) =>
+              item.setAttribute("aria-pressed", String(item === button)),
+            );
+          document.getElementById("preview").src = id + ".html";
+          document.getElementById("preview").title = info[id][0] + " 미리보기";
+          document.getElementById("standalone").href = id + ".html";
+          document.getElementById("explanation").textContent = info[id][1];
+        }),
+      );
+      document.querySelectorAll("[data-size]").forEach((button) =>
+        button.addEventListener("click", () => {
+          document
+            .querySelectorAll("[data-size]")
+            .forEach((item) =>
+              item.setAttribute("aria-pressed", String(item === button)),
+            );
+          document.getElementById("stage").className =
+            "stage " + button.dataset.size;
+        }),
+      );
+    </script>
+  </body>
+</html>
