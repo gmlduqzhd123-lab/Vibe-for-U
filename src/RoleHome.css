@@ -372,3 +372,63 @@
     margin-top: 22px;
   }
 }
+
+/* 📲 앱 설치 · 📱 QR (엽쌤 앱 공통 상단 버튼) */
+.ys-key {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.ys-chip {
+  display: inline-block;
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 1px solid #ded6e6;
+  border-radius: 999px;
+  background: #fff;
+  color: #382e49;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 750;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.ys-chip:hover {
+  background: #f4effa;
+}
+.role-home-footer {
+  flex-wrap: wrap;
+}
+.ys-credit {
+  flex-basis: 100%;
+  margin: 4px 0 0;
+  text-align: center;
+}
+.ys-credit a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+@media (max-width: 620px) {
+  .ys-key {
+    gap: 4px;
+  }
+  .ys-chip {
+    min-height: 36px;
+    padding: 6px 9px;
+    font-size: 12.5px;
+  }
+  .ys-wide {
+    display: none;
+  }
+}
+@media print {
+  .ys-key,
+  .ys-credit {
+    display: none;
+  }
+}
+.role-home-brand span {
+  word-break: keep-all;
+}

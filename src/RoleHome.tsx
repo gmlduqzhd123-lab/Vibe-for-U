@@ -76,6 +76,14 @@ export function RoleHome({
           />
           <span>뚝딱 바이브 공작소</span>
         </a>
+        <div className="ys-key">
+          <button type="button" className="ys-chip" data-ys-install>
+            📲 <span className="ys-wide">앱 </span>설치
+          </button>
+          <button type="button" className="ys-chip" data-qr aria-label="QR 코드로 접속">
+            📱 QR
+          </button>
+        </div>
         <nav aria-label="전체 메뉴">
           <details className="role-home-menu" ref={menu}>
             <summary aria-label="전체 메뉴">
@@ -200,6 +208,12 @@ export function RoleHome({
         <span>가입 없이 시작해요</span>
         <span aria-hidden="true">·</span>
         <span>학습 기록은 내 기기에 남아요</span>
+        <p className="ys-credit">
+          © 2026 엽쌤. All rights reserved. ·{" "}
+          <a href="https://gmlduqzhd123-lab.github.io/YScode/" target="_blank" rel="noopener">
+            엽쌤의 다른 앱 보기 →
+          </a>
+        </p>
       </footer>
     </div>
   );
