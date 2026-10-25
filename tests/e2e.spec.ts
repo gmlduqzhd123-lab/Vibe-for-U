@@ -470,7 +470,10 @@ for (const size of [
     await page.setViewportSize(size);
     const external: string[] = [];
     page.on("request", (req) => {
-      if (!req.url().startsWith("http://127.0.0.1:4173"))
+      if (
+        new URL(req.url()).origin !==
+        new URL(test.info().project.use.baseURL!).origin
+      )
         external.push(req.url());
     });
     await page.goto("");

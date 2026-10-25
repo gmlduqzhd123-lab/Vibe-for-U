@@ -2,6 +2,8 @@
 
 초등 5~6학년과 일반 입문자가 **목표 → 요청 → 예상·실행 → 검사·수정 → 설명·저장**을 경험하는 정적 교육용 웹앱입니다. 퀴즈·갈림길 이야기·타이머의 실행기 3개를 12개 미션에서 재사용합니다. 3~4학년은 선택 카드와 짝 활동으로 참여할 수 있습니다.
 
+**[웹앱 바로 열기](https://gmlduqzhd123-lab.github.io/Vibe-for-U/)** · [GitHub 저장소](https://github.com/gmlduqzhd123-lab/Vibe-for-U) · [GitHub 연동·공개 검증](docs/GITHUB-연동.md)
+
 ## 바로 실행
 
 Node.js 24와 npm을 사용합니다. 이 프로젝트 폴더에서 실행하세요.
@@ -18,6 +20,7 @@ npm run build   # TypeScript 검사 + dist/ 정적 산출물
 npm run preview # 빌드한 앱 미리보기
 npm test        # 핵심 규칙·저장·가져오기 자동 테스트
 npm run test:e2e # 빌드 후 Windows Edge 브라우저 검사
+npx playwright test -c playwright.public.config.ts # 실제 공개 주소에서 같은 흐름 검사
 ```
 
 브라우저 검사는 설치된 Microsoft Edge를 사용합니다. 테스트가 필요하면 `npm run build`를 먼저 실행하세요. Playwright가 `scripts/serve.mjs`를 열어 실제 `dist/`를 **`/pages-check/` 하위 경로**에서 제공합니다. 테스트 서버는 제품의 필수 서버가 아닌 개발·검증 도구입니다. 배포물은 정적 파일만 필요합니다.
@@ -87,7 +90,7 @@ npm run test:e2e # 빌드 후 Windows Edge 브라우저 검사
 
 ## GitHub Pages 배포
 
-연결 저장소는 [gmlduqzhd123-lab/Vibe-for-U](https://github.com/gmlduqzhd123-lab/Vibe-for-U), 기본 브랜치는 `main`입니다. 첫 연결 시 빈 공개 저장소임을 확인했습니다. 앱 폴더를 로컬 Git 저장소로 연결하며, `main` 푸시와 수동 실행으로 Pages 워크플로가 작동합니다. 최초 구현 시점의 로컬 검증과 이후 GitHub 연동 결과는 구분하여 기록합니다.
+연결 저장소는 [gmlduqzhd123-lab/Vibe-for-U](https://github.com/gmlduqzhd123-lab/Vibe-for-U), 기본 브랜치는 `main`입니다. 첫 연결 시 빈 공개 저장소임을 확인했습니다. 이 앱 폴더의 `origin`을 해당 저장소에 연결했고, `main` 푸시와 수동 실행으로 Pages 워크플로가 작동합니다. Pages의 게시 원본은 GitHub Actions입니다. 최초 배포 성공과 공개 주소 HTTP 200을 확인했습니다. 상세 근거는 [연동 기록](docs/GITHUB-연동.md)에 있습니다.
 
 1. 저장소를 복제하거나 이 연결된 프로젝트 폴더에서 작업합니다. 기존 프로젝트와 합칠 때는 기존 앱과 Actions 설정을 먼저 확인하세요.
 2. 저장소 **Settings → Pages → Source**에서 **GitHub Actions**를 선택합니다.
@@ -117,6 +120,6 @@ Vite `base: './'`와 해시 라우팅을 사용하여 저장소 하위 경로에
 
 ## 검증 범위와 제약
 
-검사 결과와 수정 내역은 [검증 결과](docs/검증결과.md)에 있습니다. Windows의 실제 Edge 엔진에서 PC·태블릿·휴대전화 크기를 에뮬레이션했습니다. 실제 휴대전화·학교 기기·Safari·교사 수업 운영·물리 프린터·공개 배포 검증은 별도입니다. 브라우저 저장소를 허용해야 기기 저장이 가능합니다. 여러 탭에서 같은 작품을 동시에 편집하는 공동 편집·충돌 병합은 지원하지 않습니다.
+최초 로컬 검사 결과와 수정 내역은 [검증 결과](docs/검증결과.md), 이후 공개 배포 검증은 [연동 기록](docs/GITHUB-연동.md)에 있습니다. Windows의 실제 Edge 엔진에서 PC·태블릿·휴대전화 크기를 에뮬레이션했습니다. 실제 휴대전화·학교 기기·Safari·교사 수업 운영·물리 프린터 검증은 별도입니다. 브라우저 저장소를 허용해야 기기 저장이 가능합니다. 여러 탭에서 같은 작품을 동시에 편집하는 공동 편집·충돌 병합은 지원하지 않습니다.
 
 첫 버전의 공유는 같은 미션 링크, 작품 파일, 인쇄용 기록입니다. 계정·서버·외부 DB·자동 학급 수합·순위·실시간 공동 편집·임의 HTML/JS 실행·카메라·마이크·위치는 도입하지 않았습니다. 네트워크가 없는 최초 접속을 위한 오프라인 설치 기능은 포함하지 않았습니다.
