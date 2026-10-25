@@ -363,7 +363,7 @@ test("다음 사용자·선택 삭제·전체 삭제가 다른 앱의 데이터�
   await expect(page.getByRole("dialog")).toContainText("작품 1개");
   await page.getByRole("button", { name: "대상 삭제", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "오늘은 어떤 생각을 만들어 볼까요?" }),
+    page.getByRole("heading", { level: 1, name: /퀴즈·이야기·타이머/ }),
   ).toBeVisible();
   expect(
     await page.evaluate(() => localStorage.getItem("another-app:keep")),

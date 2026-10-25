@@ -14,6 +14,7 @@ import type { Navigate } from "./Pages";
 import { Field, Hint, Icon, Pill } from "./ui";
 import { Settings } from "./Settings";
 import { Preview } from "./Preview";
+import { LearningWords } from "./Welcome";
 export const stageNames = [
   "목표 정하기",
   "요청 작성하기",
@@ -111,6 +112,7 @@ export function Workspace({
           </button>
         ))}
       </nav>
+      <LearningWords compact />
       <div className="workspace-meta">
         <span>
           <span className="status-dot" />
@@ -558,6 +560,10 @@ export function Workspace({
           <b>수정 버전 · 비교와 복원</b>
           <span>{w.versions.length} / 30개</span>
         </summary>
+        <p>
+          버전은 고치기 전후의 모습을 이름 붙여 남긴 것이에요. 저장한 모습을
+          비교하거나 다시 열 수 있어요.
+        </p>
         <div className="version-save">
           <Field
             max={LIMITS.short}

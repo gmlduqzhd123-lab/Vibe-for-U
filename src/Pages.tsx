@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { missions, lessons, rubric } from "./data";
 import { kindNames, stageDone } from "./model";
-import type { Kind, Mission, Mode, Work } from "./model";
-import { Empty, Icon, Mascot, Pill } from "./ui";
+import type { Kind, Mission, Work } from "./model";
+import { Empty, Icon, Pill } from "./ui";
 const materialPath = (filename: string) =>
   `${import.meta.env.BASE_URL}materials/${filename}`;
 const classroomDocuments = [
@@ -22,210 +22,7 @@ const classroomDocuments = [
   },
 ];
 export type Navigate = (path: string) => void;
-export function Home({
-  mode,
-  setMode,
-  works,
-  lastWork,
-  go,
-  create,
-}: {
-  mode: Mode;
-  setMode: (v: Mode) => void;
-  works: Work[];
-  lastWork?: Work;
-  go: Navigate;
-  create: (m: Mission, normal?: boolean) => void;
-}) {
-  const complete = works.filter((w) =>
-    stageDone(w.draft).every(Boolean),
-  ).length;
-  return (
-    <>
-      <div className="page-heading">
-        <div>
-          <span className="eyebrow">작은 생각이, 나만의 앱이 되는 곳</span>
-          <h1>
-            {mode === "child"
-              ? "오늘은 어떤 생각을 만들어 볼까요?"
-              : "생각한 도구를 직접 만들어 보세요."}
-          </h1>
-          <p>예상하고, 직접 해 보고, 조금씩 고치며 배워요.</p>
-        </div>
-        <span className="date-chip">40분씩, 차근차근</span>
-      </div>
-      <section className="hero">
-        <div className="hero-copy">
-          <Pill tone="paper">
-            <Icon name="spark" size={14} /> 생각을 현실로 만드는 첫걸음
-          </Pill>
-          <h2>
-            “이런 앱이 있으면 좋겠다!”
-            <br />그 생각부터 시작해요.
-          </h2>
-          <p>
-            코드를 몰라도 괜찮아요. 준비된 코드와 규칙을 바꾸며
-            <br className="desktop-br" /> 나만의 앱 만들기를 연습해요.
-          </p>
-          <div className="button-row">
-            <button className="primary" onClick={() => create(missions[0])}>
-              첫 작품 만들기 <Icon name="arrow" size={18} />
-            </button>
-            <button
-              className="hero-secondary"
-              onClick={() =>
-                lastWork ? go(`work/${lastWork.id}/0`) : go("library")
-              }
-            >
-              이어서 학습하기
-            </button>
-          </div>
-          <div className="hero-foot">
-            <span>
-              <Icon name="check" size={15} /> 가입 없이 바로 시작
-            </span>
-            <span>
-              <Icon name="shield" size={15} /> 기록은 내 기기에
-            </span>
-          </div>
-        </div>
-        <div className="hero-art">
-          <span className="sketch-note">
-            생각 한 스푼
-            <br />
-            <b>도전 한 스푼!</b>
-          </span>
-          <Mascot />
-          <span className="art-label">나도 앱을 만들 수 있어요</span>
-        </div>
-      </section>
-      <section className="mode-strip">
-        <div>
-          <Icon name="spark" />
-          <div>
-            <b>나에게 맞는 안내를 골라요</b>
-            <span>언제든 바꿀 수 있어요. 만들던 작품은 그대로!</span>
-          </div>
-        </div>
-        <div className="segmented" aria-label="사용자 모드">
-          <button
-            className={mode === "child" ? "active" : ""}
-            aria-pressed={mode === "child"}
-            onClick={() => setMode("child")}
-          >
-            어린이 모드
-          </button>
-          <button
-            className={mode === "adult" ? "active" : ""}
-            aria-pressed={mode === "adult"}
-            onClick={() => setMode("adult")}
-          >
-            일반 입문자 모드
-          </button>
-        </div>
-      </section>
-      <section>
-        <div className="section-heading">
-          <div>
-            <h2>어떤 앱을 만들어 볼까요?</h2>
-            <p>세 가지 공작대에서, 열두 가지 미션에 도전해요.</p>
-          </div>
-          <button className="text-button" onClick={() => go("missions")}>
-            모든 미션 보기 <Icon name="arrow" size={16} />
-          </button>
-        </div>
-        <div className="project-grid">
-          {(["quiz", "story", "timer"] as Kind[]).map((kind, i) => (
-            <button
-              key={kind}
-              className={`project-card ${kind}`}
-              onClick={() => go(`missions/${kind}`)}
-            >
-              <div className="project-card-top">
-                <span className="project-icon">
-                  <Icon name={kind} size={30} />
-                </span>
-                <Pill tone="paper">미션 4개</Pill>
-              </div>
-              <h3>{kindNames[kind]} 만들기</h3>
-              <p>
-                {
-                  [
-                    "정답을 고르면 점수가 쑥!\n나만의 문제로 배우는 퀴즈",
-                    "내 선택에 따라 달라지는 이야기.\n두근두근, 다음 장면은?",
-                    "시작, 멈춤, 다시 시작!\n시간을 다루는 작은 도구",
-                  ][i]
-                }
-              </p>
-              <div className="project-bottom">
-                <span>
-                  {
-                    [
-                      "선택 · 조건 · 점수",
-                      "선택 · 연결 · 흐름",
-                      "시간 · 상태 · 반복",
-                    ][i]
-                  }
-                </span>
-                <span className="circle-arrow">
-                  <Icon name="arrow" size={18} />
-                </span>
-              </div>
-            </button>
-          ))}
-        </div>
-      </section>
-      <section className="home-bottom">
-        <div className="journey panel">
-          <div className="section-heading">
-            <h2>우리는 이렇게 만들어요</h2>
-            <span className="muted small">결과보다 중요한, 만드는 과정</span>
-          </div>
-          <div className="journey-steps">
-            {[
-              "목표 정하기",
-              "요청 작성하기",
-              "예상하고 실행",
-              "검사하고 수정",
-              "설명하고 저장",
-            ].map((t, i) => (
-              <div key={t}>
-                <span>{i + 1}</span>
-                <b>{t}</b>
-                {i < 4 ? <Icon name="chevron" size={14} /> : null}
-              </div>
-            ))}
-          </div>
-        </div>
-        <button className="teacher-callout" onClick={() => go("teacher")}>
-          <Icon name="book" size={26} />
-          <div>
-            <b>선생님도 함께해요</b>
-            <p>8차시 수업 안내와 검사 카드</p>
-          </div>
-          <Icon name="arrow" />
-        </button>
-      </section>
-      {works.length ? (
-        <div className="local-progress">
-          <span>
-            지금까지 만든 작품 <b>{works.length}개</b>
-          </span>
-          <span>
-            모든 단계 기록 완료 <b>{complete}개</b>
-          </span>
-          <button className="text-button" onClick={() => go("library")}>
-            내 작품 열기 →
-          </button>
-        </div>
-      ) : null}
-      <p className="privacy-line">
-        <Icon name="shield" size={15} /> 기본 연습과 학습 기록은 외부로 자동
-        전송되지 않아요. 실제 AI 제작은 교사·성인과 별도로 진행해요.
-      </p>
-    </>
-  );
-}
+export { Home } from "./Welcome";
 export function Missions({
   filter,
   works,
@@ -480,7 +277,8 @@ export function Teacher({
           <p>40분 × 8차시. 아이의 생각과 검사 과정을 함께 살펴보세요.</p>
         </div>
         <button onClick={() => window.print()}>
-          <Icon name="print" />화면 안내 인쇄
+          <Icon name="print" />
+          화면 안내 인쇄
         </button>
       </div>
       <div className="note">
@@ -505,145 +303,167 @@ export function Teacher({
       </div>
       {tab === "lessons" ? (
         <>
-        <section
-          className="panel classroom-materials no-print"
-          aria-labelledby="classroom-materials-title"
-        >
-          <div className="materials-heading">
-            <div>
-              <h2 id="classroom-materials-title">수업 자료 내려받기</h2>
-              <p>초등 5~6학년 기준 · 40분씩 8차시 · PDF로 인쇄하고 Word로 수정하세요.</p>
-            </div>
-            <a
-              className="resource-link"
-              href={materialPath("classroom-materials.zip")}
-              download="뚝딱_바이브_8차시_수업자료.zip"
-            >
-              <Icon name="download" size={17} /> 모두 받기 · ZIP
-            </a>
-          </div>
-          <div className="materials-grid">
-            {classroomDocuments.map((document) => (
-              <article className="material-card" key={document.id}>
-                <span className="material-pages">{document.pages}쪽 · PDF / Word</span>
-                <h3>{document.title}</h3>
-                <p>{document.description}</p>
-                <div className="button-row">
-                  <a
-                    className="resource-link primary"
-                    href={materialPath(`${document.id}.pdf`)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={`${document.title} PDF 열기 (새 탭)`}
-                  >PDF 열기 <Icon name="arrow" size={15} /></a>
-                  <a
-                    className="resource-link"
-                    href={materialPath(`${document.id}.pdf`)}
-                    download={`${document.downloadName}.pdf`}
-                    aria-label={`${document.title} PDF 내려받기`}
-                  ><Icon name="download" size={15} /> PDF 내려받기</a>
-                  <a
-                    className="resource-link"
-                    href={materialPath(`${document.id}.docx`)}
-                    download={`${document.downloadName}.docx`}
-                    aria-label={`${document.title} Word 수정본 내려받기`}
-                  >Word 수정본</a>
-                </div>
-              </article>
-            ))}
-          </div>
-          <p className="materials-help">
-            오늘 쓸 활동지만 필요하면 아래 차시를 펼쳐 받으세요. 한 면당 한 쪽으로
-            인쇄하고, 양면 인쇄는 긴 쪽 넘김을 선택하세요. 6차시 외부 AI 도구는
-            교사·성인이 조작해요.
-          </p>
-        </section>
-        <div className="lessons">
-          {lessons.map((l, i) => (
-            <details className="panel lesson" key={l.title} open={i === 0}>
-              <summary>
-                <span className="lesson-num">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <div>
-                  <h2>{l.title}</h2>
-                  <span>{l.goal}</span>
-                </div>
-                <Icon name="chevron" />
-              </summary>
-              <div className="lesson-body">
-                <div className="lesson-actions no-print">
-                  <b>
-                    이 차시에 연결한 미션 ·{" "}
-                    {missions.find((m) => m.id === lessonMissions[i])!.title}
-                  </b>
-                  <div className="button-row">
-                    <button onClick={() => go(`mission/${lessonMissions[i]}`)}>
-                      미션 안내 열기 <Icon name="arrow" size={16} />
-                    </button>
-                    <button
-                      onClick={() =>
-                        copy(
-                          `${location.href.split("#")[0]}#/mission/${lessonMissions[i]}`,
-                        )
-                      }
-                    >
-                      <Icon name="copy" size={16} />
-                      학생용 미션 주소 복사
-                    </button>
-                  </div>
-                  <small>
-                    주소에는 미션만 들어가요. 학생의 기록은 각자 기기에 남아요.
-                  </small>
-                  <div className="lesson-worksheet">
-                    <b>{i + 1}차시 학생 활동지 · 앞뒤 2쪽</b>
-                    <div className="button-row">
-                      <a
-                        className="resource-link"
-                        href={materialPath(`student-lesson-${String(i + 1).padStart(2, "0")}.pdf`)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label={`${i + 1}차시 학생 활동지 PDF 열기 (새 탭)`}
-                      >활동지 PDF 열기 <Icon name="arrow" size={15} /></a>
-                      <a
-                        className="resource-link"
-                        href={materialPath(`student-lesson-${String(i + 1).padStart(2, "0")}.pdf`)}
-                        download={`뚝딱_바이브_${i + 1}차시_학생_활동지.pdf`}
-                        aria-label={`${i + 1}차시 학생 활동지 내려받기`}
-                      ><Icon name="download" size={15} /> 활동지 내려받기</a>
-                    </div>
-                  </div>
-                </div>
+          <section
+            className="panel classroom-materials no-print"
+            aria-labelledby="classroom-materials-title"
+          >
+            <div className="materials-heading">
+              <div>
+                <h2 id="classroom-materials-title">수업 자료 내려받기</h2>
                 <p>
-                  <b>준비물</b> {l.materials}
-                </p>
-                <div className="lesson-schedule">
-                  <div>
-                    <Pill>도입 5분</Pill>
-                    <p>{l.intro}</p>
-                  </div>
-                  <div>
-                    <Pill tone="green">전개 30분</Pill>
-                    <p>{l.activity}</p>
-                  </div>
-                  <div>
-                    <Pill tone="orange">정리 5분</Pill>
-                    <p>{l.close}</p>
-                  </div>
-                </div>
-                <p>
-                  <b>교사 발문</b> “{l.question}”
-                </p>
-                <p>
-                  <b>관찰 기준</b> {l.observe}
-                </p>
-                <p>
-                  <b>기기 문제 대안</b> {l.fallback}
+                  초등 5~6학년 기준 · 40분씩 8차시 · PDF로 인쇄하고 Word로
+                  수정하세요.
                 </p>
               </div>
-            </details>
-          ))}
-        </div>
+              <a
+                className="resource-link"
+                href={materialPath("classroom-materials.zip")}
+                download="뚝딱_바이브_8차시_수업자료.zip"
+              >
+                <Icon name="download" size={17} /> 모두 받기 · ZIP
+              </a>
+            </div>
+            <div className="materials-grid">
+              {classroomDocuments.map((document) => (
+                <article className="material-card" key={document.id}>
+                  <span className="material-pages">
+                    {document.pages}쪽 · PDF / Word
+                  </span>
+                  <h3>{document.title}</h3>
+                  <p>{document.description}</p>
+                  <div className="button-row">
+                    <a
+                      className="resource-link primary"
+                      href={materialPath(`${document.id}.pdf`)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`${document.title} PDF 열기 (새 탭)`}
+                    >
+                      PDF 열기 <Icon name="arrow" size={15} />
+                    </a>
+                    <a
+                      className="resource-link"
+                      href={materialPath(`${document.id}.pdf`)}
+                      download={`${document.downloadName}.pdf`}
+                      aria-label={`${document.title} PDF 내려받기`}
+                    >
+                      <Icon name="download" size={15} /> PDF 내려받기
+                    </a>
+                    <a
+                      className="resource-link"
+                      href={materialPath(`${document.id}.docx`)}
+                      download={`${document.downloadName}.docx`}
+                      aria-label={`${document.title} Word 수정본 내려받기`}
+                    >
+                      Word 수정본
+                    </a>
+                  </div>
+                </article>
+              ))}
+            </div>
+            <p className="materials-help">
+              오늘 쓸 활동지만 필요하면 아래 차시를 펼쳐 받으세요. 한 면당 한
+              쪽으로 인쇄하고, 양면 인쇄는 긴 쪽 넘김을 선택하세요. 6차시 외부
+              AI 도구는 교사·성인이 조작해요.
+            </p>
+          </section>
+          <div className="lessons">
+            {lessons.map((l, i) => (
+              <details className="panel lesson" key={l.title} open={i === 0}>
+                <summary>
+                  <span className="lesson-num">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <div>
+                    <h2>{l.title}</h2>
+                    <span>{l.goal}</span>
+                  </div>
+                  <Icon name="chevron" />
+                </summary>
+                <div className="lesson-body">
+                  <div className="lesson-actions no-print">
+                    <b>
+                      이 차시에 연결한 미션 ·{" "}
+                      {missions.find((m) => m.id === lessonMissions[i])!.title}
+                    </b>
+                    <div className="button-row">
+                      <button
+                        onClick={() => go(`mission/${lessonMissions[i]}`)}
+                      >
+                        미션 안내 열기 <Icon name="arrow" size={16} />
+                      </button>
+                      <button
+                        onClick={() =>
+                          copy(
+                            `${location.href.split("#")[0]}#/mission/${lessonMissions[i]}`,
+                          )
+                        }
+                      >
+                        <Icon name="copy" size={16} />
+                        학생용 미션 주소 복사
+                      </button>
+                    </div>
+                    <small>
+                      주소에는 미션만 들어가요. 학생의 기록은 각자 기기에
+                      남아요.
+                    </small>
+                    <div className="lesson-worksheet">
+                      <b>{i + 1}차시 학생 활동지 · 앞뒤 2쪽</b>
+                      <div className="button-row">
+                        <a
+                          className="resource-link"
+                          href={materialPath(
+                            `student-lesson-${String(i + 1).padStart(2, "0")}.pdf`,
+                          )}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={`${i + 1}차시 학생 활동지 PDF 열기 (새 탭)`}
+                        >
+                          활동지 PDF 열기 <Icon name="arrow" size={15} />
+                        </a>
+                        <a
+                          className="resource-link"
+                          href={materialPath(
+                            `student-lesson-${String(i + 1).padStart(2, "0")}.pdf`,
+                          )}
+                          download={`뚝딱_바이브_${i + 1}차시_학생_활동지.pdf`}
+                          aria-label={`${i + 1}차시 학생 활동지 내려받기`}
+                        >
+                          <Icon name="download" size={15} /> 활동지 내려받기
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                  <p>
+                    <b>준비물</b> {l.materials}
+                  </p>
+                  <div className="lesson-schedule">
+                    <div>
+                      <Pill>도입 5분</Pill>
+                      <p>{l.intro}</p>
+                    </div>
+                    <div>
+                      <Pill tone="green">전개 30분</Pill>
+                      <p>{l.activity}</p>
+                    </div>
+                    <div>
+                      <Pill tone="orange">정리 5분</Pill>
+                      <p>{l.close}</p>
+                    </div>
+                  </div>
+                  <p>
+                    <b>교사 발문</b> “{l.question}”
+                  </p>
+                  <p>
+                    <b>관찰 기준</b> {l.observe}
+                  </p>
+                  <p>
+                    <b>기기 문제 대안</b> {l.fallback}
+                  </p>
+                </div>
+              </details>
+            ))}
+          </div>
         </>
       ) : null}
       {tab === "cards" ? (

@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import type { Mode, Work, Mission, Snapshot, Version } from "./model";
 import { APP_PREFIX, LIMITS, makeWork, uid, now, clone } from "./model";
 import { missions } from "./data";
@@ -16,6 +23,9 @@ import { Home, Library, Missions, MissionDetail, Teacher } from "./Pages";
 import { Workspace } from "./Workspace";
 import { Portfolio } from "./Portfolio";
 import { Icon, Mascot, Empty, Field } from "./ui";
+import { Explore, Prepare, QuickTry } from "./Welcome";
+import "./Welcome.css";
+const SharePage = lazy(() => import("./SharePage"));
 function getSetting<T>(key: string, fallback: T): T {
   try {
     const s = localStorage.getItem(APP_PREFIX + key);
@@ -192,8 +202,17 @@ export default function App() {
     setModeState(v);
     setting("mode", v);
   };
-  const create = (m: Mission, normal = false) => {
+  const create = (
+    m: Mission,
+    normal = false,
+    starter?: { prediction: string; reason: string },
+  ) => {
     const work = makeWork(m, normal);
+    if (starter) {
+      work.draft.prediction = starter.prediction;
+      work.draft.change.reason = starter.reason;
+      work.draft.change.behavior = "같은 문제는 한 번만 채점하기";
+    }
     persist(work);
     setLastId(work.id);
     setting("last", work.id);
@@ -428,14 +447,13 @@ export default function App() {
   };
   const visible = works.filter((w) => !hidden.includes(w.id));
   const lastWork = visible.find((w) => w.id === lastId);
-  const navActive =
-    parts[0] === "home"
-      ? "home"
-      : parts[0] === "teacher"
-        ? "teacher"
-        : parts[0] === "library" || parts[0] === "portfolio"
-          ? "library"
-          : "missions";
+  const navActive = ["home", "explore", "try", "share"].includes(parts[0])
+    ? "home"
+    : ["teacher", "prepare"].includes(parts[0])
+      ? "teacher"
+      : parts[0] === "library" || parts[0] === "portfolio"
+        ? "library"
+        : "missions";
   const step = Math.max(0, Math.min(4, Number(parts[2]) || 0));
   return (
     <div className={`app mode-${mode}`}>
@@ -511,13 +529,21 @@ export default function App() {
           <div className="breadcrumbs">
             나의 배움 공간 <Icon name="chevron" size={13} />
             <b>
-              {navActive === "home"
-                ? "공작소 홈"
-                : navActive === "missions"
-                  ? "미션 공작대"
-                  : navActive === "library"
-                    ? "내 작품 선반"
-                    : "교사 자료실"}
+              {parts[0] === "explore"
+                ? "학생 체험하기"
+                : parts[0] === "try"
+                  ? "3분 첫 체험"
+                  : parts[0] === "prepare"
+                    ? "교사 수업 준비"
+                    : parts[0] === "share"
+                      ? "QR 소개 카드"
+                      : navActive === "home"
+                        ? "공작소 홈"
+                        : navActive === "missions"
+                          ? "미션 공작대"
+                          : navActive === "library"
+                            ? "내 작품 선반"
+                            : "교사 자료실"}
             </b>
           </div>
           <div className="topbar-actions">
@@ -563,6 +589,18 @@ export default function App() {
             />
           ) : parts[0] === "missions" ? (
             <Missions filter={parts[1]} works={visible} go={go} />
+          ) : parts[0] === "explore" ? (
+            <Explore go={go} />
+          ) : parts[0] === "try" ? (
+            <QuickTry go={go} create={create} />
+          ) : parts[0] === "prepare" ? (
+            <Prepare go={go} />
+          ) : parts[0] === "share" ? (
+            <Suspense
+              fallback={<p role="status">소개 카드를 준비하고 있어요…</p>}
+            >
+              <SharePage go={go} copy={copy} />
+            </Suspense>
           ) : parts[0] === "mission" && mission ? (
             <MissionDetail mission={mission} create={create} share={copy} />
           ) : parts[0] === "teacher" ? (
