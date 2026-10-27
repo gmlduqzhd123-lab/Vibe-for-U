@@ -64,6 +64,7 @@ export default function App() {
   const [copyFallback, setCopyFallback] = useState<string | null>(null);
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const [dialogBusy, setDialogBusy] = useState(false);
+  const [updateReady, setUpdateReady] = useState(false);
   const importInput = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const previousFocus = useRef<HTMLElement | null>(null);
@@ -176,6 +177,11 @@ export default function App() {
       document.removeEventListener("visibilitychange", hiddenSave);
     };
   }, [flush]);
+  useEffect(() => {
+    const ready = () => setUpdateReady(true);
+    addEventListener("ttukttak:update", ready);
+    return () => removeEventListener("ttukttak:update", ready);
+  }, []);
   useEffect(() => {
     if (!toast) return;
     const timeout = setTimeout(() => setToast(""), 6000);
@@ -570,6 +576,26 @@ export default function App() {
           </div>
         </header>
         <main id="main-content" tabIndex={-1}>
+          {updateReady ? (
+            <div role="status" className="update-banner no-print">
+              <p>
+                새 버전이 준비됐어요. 지금 편집 내용을 저장한 뒤 새로고침하면
+                적용돼요.
+              </p>
+              <div className="button-row">
+                <button
+                  className="primary"
+                  onClick={async () => {
+                    await flush();
+                    location.reload();
+                  }}
+                >
+                  저장하고 새로고침
+                </button>
+                <button onClick={() => setUpdateReady(false)}>나중에</button>
+              </div>
+            </div>
+          ) : null}
           {storageError ? (
             <div role="alert" className="storage-error no-print">
               <p>{storageError}</p>
