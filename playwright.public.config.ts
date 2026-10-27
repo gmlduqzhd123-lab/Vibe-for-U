@@ -5,7 +5,9 @@ export default defineConfig({
   webServer: undefined,
   use: {
     ...local.use,
-    baseURL: "https://gmlduqzhd123-lab.github.io/Vibe-for-U/",
+    // 배포 워크플로는 PUBLIC_URL로 방금 배포한 주소를 넘긴다.
+    baseURL:
+      process.env.PUBLIC_URL ?? "https://gmlduqzhd123-lab.github.io/Vibe-for-U/",
   },
   outputDir: "test-results/public",
   reporter: [

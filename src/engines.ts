@@ -2,6 +2,8 @@ import { now, uid, LIMITS } from "./model";
 import type {
   Check,
   Config,
+  Direction,
+  PatternConfig,
   QuizConfig,
   StoryConfig,
   TimerConfig,
@@ -108,6 +110,86 @@ export function tickTimer(
 export function pauseTimer(s: TimerState, t: number, c: TimerConfig) {
   return { ...tickTimer(s, t, c), running: false };
 }
+export type PatternState = {
+  x: number;
+  y: number;
+  painted: string[];
+  step: number;
+  wrapped: number;
+  blocked: number;
+  event: string;
+};
+export const dirNames: Record<Direction, string> = {
+  right: "오른쪽",
+  down: "아래",
+  left: "왼쪽",
+  up: "위",
+};
+const delta: Record<Direction, [number, number]> = {
+  right: [1, 0],
+  down: [0, 1],
+  left: [-1, 0],
+  up: [0, -1],
+};
+export const cell = (x: number, y: number) => `${x},${y}`;
+export const initialPattern = (): PatternState => ({
+  x: 0,
+  y: 0,
+  painted: [cell(0, 0)],
+  step: 0,
+  wrapped: 0,
+  blocked: 0,
+  event: "첫 칸(0,0)에서 시작해요.",
+});
+// 반복 × 명령 × 칸 수를 한 칸짜리 이동 목록으로 펼친다.
+export function patternMoves(c: PatternConfig): Direction[] {
+  const once = c.commands.flatMap((m) =>
+    Array.from({ length: m.count }, () => m.dir),
+  );
+  return Array.from({ length: c.repeat }, () => once).flat();
+}
+export function stepPattern(c: PatternConfig, s: PatternState): PatternState {
+  const moves = patternMoves(c);
+  if (s.step >= moves.length) return s;
+  const dir = moves[s.step];
+  const [dx, dy] = delta[dir];
+  let x = s.x + dx;
+  let y = s.y + dy;
+  const outside = x < 0 || y < 0 || x >= c.size || y >= c.size;
+  if (outside && c.edge === "stop")
+    return {
+      ...s,
+      step: s.step + 1,
+      blocked: s.blocked + 1,
+      event: `${dirNames[dir]} 한 칸 → 판 가장자리 → 멈춤 (위치 ${cell(s.x, s.y)})`,
+    };
+  if (outside) {
+    x = (x + c.size) % c.size;
+    y = (y + c.size) % c.size;
+  }
+  const at = cell(x, y);
+  return {
+    x,
+    y,
+    step: s.step + 1,
+    painted: s.painted.includes(at) ? s.painted : [...s.painted, at],
+    blocked: s.blocked,
+    wrapped: s.wrapped + (outside ? 1 : 0),
+    event: `${dirNames[dir]} 한 칸 → ${outside ? "판 밖 → 반대편으로 넘어감 → " : ""}위치 ${at} 칠하기`,
+  };
+}
+export function runPattern(c: PatternConfig, s = initialPattern()) {
+  const total = patternMoves(c).length;
+  let state = s;
+  while (state.step < total) state = stepPattern(c, state);
+  return { ...state, event: `명령 ${total}칸을 모두 실행했어요.` };
+}
+export function patternMatch(c: PatternConfig, painted: string[]) {
+  return {
+    missing: c.target.filter((t) => !painted.includes(t)),
+    extra: painted.filter((p) => !c.target.includes(p)),
+  };
+}
 export function autoChecks(c: Config, revision: string): Check[] {
   const rows: {
     label: string;
@@ -174,6 +256,43 @@ export function autoChecks(c: Config, revision: string): Check[] {
         expected: "시작 장면이 존재",
         actual: c.scenes.find((s) => s.id === c.start)?.title ?? "없음",
         pass: c.scenes.some((s) => s.id === c.start),
+      },
+    );
+  } else if (c.kind === "pattern") {
+    const done = runPattern(c);
+    const { missing, extra } = patternMatch(c, done.painted);
+    const reset = initialPattern();
+    rows.push(
+      {
+        label: "목표 모양",
+        expected: `목표 칸 ${c.target.length}개와 같은 모양`,
+        actual:
+          missing.length || extra.length
+            ? `칠한 칸 ${done.painted.length}개 · 빠진 칸 ${missing.length}개, 더 칠한 칸 ${extra.length}개`
+            : `칠한 칸 ${done.painted.length}개 · 목표와 같음`,
+        pass: !missing.length && !extra.length,
+      },
+      {
+        label: "판 가장자리",
+        expected: "판 밖으로 넘어가지 않음",
+        actual: done.wrapped
+          ? `반대편으로 ${done.wrapped}번 넘어감`
+          : done.blocked
+            ? `가장자리에서 ${done.blocked}번 멈춤`
+            : "넘어간 이동 없음",
+        pass: done.wrapped === 0,
+      },
+      {
+        label: "반복 실행",
+        expected: `명령 묶음 ${c.repeat}번 · ${patternMoves(c).length}칸 이동`,
+        actual: `${done.step}칸 이동`,
+        pass: done.step === patternMoves(c).length,
+      },
+      {
+        label: "처음으로 다시 그리기",
+        expected: "빈 판의 첫 칸(0,0)에서 시작",
+        actual: `칠한 칸 ${reset.painted.length}개 · 위치 ${cell(reset.x, reset.y)}`,
+        pass: reset.painted.length === 1 && reset.x === 0 && reset.y === 0,
       },
     );
   } else {

@@ -593,6 +593,13 @@ main {
 .project-card.timer:hover {
   background: #e7e3f3;
 }
+.project-card.pattern {
+  background: #eaf1f4;
+  border-color: #d6e3e9;
+}
+.project-card.pattern:hover {
+  background: #e0ecf1;
+}
 .project-card h3 {
   font-size: 18px;
   margin: 15px 0 9px;
@@ -644,6 +651,11 @@ main {
 .project-icon.timer {
   background: #dfd9f0;
   color: #695887;
+}
+.pattern .project-icon,
+.project-icon.pattern {
+  background: #d3e4ec;
+  color: #3f6273;
 }
 .project-bottom {
   display: flex;
@@ -901,6 +913,27 @@ main {
 }
 .storage-error {
   margin: 0 0 25px;
+}
+.plain-fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.tab-lock p {
+  margin: 0 0 10px;
+}
+.update-banner {
+  border-radius: 10px;
+  background: #e8f1ed;
+  border: 1px solid #c4dbd1;
+  color: #2f5a49;
+  padding: 16px 19px;
+  margin: 0 0 25px;
+  font-size: 13px;
+}
+.update-banner p {
+  margin: 0 0 10px;
 }
 .storage-error p {
   margin-bottom: 10px;
@@ -3051,4 +3084,224 @@ pre {
   color: inherit;
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+/* 학급 작품 모으기 */
+.class-review .panel + .panel,
+.class-review .class-cards {
+  margin-top: 18px;
+}
+.class-table td.stage-done {
+  color: var(--green);
+  font-weight: 700;
+}
+.class-table .class-total td {
+  background: #f5f2eb;
+  font-weight: 700;
+}
+.class-cards {
+  display: grid;
+  gap: 14px;
+}
+.review-card > summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+.review-card > summary span {
+  color: var(--muted);
+  font-size: 13px;
+}
+.rubric-choice {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  margin: 12px 0;
+  padding: 10px 14px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.rubric-choice legend {
+  font-weight: 700;
+  padding: 0 6px;
+}
+.rubric-choice label {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  font-size: 13px;
+}
+.rubric-choice label span {
+  display: grid;
+  gap: 2px;
+}
+.rubric-choice small {
+  color: var(--muted);
+}
+.teacher-feedback {
+  border-top: 2px solid var(--purple);
+}
+@media (max-width: 640px) {
+  .rubric-choice {
+    grid-template-columns: 1fr;
+  }
+}
+/* 버전 비교 */
+.compare-diff {
+  margin: 16px 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.diff-list {
+  padding-left: 0;
+  list-style: none;
+}
+.diff-removed,
+.diff-added {
+  border-radius: 6px;
+  padding: 2px 6px;
+}
+.diff-removed {
+  background: #fbe9e2;
+  color: #8a3d22;
+  text-decoration: line-through;
+}
+.diff-added {
+  background: #e3f1ea;
+  color: #2f5a49;
+  font-weight: 700;
+}
+.diff-list .diff-removed::before {
+  content: "− ";
+}
+.diff-list .diff-added::before {
+  content: "+ ";
+}
+.side-by-side {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 14px;
+}
+.side-run {
+  min-width: 0;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  padding: 12px;
+}
+@media (max-width: 900px) {
+  .side-by-side {
+    grid-template-columns: 1fr;
+  }
+}
+/* 패턴 그리기 */
+.pattern-board {
+  display: grid;
+  gap: 3px;
+  width: min(100%, 280px);
+  aspect-ratio: 1;
+  margin: 12px auto;
+  padding: 6px;
+  background: #f2efe8;
+  border-radius: 10px;
+}
+.pattern-board > * {
+  aspect-ratio: 1;
+  min-width: 0;
+  border-radius: 4px;
+  background: #fff;
+  border: 1px solid var(--line);
+  padding: 0;
+}
+.pattern-board .target {
+  border: 2px dashed #3f6273;
+}
+.pattern-board .painted {
+  background: #5b8fa6;
+  border-color: #3f6273;
+}
+.pattern-board .current {
+  outline: 3px solid var(--orange);
+  outline-offset: -3px;
+}
+.target-editor button[aria-pressed="true"] {
+  background: #9fc3d3;
+}
+.command-list {
+  padding-left: 20px;
+}
+.command-list li {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 10px;
+  align-items: end;
+}
+@media (max-width: 640px) {
+  .command-list li {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+/* 쉬운 모드 (3~4학년) · 낱말 블록 · 읽어 주기 */
+.speak-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+.speak-button[aria-pressed="true"] {
+  background: #e3f1ea;
+  border-color: #c4dbd1;
+}
+.block-prompt {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin: 12px 0;
+  background: #fbf8f2;
+}
+.block-group {
+  margin: 10px 0;
+}
+.block-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+.block-chip {
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 14px;
+}
+.block-chip[aria-pressed="true"] {
+  background: var(--purple);
+  border-color: var(--purple-dark);
+  color: #fff;
+}
+.block-sentence {
+  font-size: 16px;
+  background: #fff;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  padding: 12px;
+}
+.mode-easy main .field label,
+.mode-easy main .field > span,
+.mode-easy main input,
+.mode-easy main select,
+.mode-easy main textarea,
+.mode-easy main button,
+.mode-easy main p,
+.mode-easy .prompt-question {
+  font-size: 16px;
+  line-height: 1.7;
+}
+.mode-easy main h2 {
+  font-size: 22px;
+}
+.mode-easy .block-chip {
+  font-size: 16px;
+  padding: 10px 16px;
 }

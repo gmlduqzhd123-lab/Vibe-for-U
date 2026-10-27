@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import fs from "node:fs/promises";
+import { savePdf, useClipboard } from "./support";
 const mission = async (
   page: import("@playwright/test").Page,
   id = "quiz-3",
@@ -141,11 +142,7 @@ test("첫 방문 → 요청·예상 → 중복 점수 발견·수정 → 재검�
   await page.emulateMedia({ media: "print" });
   await expect(page.locator(".sidebar")).toBeHidden();
   await expect(page.locator(".topbar")).toBeHidden();
-  await page.pdf({
-    path: "test-results/evidence/portfolio-check.pdf",
-    format: "A4",
-    printBackground: true,
-  });
+  await savePdf(page, "test-results/evidence/portfolio-check.pdf");
   await page.emulateMedia({ media: "screen" });
   await page.goto(url);
   await page.getByText("수정 버전 · 비교와 복원", { exact: true }).click();
@@ -287,7 +284,7 @@ test("JSON 내보내기·가져오기 왕복과 오류 보존", async ({ page })
     ),
   });
   await expect(
-    page.getByRole("status").filter({ hasText: "스키마 버전 1" }),
+    page.getByRole("status").filter({ hasText: "스키마 버전 1~2" }),
   ).toBeVisible();
   await expect(page.locator(".work-card")).toHaveCount(2);
 });
@@ -389,11 +386,8 @@ test("다음 사용자·선택 삭제·전체 삭제가 다른 앱의 데이터�
     ),
   ).toBe("safe");
 });
-test("실제 AI는 복사·모드 전환만으로 완료가 되지 않는다", async ({
-  page,
-  context,
-}) => {
-  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+test("실제 AI는 복사·모드 전환만으로 완료가 되지 않는다", async ({ page }) => {
+  await useClipboard(page);
   await mission(page);
   await page
     .getByRole("button", { name: "실제 AI 제작 기록", exact: true })
@@ -440,16 +434,12 @@ test("클립보드 실패는 직접 선택 대체 UI를 연다", async ({ page }
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).not.toBeVisible();
 });
-test("12개 미션·8차시·검사표·평가표·공유 경로", async ({ page }) => {
+test("16개 미션·8차시·검사표·평가표·공유 경로", async ({ page }) => {
   await page.goto("#/missions");
-  await expect(page.locator(".mission-card")).toHaveCount(12);
+  await expect(page.locator(".mission-card")).toHaveCount(16);
   await page.goto("#/teacher");
   await expect(page.locator(".lesson")).toHaveCount(8);
-  await page.pdf({
-    path: "test-results/evidence/teacher-check.pdf",
-    format: "A4",
-    printBackground: true,
-  });
+  await savePdf(page, "test-results/evidence/teacher-check.pdf");
   await page
     .getByRole("button", { name: "검사표 · 짝 활동", exact: true })
     .click();
@@ -601,16 +591,15 @@ test("학생 UX: 약속 확인·예상 수정·단계 이동 상태·한 번에 
 });
 test("교사 UX: 차시에서 미션 안내·학생 주소 복사·프로젝트 검사표", async ({
   page,
-  context,
 }) => {
-  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  const readClipboard = await useClipboard(page);
   await page.goto("#/teacher");
   const lesson = page.locator(".lesson").nth(4);
   await lesson.locator("summary").click();
   await lesson
     .getByRole("button", { name: "학생용 미션 주소 복사", exact: true })
     .click();
-  const copied = await page.evaluate(() => navigator.clipboard.readText());
+  const copied = await readClipboard();
   expect(copied).toBe(
     new URL("#/mission/quiz-3", test.info().project.use.baseURL!).href,
   );
@@ -670,11 +659,7 @@ test("포트폴리오 UX: 사람이 읽는 규칙 요약과 인쇄에서 원본 
   await page.emulateMedia({ media: "print" });
   await expect(technical).toBeHidden();
   await expect(page.locator(".config-summary").first()).toBeVisible();
-  await page.pdf({
-    path: "test-results/evidence/portfolio-ux-print.pdf",
-    format: "A4",
-    printBackground: true,
-  });
+  await savePdf(page, "test-results/evidence/portfolio-ux-print.pdf");
   await page.emulateMedia({ media: "screen" });
 });
 test("직접 검사 작성·선택 기록 삭제·작품 삭제 범위와 대화상자 접근성", async ({

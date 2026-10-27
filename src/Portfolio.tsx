@@ -3,6 +3,8 @@ import { aiStatus, kindNames, stageDone, correctionPrompt } from "./model";
 import { Icon, Pill } from "./ui";
 import type { Navigate } from "./Pages";
 import { configSummary, revisionLabel } from "./learning";
+import { rubric } from "./data";
+import { levelNames } from "./classReview";
 const text = (v: string) => v || "아직 기록하지 않았어요.";
 export function Portfolio({
   work: w,
@@ -211,6 +213,32 @@ export function Portfolio({
             코드를 자동으로 검증하지 않습니다.
           </small>
         </section>
+        {w.feedback &&
+        (w.feedback.levels.some((l) => l > 0) || w.feedback.note.trim()) ? (
+          <section className="teacher-feedback">
+            <h2>07. 선생님의 과정 평가</h2>
+            <p className="small muted">
+              {new Date(w.feedback.at).toLocaleString("ko-KR")}에 남긴 평가예요.
+              작품 기록을 근거로 한 단계와 의견이에요.
+            </p>
+            <dl className="record-list">
+              {rubric.map((row, i) => {
+                const level = w.feedback!.levels[i];
+                return (
+                  <div key={row[0]}>
+                    <dt>{row[0]}</dt>
+                    <dd>
+                      <b>{levelNames[level]}</b>
+                      {level ? ` · ${row[level]}` : ""}
+                    </dd>
+                  </div>
+                );
+              })}
+            </dl>
+            <h3>확인한 근거와 다음 도움</h3>
+            <p className="preserve">{text(w.feedback.note)}</p>
+          </section>
+        ) : null}
       </article>
     </>
   );

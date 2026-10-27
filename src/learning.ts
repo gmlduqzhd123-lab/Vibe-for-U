@@ -1,4 +1,5 @@
 import type { Config, Snapshot, Work } from "./model";
+import { dirNames } from "./engines";
 export function updatePrediction(d: Snapshot, prediction: string): Snapshot {
   return {
     ...d,
@@ -26,6 +27,13 @@ export function configSummary(c: Config): string[] {
         ),
       ),
     ];
+  if (c.kind === "pattern")
+    return [
+      `판 ${c.size}×${c.size} · 명령 묶음 ${c.repeat}번 반복`,
+      `명령: ${c.commands.map((m) => `${dirNames[m.dir]} ${m.count}칸`).join(" → ")}`,
+      `가장자리: ${c.edge === "stop" ? "멈추기" : "반대편으로 넘어가기 (학습용 오류)"}`,
+      `목표 칸 ${c.target.length}개`,
+    ];
   return [
     `제한 시간: ${c.seconds}초`,
     `종료 안내: ${c.showEnd ? "표시함" : "표시하지 않음 (학습용 오류)"}`,
@@ -39,4 +47,24 @@ export function revisionLabel(w: Work, revision: string) {
   return index >= 0
     ? `V${index + 1} · ${w.versions[index].label}`
     : "이전 설정 (버전 저장 전)";
+}
+// 두 버전을 비교해 바뀐 규칙 줄과 바뀐 기록 항목을 찾는다.
+export function compareSnapshots(a: Snapshot, b: Snapshot) {
+  const left = configSummary(a.config);
+  const right = configSummary(b.config);
+  const fields: [string, (d: Snapshot) => string][] = [
+    ["작품 제목", (d) => d.title],
+    ["실행 전 예상", (d) => d.prediction],
+    ["원문 요청", (d) => d.originalPrompt],
+    ["정리한 요청", (d) => d.arrangedPrompt],
+    ["바꾼 동작", (d) => d.change.behavior],
+    ["수정 이유", (d) => d.change.reason],
+    ["작동 원리", (d) => d.reflection],
+  ];
+  return {
+    removed: left.filter((l) => !right.includes(l)),
+    added: right.filter((l) => !left.includes(l)),
+    sameConfig: JSON.stringify(a.config) === JSON.stringify(b.config),
+    fields: fields.filter(([, get]) => get(a) !== get(b)).map(([n]) => n),
+  };
 }

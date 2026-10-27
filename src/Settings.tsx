@@ -1,6 +1,7 @@
 import type { Config, QuizConfig, StoryConfig } from "./model";
 import { LIMITS, uid } from "./model";
 import { Field, Icon } from "./ui";
+import { PatternSettings } from "./PatternSettings";
 export function Settings({
   config,
   onChange,
@@ -191,6 +192,8 @@ export function Settings({
       </div>
     );
   }
+  if (config.kind === "pattern")
+    return <PatternSettings config={config} onChange={onChange} />;
   if (config.kind === "story") {
     const edit = (patch: Partial<StoryConfig>) =>
       onChange({ ...config, ...patch });
