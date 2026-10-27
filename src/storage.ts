@@ -1,8 +1,9 @@
-import { APP_PREFIX, LIMITS, uid } from "./model";
+import { APP_PREFIX, LIMITS, SCHEMA_VERSION, uid } from "./model";
 import type {
   AIData,
   Check,
   Config,
+  Feedback,
   Kind,
   PromiseData,
   Snapshot,
@@ -48,8 +49,11 @@ async function transaction<T>(
     tx.onabort = () => reject(tx.error ?? new Error("저장이 취소되었어요."));
   });
 }
+// 기기에 남은 옛 형식 작품은 읽을 때 새 형식으로 바꾸고, 다음 저장 때 새 형식으로 기록한다.
 export const listWorks = () =>
-  transaction("readonly", (s) => s.getAll()) as Promise<Work[]>;
+  (transaction("readonly", (s) => s.getAll()) as Promise<unknown[]>).then(
+    (all) => all.map((w) => migrateWork(w) as Work),
+  );
 export const saveWork = (w: Work) => transaction("readwrite", (s) => s.put(w));
 export const deleteWork = (id: string) =>
   transaction("readwrite", (s) => s.delete(id));
@@ -67,7 +71,7 @@ export async function importWorks(works: Work[]) {
 export function exportJSON(works: Work[]) {
   return JSON.stringify({
     format: "ttukttak-vibe-backup",
-    schemaVersion: 1,
+    schemaVersion: SCHEMA_VERSION,
     works,
   });
 }
@@ -314,12 +318,46 @@ function validateSnapshot(v: unknown, kind: Kind): Snapshot {
     ai,
   };
 }
-export function validateWork(v: unknown): Work {
-  const w = obj(v, "작품");
-  if (w.schemaVersion !== 1)
+// 저장 형식을 바꿀 때는 SCHEMA_VERSION을 올리고, 바로 앞 버전에서 바꾸는 함수를 여기에 더한다.
+// 각 함수는 검사 전의 원본을 받아 다음 버전의 원본을 돌려준다. 검사는 마지막에 한 번 한다.
+const migrations: Record<number, (w: Obj) => Obj> = {
+  // 1 → 2: 교사 평가 기록(feedback)을 더했다.
+  1: (w) => ({ ...w, schemaVersion: 2, feedback: null }),
+};
+const supported = `스키마 버전 1~${SCHEMA_VERSION}`;
+function checkVersion(v: unknown, what: string) {
+  if (typeof v !== "number" || !Number.isInteger(v) || v < 1)
     throw new Error(
-      "지원하는 스키마는 버전 1이에요. 기존 자료는 그대로 유지돼요.",
+      `${what}의 스키마 버전을 알 수 없어요. 이 앱은 ${supported}를 읽어요.`,
     );
+  if (v > SCHEMA_VERSION)
+    throw new Error(
+      `더 새로운 앱에서 만든 ${what}이에요(스키마 버전 ${v}). 이 앱은 ${supported}를 읽어요. 최신 주소에서 새로고침한 뒤 다시 가져와 주세요.`,
+    );
+  return v;
+}
+export function migrateWork(v: unknown): unknown {
+  let w = obj(v, "작품");
+  let version = checkVersion(w.schemaVersion, "작품");
+  while (version < SCHEMA_VERSION) {
+    w = migrations[version](w);
+    version = checkVersion(w.schemaVersion, "작품");
+  }
+  return w;
+}
+function validateFeedback(v: unknown): Feedback | null {
+  if (v === null) return null;
+  const f = obj(v, "교사 평가");
+  return {
+    levels: arr(f.levels, "평가 단계", 4, 4).map((l) =>
+      num(l, "평가 단계", 0, 3),
+    ),
+    note: str(f.note, "평가 의견"),
+    at: stamp(f.at, "평가 시각"),
+  };
+}
+export function validateWork(v: unknown): Work {
+  const w = obj(migrateWork(v), "작품");
   const kind = one(w.kind, ["quiz", "story", "timer"], "프로젝트 종류");
   const missionId = str(w.missionId, "미션", 80);
   if (!new RegExp(`^${kind}-[1-4]$`).test(missionId))
@@ -343,7 +381,7 @@ export function validateWork(v: unknown): Work {
       "수정 버전 묶음은 600KB까지예요. 필요한 버전만 남긴 파일을 선택해 주세요.",
     );
   return {
-    schemaVersion: 1,
+    schemaVersion: SCHEMA_VERSION,
     id: str(w.id, "작품 ID", 80),
     kind,
     missionId,
@@ -352,6 +390,7 @@ export function validateWork(v: unknown): Work {
     editingLabel: str(w.editingLabel, "편집본 이름", LIMITS.short),
     draft: validateSnapshot(w.draft, kind),
     versions,
+    feedback: validateFeedback(w.feedback),
   };
 }
 export function parseImport(text: string): Work[] {
@@ -366,8 +405,9 @@ export function parseImport(text: string): Work[] {
     );
   }
   const root = obj(data, "파일");
-  if (root.format !== "ttukttak-vibe-backup" || root.schemaVersion !== 1)
-    throw new Error("뚝딱 백업 스키마 버전 1 파일을 선택해 주세요.");
+  if (root.format !== "ttukttak-vibe-backup")
+    throw new Error(`뚝딱 백업 파일(${supported})을 선택해 주세요.`);
+  checkVersion(root.schemaVersion, "백업 파일");
   return arr(root.works, "작품 목록", 1, 50).map((v) => {
     const work = validateWork(v);
     return { ...work, id: uid(), editingLabel: "가져온 복사본 · 현재 편집본" };

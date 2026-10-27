@@ -94,8 +94,15 @@ export type Version = {
   at: string;
   data: Snapshot;
 };
+// 교사가 과정 평가표 네 항목에 매긴 단계(0 = 아직 평가하지 않음, 1~3 = 시작·수행·설명 단계)
+export type Feedback = {
+  levels: number[];
+  note: string;
+  at: string;
+};
+export const SCHEMA_VERSION = 2;
 export type Work = {
-  schemaVersion: 1;
+  schemaVersion: typeof SCHEMA_VERSION;
   id: string;
   kind: Kind;
   missionId: string;
@@ -104,6 +111,7 @@ export type Work = {
   editingLabel: string;
   draft: Snapshot;
   versions: Version[];
+  feedback: Feedback | null;
 };
 export type Mission = {
   id: string;
@@ -249,7 +257,7 @@ export function makeWork(mission: Mission, normal = false): Work {
     },
   };
   return {
-    schemaVersion: 1,
+    schemaVersion: SCHEMA_VERSION,
     id: uid(),
     kind: mission.kind,
     missionId: mission.id,
@@ -266,5 +274,6 @@ export function makeWork(mission: Mission, normal = false): Work {
         data: clone(draft),
       },
     ],
+    feedback: null,
   };
 }
