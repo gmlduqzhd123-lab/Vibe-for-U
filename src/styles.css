@@ -902,6 +902,15 @@ main {
 .storage-error {
   margin: 0 0 25px;
 }
+.plain-fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.tab-lock p {
+  margin: 0 0 10px;
+}
 .update-banner {
   border-radius: 10px;
   background: #e8f1ed;

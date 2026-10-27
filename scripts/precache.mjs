@@ -14,8 +14,13 @@ export function precacheFiles(files) {
 }
 
 export function buildServiceWorker(template, files, version) {
-  if (!template.includes("__CACHE_VERSION__") || !template.includes("__PRECACHE__"))
-    throw new Error("sw.js에 __CACHE_VERSION__ / __PRECACHE__ 자리가 필요해요.");
+  if (
+    !template.includes("__CACHE_VERSION__") ||
+    !template.includes("__PRECACHE__")
+  )
+    throw new Error(
+      "sw.js에 __CACHE_VERSION__ / __PRECACHE__ 자리가 필요해요.",
+    );
   const list = ["./", ...files.map((f) => `./${f}`)];
   return template
     .replace("__CACHE_VERSION__", version)
@@ -35,7 +40,8 @@ async function walk(dir, base = dir) {
 export async function writeServiceWorker(dist) {
   const files = precacheFiles(await walk(dist));
   const hash = createHash("sha256");
-  for (const f of files) hash.update(f).update(await readFile(path.join(dist, f)));
+  for (const f of files)
+    hash.update(f).update(await readFile(path.join(dist, f)));
   const version = hash.digest("hex").slice(0, 12);
   const target = path.join(dist, "sw.js");
   await writeFile(

@@ -18,7 +18,9 @@ test("한 번 연 뒤에는 인터넷이 끊겨도 앱과 미션 화면이 열�
   expect(cached.mine).toHaveLength(1);
   expect(cached.mine[0]).not.toBe("vibe-for-u-v1");
   expect(cached.urls.some((u) => /\/assets\/index-.+\.js$/.test(u))).toBe(true);
-  expect(cached.urls.some((u) => /\/assets\/index-.+\.css$/.test(u))).toBe(true);
+  expect(cached.urls.some((u) => /\/assets\/index-.+\.css$/.test(u))).toBe(
+    true,
+  );
   expect(cached.urls.some((u) => u.includes("/materials/"))).toBe(false);
 
   await context.setOffline(true);

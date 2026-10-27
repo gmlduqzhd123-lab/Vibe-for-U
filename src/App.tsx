@@ -24,6 +24,7 @@ import { Workspace } from "./Workspace";
 import { Portfolio } from "./Portfolio";
 import { Icon, Mascot, Empty, Field } from "./ui";
 import { Explore, Prepare, QuickTry, LessonLanding } from "./Welcome";
+import { announceChange, useChanges, useWorkLock } from "./tabLock";
 import "./Welcome.css";
 const SharePage = lazy(() => import("./SharePage"));
 function getSetting<T>(key: string, fallback: T): T {
@@ -99,6 +100,7 @@ export default function App() {
     queue.current = queue.current.then(async () => {
       try {
         await saveWork(work);
+        announceChange();
         if (pending.current.get(id) === work) pending.current.delete(id);
         if (!pending.current.size) {
           setStorageStatus("기기에 저장됨");
@@ -131,6 +133,19 @@ export default function App() {
     },
     [flushOne, setAll],
   );
+  // 다른 탭이 저장·삭제하면 아직 저장 전인 이 탭의 편집본은 그대로 두고 목록을 새로 읽는다.
+  const refresh = useCallback(() => {
+    void listWorks()
+      .then((all) => {
+        const ids = new Set(all.map((w) => w.id));
+        setAll([
+          ...all.map((w) => pending.current.get(w.id) ?? w),
+          ...[...pending.current.values()].filter((w) => !ids.has(w.id)),
+        ]);
+      })
+      .catch(() => {});
+  }, [setAll]);
+  useChanges(refresh);
   useEffect(() => {
     let alive = true;
     listWorks()
@@ -226,6 +241,18 @@ export default function App() {
   };
   const parts = route.split("/");
   const active = works.find((w) => w.id === parts[1]);
+  const lock = useWorkLock(
+    parts[0] === "work" ? active?.id : undefined,
+    refresh,
+  );
+  const readOnly = lock.state === "other";
+  const blocked = () => {
+    if (readOnly)
+      message(
+        "다른 탭에서 이 작품을 편집하고 있어요. 이 탭에서 편집하기를 누른 뒤 다시 시도해 주세요.",
+      );
+    return readOnly;
+  };
   const mission = missions.find(
     (m) => m.id === (active?.missionId ?? parts[1]),
   );
@@ -236,7 +263,7 @@ export default function App() {
     }
   }, [active?.id, parts[0], setting]);
   const edit = (fn: (d: Snapshot) => Snapshot) => {
-    if (!active) return;
+    if (!active || readOnly) return;
     const current = worksRef.current.find((w) => w.id === active.id)!;
     persist({
       ...current,
@@ -287,6 +314,7 @@ export default function App() {
       action: async () => {
         await flush();
         await deleteWork(w.id);
+        announceChange();
         pending.current.delete(w.id);
         setAll(worksRef.current.filter((t) => t.id !== w.id));
         if (lastId === w.id) {
@@ -304,6 +332,7 @@ export default function App() {
       action: async () => {
         await flush();
         await clearWorks();
+        announceChange();
         pending.current.clear();
         setAll([]);
         for (let i = localStorage.length - 1; i >= 0; i--) {
@@ -336,7 +365,7 @@ export default function App() {
       label: "다음 사용자로 시작",
     });
   const saveVersion = (label: string) => {
-    if (!active) return;
+    if (!active || blocked()) return;
     if (active.versions.length >= LIMITS.versions) {
       message("버전은 작품당 30개까지예요. 파일로 백업해 주세요.");
       return;
@@ -365,7 +394,7 @@ export default function App() {
     );
   };
   const restore = (v: Version) => {
-    if (!active) return;
+    if (!active || blocked()) return;
     if (active.versions.length >= LIMITS.versions) {
       message(
         "복원 전 편집본을 보존할 공간이 필요해요. 먼저 파일로 백업해 주세요.",
@@ -398,7 +427,7 @@ export default function App() {
     );
   };
   const deleteChecks = (ids: string[]) => {
-    if (!active) return;
+    if (!active || blocked()) return;
     ask({
       title: "선택한 학습 기록을 삭제할까요?",
       body: `「${active.draft.title}」에서 선택한 검사 기록 ${ids.length}개를 현재 편집본과 저장 버전에서 삭제해요. 작품 설정과 나머지 기록은 유지돼요.`,
@@ -420,7 +449,7 @@ export default function App() {
     });
   };
   const deleteVersion = (v: Version) => {
-    if (!active || active.versions[0].id === v.id) return;
+    if (!active || active.versions[0].id === v.id || blocked()) return;
     ask({
       title: "이 수정 버전을 삭제할까요?",
       body: `「${v.label}」의 저장된 설정과 검사 묶음을 삭제해요. 현재 편집본과 다른 버전은 유지돼요. 처음 시작 버전은 보존해요.`,
@@ -440,6 +469,7 @@ export default function App() {
       const imported = parseImport(await file.text());
       await flush();
       await importWorks(imported);
+      announceChange();
       setAll([...worksRef.current, ...imported]);
       message(`작품 ${imported.length}개를 새 ID의 복사본으로 가져왔어요.`);
       go("library");
@@ -664,7 +694,9 @@ export default function App() {
                 restore,
                 deleteChecks,
                 deleteVersion,
+                readOnly,
               }}
+              takeOver={lock.takeOver}
               exportWork={() => backup([active])}
             />
           ) : parts[0] === "portfolio" && active ? (
@@ -688,7 +720,11 @@ export default function App() {
           <span>정답을 만드는 시간보다, 생각을 키우는 시간.</span>
           <p className="ys-credit">
             © 2026 엽쌤. All rights reserved. ·{" "}
-            <a href="https://gmlduqzhd123-lab.github.io/YScode/" target="_blank" rel="noopener">
+            <a
+              href="https://gmlduqzhd123-lab.github.io/YScode/"
+              target="_blank"
+              rel="noopener"
+            >
               엽쌤의 다른 앱 보기 →
             </a>
           </p>
