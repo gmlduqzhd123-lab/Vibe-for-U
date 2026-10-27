@@ -14,7 +14,8 @@ test("쉬운 모드: 낱말 블록으로 원문을 만들고 안내를 소리로
   await page.addInitScript(() => {
     const spoken: string[] = [];
     (window as unknown as { spoken: string[] }).spoken = spoken;
-    speechSynthesis.speak = (u: SpeechSynthesisUtterance) => {
+    // WebKit은 speechSynthesis 객체를 다시 만들 수 있어 프로토타입에 바꿔 둔다.
+    SpeechSynthesis.prototype.speak = function (u: SpeechSynthesisUtterance) {
       spoken.push(`${u.lang}|${u.text}`);
     };
   });

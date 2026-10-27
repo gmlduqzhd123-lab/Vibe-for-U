@@ -11,6 +11,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      asset: ${{ steps.asset.outputs.asset }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v4
@@ -20,6 +22,9 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+      # 배포 뒤 공개 주소가 이번 빌드로 바뀌었는지 확인할 때 쓴다.
+      - id: asset
+        run: echo "asset=$(grep -o 'assets/index-[A-Za-z0-9_-]*\.js' dist/index.html | head -1)" >> "$GITHUB_OUTPUT"
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:
@@ -27,6 +32,8 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     permissions:
       pages: write
       id-token: write
@@ -37,3 +44,38 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+  public-check:
+    # 실제 공개 주소에서 같은 브라우저 흐름을 검사한다.
+    needs: [build, deploy]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Wait for the new build to be served
+        env:
+          URL: ${{ needs.deploy.outputs.page_url }}
+          ASSET: ${{ needs.build.outputs.asset }}
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS "$URL" | grep -q "$ASSET"; then exit 0; fi
+            sleep 10
+          done
+          echo "공개 주소가 5분 안에 $ASSET 을(를) 제공하지 않았어요." >&2
+          exit 1
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test -c playwright.public.config.ts
+        env:
+          PW_BROWSER: chromium
+          PUBLIC_URL: ${{ needs.deploy.outputs.page_url }}
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-public
+          path: |
+            playwright-report/public
+            test-results/public
+          retention-days: 7

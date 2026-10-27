@@ -25,7 +25,7 @@ npm run test:e2e # 빌드 후 Windows Edge 브라우저 검사
 npx playwright test -c playwright.public.config.ts # 실제 공개 주소에서 같은 흐름 검사
 ```
 
-브라우저 검사는 설치된 Microsoft Edge를 사용합니다. 테스트가 필요하면 `npm run build`를 먼저 실행하세요. Playwright가 `scripts/serve.mjs`를 열어 실제 `dist/`를 **`/pages-check/` 하위 경로**에서 제공합니다. 테스트 서버는 제품의 필수 서버가 아닌 개발·검증 도구입니다. 배포물은 정적 파일만 필요합니다.
+브라우저 검사는 기본으로 설치된 Microsoft Edge를 사용합니다. 다른 엔진은 `PW_BROWSER=chromium` 또는 `PW_BROWSER=webkit`(아이폰·아이패드 Safari와 같은 엔진)으로 고르고, 먼저 `npx playwright install chromium webkit`으로 설치합니다. 이미 설치된 실행 파일을 쓰려면 `PW_EXECUTABLE`에 경로를 줍니다. PDF 증거 파일은 Chromium 계열에서만 만들고, WebKit에서는 클립보드 권한 대신 복사한 글을 기록해 검사합니다(`tests/support.ts`). 테스트가 필요하면 `npm run build`를 먼저 실행하세요. Playwright가 `scripts/serve.mjs`를 열어 실제 `dist/`를 **`/pages-check/` 하위 경로**에서 제공합니다. 테스트 서버는 제품의 필수 서버가 아닌 개발·검증 도구입니다. 배포물은 정적 파일만 필요합니다.
 
 ## 첫 시범: 중복 점수 고치기
 
@@ -147,7 +147,7 @@ npx playwright test -c playwright.public.config.ts # 실제 공개 주소에서 
 
 Vite `base: './'`와 해시 라우팅을 사용하여 저장소 하위 경로에서도 자산을 상대 경로로 읽습니다. 미션·작품 화면을 새로고침해도 서버에는 `index.html`이 있는 경로만 요청합니다. 사용자 기록은 공유 링크에 넣지 않습니다. 저장된 작품 URL은 그 기기의 자료를 여는 주소이며 작품의 공개 게시 주소가 아닙니다.
 
-워크플로는 테스트 → 빌드 → Pages 설정 → `dist/` 업로드 → 배포 순서입니다. 참고: [GitHub 공식 사용자 지정 Pages 워크플로 문서](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
+워크플로는 테스트 → 빌드 → Pages 설정 → `dist/` 업로드 → 배포 → **공개 주소 검사** 순서입니다. 공개 주소 검사는 방금 만든 JS 파일을 공개 주소가 제공할 때까지 최대 5분 기다린 뒤, 같은 브라우저 흐름(`playwright.public.config.ts`, `PUBLIC_URL`)을 Chromium으로 실행합니다. 별도의 **Browser tests** 워크플로(`.github/workflows/browser-tests.yml`)는 모든 PR과 `main` 푸시에서 단위 테스트·빌드와 함께 Chromium·WebKit 두 엔진으로 전체 브라우저 검사를 실행하고, 실패하면 보고서와 기록을 7일 보관합니다. 참고: [GitHub 공식 사용자 지정 Pages 워크플로 문서](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
 
 ## 구조와 자료 추가
 
@@ -177,7 +177,7 @@ Vite `base: './'`와 해시 라우팅을 사용하여 저장소 하위 경로에
 
 ## 검증 범위와 제약
 
-최초 로컬 검사 결과와 수정 내역은 [검증 결과](docs/검증결과.md), 이후 공개 배포 검증은 [연동 기록](docs/GITHUB-연동.md)에 있습니다. Windows의 실제 Edge 엔진에서 PC·태블릿·휴대전화 크기를 에뮬레이션했습니다. 실제 휴대전화·학교 기기·Safari·교사 수업 운영·물리 프린터 검증은 별도입니다. 브라우저 저장소를 허용해야 기기 저장이 가능합니다. 같은 작품을 여러 탭에서 열면 한 탭만 편집하고 나머지 탭은 읽기 전용으로 엽니다(Web Locks). 읽기 전용 탭에서 **이 탭에서 편집하기**를 누르면 편집 권한을 넘겨받고, 편집하던 탭이 작품을 떠나거나 닫히면 남은 탭이 이어받습니다. 저장·삭제는 다른 탭에 알려 목록과 읽기 전용 화면을 새로 읽습니다(BroadcastChannel). Web Locks가 없는 오래된 브라우저에서는 예전처럼 모든 탭에서 편집할 수 있으니 한 탭만 사용하세요. 실시간 공동 편집·충돌 병합은 지원하지 않습니다.
+최초 로컬 검사 결과와 수정 내역은 [검증 결과](docs/검증결과.md), 이후 공개 배포 검증은 [연동 기록](docs/GITHUB-연동.md)에 있습니다. Windows의 실제 Edge 엔진에서 PC·태블릿·휴대전화 크기를 에뮬레이션했고, CI에서 Chromium과 WebKit(Safari 엔진)으로 같은 흐름을 검사합니다. WebKit 검사는 Safari 앱 자체가 아니므로 실제 휴대전화·학교 기기·iOS Safari·교사 수업 운영·물리 프린터 검증은 별도입니다. 브라우저 저장소를 허용해야 기기 저장이 가능합니다. 같은 작품을 여러 탭에서 열면 한 탭만 편집하고 나머지 탭은 읽기 전용으로 엽니다(Web Locks). 읽기 전용 탭에서 **이 탭에서 편집하기**를 누르면 편집 권한을 넘겨받고, 편집하던 탭이 작품을 떠나거나 닫히면 남은 탭이 이어받습니다. 저장·삭제는 다른 탭에 알려 목록과 읽기 전용 화면을 새로 읽습니다(BroadcastChannel). Web Locks가 없는 오래된 브라우저에서는 예전처럼 모든 탭에서 편집할 수 있으니 한 탭만 사용하세요. 실시간 공동 편집·충돌 병합은 지원하지 않습니다.
 
 공유는 같은 미션 링크, 작품 파일, 인쇄용 기록, 교사의 파일 모으기입니다. 계정·서버·외부 DB·자동 학급 수합·순위·실시간 공동 편집·임의 HTML/JS 실행·카메라·마이크·위치는 도입하지 않았습니다. 한 번이라도 인터넷에 연결해 연 기기는 이후 오프라인에서도 앱을 열 수 있습니다(아래 **오프라인 사용** 참고). 한 번도 연 적 없는 기기의 첫 접속에는 인터넷이 필요합니다.
 

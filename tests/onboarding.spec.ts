@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import fs from "node:fs/promises";
+import { savePdf } from "./support";
 import { qrData } from "../src/qrData";
 
 test("첫 화면의 역할 입구와 세 예제는 작품을 만들지 않고 작동한다", async ({
@@ -300,11 +301,7 @@ test("소개 카드 10종의 QR·PNG 다운로드·복사 대안·인쇄", async
   await page.emulateMedia({ media: "print" });
   await expect(page.locator(".share-controls")).toBeHidden();
   await expect(page.locator(".share-poster")).toBeVisible();
-  await page.pdf({
-    path: "test-results/evidence/intro-card.pdf",
-    format: "A4",
-    printBackground: true,
-  });
+  await savePdf(page, "test-results/evidence/intro-card.pdf");
 });
 
 test("새 입구 네 화면은 휴대전화·태블릿·PC에서 넘침과 접근성 오류가 없다", async ({
