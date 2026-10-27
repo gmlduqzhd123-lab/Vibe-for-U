@@ -3,6 +3,7 @@ import { missions, lessons, rubric } from "./data";
 import { kindNames, stageDone } from "./model";
 import type { Kind, Mission, Work } from "./model";
 import { Empty, Icon, Pill } from "./ui";
+import { ClassReview } from "./ClassReview";
 const materialPath = (filename: string) =>
   `${import.meta.env.BASE_URL}materials/${filename}`;
 const classroomDocuments = [
@@ -180,10 +181,12 @@ export function Teacher({
   create,
   go,
   copy,
+  message,
 }: {
   create: (m: Mission) => void;
   go: Navigate;
   copy: (text: string) => void;
+  message: (s: string) => void;
 }) {
   const [tab, setTab] = useState("lessons");
   const [cardKind, setCardKind] = useState<Kind | "all">("all");
@@ -290,6 +293,7 @@ export function Teacher({
           ["lessons", "8차시 수업 안내"],
           ["cards", "검사표 · 짝 활동"],
           ["rubric", "과정 평가표"],
+          ["class", "학급 작품 모으기"],
           ["examples", "시범 작품"],
         ].map(([k, t]) => (
           <button
@@ -575,6 +579,7 @@ export function Teacher({
           <p>확인한 근거 / 다음 도움: _____________________________________</p>
         </div>
       ) : null}
+      {tab === "class" ? <ClassReview message={message} /> : null}
       {tab === "examples" ? (
         <div className="project-grid">
           {["quiz-3", "story-3", "timer-3"].map((id) => {

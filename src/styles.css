@@ -3073,3 +3073,65 @@ pre {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+/* 학급 작품 모으기 */
+.class-review .panel + .panel,
+.class-review .class-cards {
+  margin-top: 18px;
+}
+.class-table td.stage-done {
+  color: var(--green);
+  font-weight: 700;
+}
+.class-table .class-total td {
+  background: #f5f2eb;
+  font-weight: 700;
+}
+.class-cards {
+  display: grid;
+  gap: 14px;
+}
+.review-card > summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+.review-card > summary span {
+  color: var(--muted);
+  font-size: 13px;
+}
+.rubric-choice {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  margin: 12px 0;
+  padding: 10px 14px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.rubric-choice legend {
+  font-weight: 700;
+  padding: 0 6px;
+}
+.rubric-choice label {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  font-size: 13px;
+}
+.rubric-choice label span {
+  display: grid;
+  gap: 2px;
+}
+.rubric-choice small {
+  color: var(--muted);
+}
+.teacher-feedback {
+  border-top: 2px solid var(--purple);
+}
+@media (max-width: 640px) {
+  .rubric-choice {
+    grid-template-columns: 1fr;
+  }
+}

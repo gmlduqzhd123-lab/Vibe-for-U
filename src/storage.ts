@@ -98,17 +98,23 @@ export function backupFiles(works: Work[]) {
   if (group.length) files.push(exportJSON(group));
   return files;
 }
+export function downloadText(name: string, text: string, type: string) {
+  const url = URL.createObjectURL(new Blob([text], { type }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 export function downloadWorks(works: Work[]) {
   const files = backupFiles(works);
-  files.forEach((text, i) => {
-    const blob = new Blob([text], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `뚝딱-작품-${new Date().toISOString().slice(0, 10)}${files.length > 1 ? `-${i + 1}` : ""}.json`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  });
+  files.forEach((text, i) =>
+    downloadText(
+      `뚝딱-작품-${new Date().toISOString().slice(0, 10)}${files.length > 1 ? `-${i + 1}` : ""}.json`,
+      text,
+      "application/json",
+    ),
+  );
   return files.length;
 }
 type Obj = Record<string, unknown>;
