@@ -17,6 +17,7 @@ import { Preview } from "./Preview";
 import { LearningWords } from "./Welcome";
 import { BlockPrompt, predictionStarters } from "./BlockPrompt";
 import { SpeakButton } from "./Speak";
+import { useT } from "./i18n";
 const stageGuides = [
   "누가, 어떤 순간에 쓸 앱인지 약속해요.",
   "내 말로 적고, 검사할 수 있는 요청으로 정리해요.",
@@ -65,6 +66,7 @@ export function Workspace({
   readOnly = false,
   takeOver,
 }: Props) {
+  const t = useT();
   const d = w.draft;
   const done = stageDone(d);
   const predictionRef = useRef<HTMLDivElement>(null);
@@ -106,36 +108,36 @@ export function Workspace({
         <div className="button-row">
           <button onClick={exportWork}>
             <Icon name="download" />
-            파일 백업
+            {t("파일 백업")}
           </button>
           <button onClick={() => go(`portfolio/${w.id}`)}>
-            과정 포트폴리오 <Icon name="arrow" />
+            {t("과정 포트폴리오")} <Icon name="arrow" />
           </button>
         </div>
       </div>
-      <nav className="stage-nav" aria-label="학습 단계">
-        {stageNames.map((t, i) => (
+      <nav className="stage-nav" aria-label={t("학습 단계")}>
+        {stageNames.map((name, i) => (
           <button
-            key={t}
+            key={name}
             className={step === i ? "active" : done[i] ? "done" : ""}
             aria-current={step === i ? "step" : undefined}
             onClick={() => go(`work/${w.id}/${i}`)}
           >
             <span>{done[i] ? <Icon name="check" size={15} /> : i + 1}</span>
-            <b>{t}</b>
-            <small>{done[i] ? "기록 완료" : "기록할 내용 있음"}</small>
+            <b>{t(name)}</b>
+            <small>{t(done[i] ? "기록 완료" : "기록할 내용 있음")}</small>
           </button>
         ))}
       </nav>
       {readOnly ? (
         <div role="alert" className="warning tab-lock no-print">
           <p>
-            <b>다른 탭에서 이 작품을 편집하고 있어요.</b> 이 탭은 읽기
+            <b>{t("다른 탭에서 이 작품을 편집하고 있어요.")}</b> 이 탭은 읽기
             전용이에요. 두 탭에서 함께 고치면 나중에 저장한 쪽이 앞의 내용을
             덮어쓸 수 있어요.
           </p>
           <button className="primary" onClick={takeOver}>
-            이 탭에서 편집하기
+            {t("이 탭에서 편집하기")}
           </button>
         </div>
       ) : null}
@@ -270,7 +272,7 @@ export function Workspace({
           <fieldset className="plain-fieldset" disabled={readOnly}>
             <div className="step-heading">
               <Pill>STEP {String(step + 1).padStart(2, "0")}</Pill>
-              <h2>{stageNames[step]}</h2>
+              <h2>{t(stageNames[step])}</h2>
               <p>{stageGuides[step]}</p>
               <SpeakButton
                 text={[
@@ -584,11 +586,13 @@ export function Workspace({
                       : saveVersion(versionLabel || "설명과 성찰 기록")
                 }
               >
-                {step === 0
-                  ? "이 약속으로 만들기"
-                  : step < 4
-                    ? "다음 단계"
-                    : "이 과정 버전으로 저장"}
+                {t(
+                  step === 0
+                    ? "이 약속으로 만들기"
+                    : step < 4
+                      ? "다음 단계"
+                      : "이 과정 버전으로 저장",
+                )}
                 <Icon name="arrow" size={17} />
               </button>
             </div>
@@ -630,7 +634,7 @@ export function Workspace({
       <details className="panel versions">
         <summary>
           <Icon name="folder" />
-          <b>수정 버전 · 비교와 복원</b>
+          <b>{t("수정 버전 · 비교와 복원")}</b>
           <span>{w.versions.length} / 30개</span>
         </summary>
         <fieldset className="plain-fieldset" disabled={readOnly}>

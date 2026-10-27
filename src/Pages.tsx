@@ -5,6 +5,7 @@ import type { Kind, Mission, Work } from "./model";
 import { Empty, Icon, Pill } from "./ui";
 import { ClassReview } from "./ClassReview";
 import { SpeakButton } from "./Speak";
+import { useLang, useT } from "./i18n";
 const materialPath = (filename: string) =>
   `${import.meta.env.BASE_URL}materials/${filename}`;
 const classroomDocuments = [
@@ -35,13 +36,20 @@ export function Missions({
   go: Navigate;
 }) {
   const valid = (kinds as string[]).includes(filter ?? "");
+  const t = useT();
+  const lang = useLang();
   return (
     <>
       <div className="page-heading">
         <div>
-          <span className="eyebrow">한 번에 하나씩, 나의 속도로</span>
-          <h1>미션 공작대</h1>
-          <p>처음이라면 퀴즈 1부터. 문제를 찾는 연습은 퀴즈 3을 골라요.</p>
+          <span className="eyebrow">{t("한 번에 하나씩, 나의 속도로")}</span>
+          <h1>{t("미션 공작대")}</h1>
+          <p>
+            {t("처음이라면 퀴즈 1부터. 문제를 찾는 연습은 퀴즈 3을 골라요.")}
+          </p>
+          {lang !== "ko" ? (
+            <p className="note">{t("미션 본문은 한국어로 되어 있어요.")}</p>
+          ) : null}
         </div>
       </div>
       <div className="filter-row">
@@ -51,7 +59,9 @@ export function Missions({
             key={k}
             onClick={() => go(k === "all" ? "missions" : `missions/${k}`)}
           >
-            {k === "all" ? `전체 ${missions.length}개` : kindNames[k as Kind]}
+            {k === "all"
+              ? t("전체 {n}개").replace("{n}", String(missions.length))
+              : t(kindNames[k as Kind])}
           </button>
         ))}
       </div>
@@ -71,11 +81,11 @@ export function Missions({
               >
                 <div className="project-card-top">
                   <Pill tone="paper">
-                    {kindNames[m.kind]} {m.order}
+                    {t(kindNames[m.kind])} {m.order}
                   </Pill>
-                  {m.id === "quiz-1" ? <Pill>첫 미션 추천</Pill> : null}
+                  {m.id === "quiz-1" ? <Pill>{t("첫 미션 추천")}</Pill> : null}
                   {m.learningError ? (
-                    <Pill tone="orange">학습용 오류 포함</Pill>
+                    <Pill tone="orange">{t("학습용 오류 포함")}</Pill>
                   ) : null}
                 </div>
                 <h2>{m.title}</h2>
@@ -85,11 +95,13 @@ export function Missions({
                 </span>
                 <div className="mission-footer">
                   <b>
-                    {done
-                      ? "기록 완료"
-                      : attempts.length
-                        ? "진행 중"
-                        : "아직 시작하지 않음"}
+                    {t(
+                      done
+                        ? "기록 완료"
+                        : attempts.length
+                          ? "진행 중"
+                          : "아직 시작하지 않음",
+                    )}
                   </b>
                   <Icon name="arrow" />
                 </div>
@@ -640,22 +652,23 @@ export function Library({
   hiddenCount: number;
   reveal: () => void;
 }) {
+  const t = useT();
   return (
     <>
       <div className="page-heading">
         <div>
-          <span className="eyebrow">한 번의 완성보다, 쌓이는 변화</span>
-          <h1>내 작품 선반</h1>
-          <p>자동 저장된 편집본과 직접 남긴 수정 버전을 다시 만나요.</p>
+          <span className="eyebrow">{t("한 번의 완성보다, 쌓이는 변화")}</span>
+          <h1>{t("내 작품 선반")}</h1>
+          <p>{t("자동 저장된 편집본과 직접 남긴 수정 버전을 다시 만나요.")}</p>
         </div>
         <div className="button-row">
           <button onClick={importFile}>
             <Icon name="folder" />
-            파일 가져오기
+            {t("파일 가져오기")}
           </button>
           <button disabled={!works.length} onClick={exportAll}>
             <Icon name="download" />
-            목록 백업
+            {t("목록 백업")}
           </button>
         </div>
       </div>
@@ -696,10 +709,10 @@ export function Library({
                     className="primary"
                     onClick={() => go(`work/${w.id}/0`)}
                   >
-                    작품 열기
+                    {t("작품 열기")}
                   </button>
                   <button onClick={() => go(`portfolio/${w.id}`)}>
-                    포트폴리오
+                    {t("포트폴리오")}
                   </button>
                   <button
                     className="danger-text"
@@ -707,7 +720,7 @@ export function Library({
                     onClick={() => remove(w)}
                   >
                     <Icon name="trash" />
-                    삭제
+                    {t("삭제")}
                   </button>
                 </div>
               </article>
@@ -726,7 +739,7 @@ export function Library({
       )}
       <div className="shared-device panel">
         <div>
-          <h2>공용 기기 정리</h2>
+          <h2>{t("공용 기기 정리")}</h2>
           <p>
             다음 사용자는 이전 기록을 자동으로 이어받지 않아요. 삭제 전에는 파일
             백업을 선택할 수 있어요.
@@ -737,9 +750,9 @@ export function Library({
           </small>
         </div>
         <div className="button-row">
-          <button onClick={nextUser}>다음 사용자 시작</button>
+          <button onClick={nextUser}>{t("다음 사용자 시작")}</button>
           <button className="danger-text" onClick={clearAll}>
-            이 앱의 데이터 전체 삭제
+            {t("이 앱의 데이터 전체 삭제")}
           </button>
         </div>
       </div>

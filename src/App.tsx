@@ -20,12 +20,14 @@ import {
   jsonBytes,
 } from "./storage";
 import { Home, Library, Missions, MissionDetail, Teacher } from "./Pages";
-import { Workspace } from "./Workspace";
+import { Workspace, stageNames } from "./Workspace";
 import { Portfolio } from "./Portfolio";
 import { Icon, Mascot, Empty, Field } from "./ui";
 import { Explore, Prepare, QuickTry, LessonLanding } from "./Welcome";
 import { announceChange, useChanges, useWorkLock } from "./tabLock";
 import "./Welcome.css";
+import { LangContext, langs, translate } from "./i18n";
+import type { Lang } from "./i18n";
 const SharePage = lazy(() => import("./SharePage"));
 function getSetting<T>(key: string, fallback: T): T {
   try {
@@ -50,6 +52,11 @@ export default function App() {
     const saved = getSetting<string>("mode", "child");
     return modes.includes(saved as Mode) ? (saved as Mode) : "child";
   });
+  const [lang, setLangState] = useState<Lang>(() => {
+    const saved = getSetting<string>("lang", "ko");
+    return langs.some((l) => l.id === saved) ? (saved as Lang) : "ko";
+  });
+  const t = (s: string) => translate(lang, s);
   const [works, setWorks] = useState<Work[]>([]);
   const worksRef = useRef<Work[]>([]);
   const [hidden, setHidden] = useState<string[]>(() => {
@@ -67,6 +74,8 @@ export default function App() {
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const [dialogBusy, setDialogBusy] = useState(false);
   const [updateReady, setUpdateReady] = useState(false);
+  const [announce, setAnnounce] = useState("");
+  const firstRoute = useRef(true);
   const importInput = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const previousFocus = useRef<HTMLElement | null>(null);
@@ -220,6 +229,10 @@ export default function App() {
     },
     [flush],
   );
+  const setLang = (v: Lang) => {
+    setLangState(v);
+    setting("lang", v);
+  };
   const setMode = (v: Mode) => {
     setModeState(v);
     setting("mode", v);
@@ -494,333 +507,395 @@ export default function App() {
         ? "library"
         : "missions";
   const step = Math.max(0, Math.min(4, Number(parts[2]) || 0));
+  const pageName = t(
+    parts[0] === "explore"
+      ? "학생 체험하기"
+      : parts[0] === "try"
+        ? "3분 첫 체험"
+        : parts[0] === "prepare"
+          ? "교사 수업 준비"
+          : parts[0] === "share"
+            ? "QR 소개 카드"
+            : navActive === "home"
+              ? "공작소 홈"
+              : navActive === "missions"
+                ? "미션 공작대"
+                : navActive === "library"
+                  ? "내 작품 선반"
+                  : "교사 자료실",
+  );
+  const pageTitle =
+    parts[0] === "work" && active
+      ? `${active.draft.title || "제목 없는 작품"} · ${t(stageNames[step])}`
+      : parts[0] === "mission" && mission
+        ? mission.title
+        : pageName;
+  useEffect(() => {
+    document.title = `${pageTitle} · ${translate(lang, "뚝딱 바이브 공작소")}`;
+  }, [pageTitle, lang]);
+  useEffect(() => {
+    document.documentElement.lang =
+      langs.find((l) => l.id === lang)?.html ?? "ko";
+  }, [lang]);
+  // 화면이 바뀌면 화면 낭독기에 새 화면 이름을 알리고, 누른 버튼이 사라져
+  // 초점을 잃었으면 본문으로 옮긴다.
+  useEffect(() => {
+    if (firstRoute.current) {
+      firstRoute.current = false;
+      return;
+    }
+    setAnnounce(pageTitle);
+    const frame = requestAnimationFrame(() => {
+      const focused = document.activeElement;
+      if (!focused || focused === document.body || !focused.isConnected)
+        document.getElementById("main-content")?.focus({ preventScroll: true });
+    });
+    return () => cancelAnimationFrame(frame);
+    // 화면 경로가 바뀔 때만 알린다.
+  }, [route]);
   return (
-    <div
-      className={`app mode-${mode}${parts[0] === "home" ? " home-screen" : ""}`}
-    >
-      <a
-        className="skip-link"
-        href="#main-content"
-        onClick={(e) => {
-          e.preventDefault();
-          document.getElementById("main-content")?.focus();
-        }}
+    <LangContext.Provider value={lang}>
+      <div
+        className={`app mode-${mode}${parts[0] === "home" ? " home-screen" : ""}`}
       >
-        본문으로 건너뛰기
-      </a>
-      <aside className="sidebar no-print">
-        <button className="brand" onClick={() => go("home")}>
-          <span className="brand-symbol">
-            <Mascot mini />
-          </span>
-          <span>
-            <b>뚝딱 바이브</b>
-            <strong>공작소</strong>
-          </span>
-        </button>
-        <span className="sidebar-label">나의 작은 앱 만들기</span>
-        <nav aria-label="주 메뉴">
-          {[
-            ["home", "home", "공작소 홈"],
-            ["missions", "grid", "미션 공작대"],
-            ["library", "folder", "내 작품 선반"],
-            ["teacher", "book", "교사 자료실"],
-          ].map(([path, icon, label]) => (
-            <button
-              key={path}
-              className={navActive === path ? "active" : ""}
-              aria-current={navActive === path ? "page" : undefined}
-              onClick={() => go(path)}
-            >
-              <Icon name={icon} />
-              {label}
-              {navActive === path ? <span className="nav-dot" /> : null}
-            </button>
-          ))}
-        </nav>
-        <div className="sidebar-tip">
-          <span className="tip-spark">✦</span>
-          <b>
-            잘 고치는 것도
-            <br />
-            멋진 만들기예요.
-          </b>
-          <p>
-            한 번에 완벽하지 않아도
-            <br />
-            괜찮아요. 다시 해 봐요!
-          </p>
-          <button className="text-button" onClick={() => go("mission/quiz-3")}>
-            버그 탐정 도전 <Icon name="arrow" size={16} />
-          </button>
-        </div>
-        <div className="sidebar-footer">
-          <Icon name="shield" size={17} />
-          <span>
-            가입 없이, 내 기기에 저장
-            <br />
-            <small>생각을 키우는 안전한 연습실</small>
-          </span>
-        </div>
-      </aside>
-      <div className="main-shell">
-        <header className="topbar no-print">
-          <div className="breadcrumbs">
-            나의 배움 공간 <Icon name="chevron" size={13} />
-            <b>
-              {parts[0] === "explore"
-                ? "학생 체험하기"
-                : parts[0] === "try"
-                  ? "3분 첫 체험"
-                  : parts[0] === "prepare"
-                    ? "교사 수업 준비"
-                    : parts[0] === "share"
-                      ? "QR 소개 카드"
-                      : navActive === "home"
-                        ? "공작소 홈"
-                        : navActive === "missions"
-                          ? "미션 공작대"
-                          : navActive === "library"
-                            ? "내 작품 선반"
-                            : "교사 자료실"}
-            </b>
-          </div>
-          <div className="topbar-actions">
-            <span
-              className={`save-state ${storageError ? "error" : ""}`}
-              role="status"
-            >
-              <span className="status-dot" />
-              {storageStatus}
+        <a
+          className="skip-link"
+          href="#main-content"
+          onClick={(e) => {
+            e.preventDefault();
+            document.getElementById("main-content")?.focus();
+          }}
+        >
+          {t("본문으로 건너뛰기")}
+        </a>
+        <aside className="sidebar no-print">
+          <button className="brand" onClick={() => go("home")}>
+            <span className="brand-symbol">
+              <Mascot mini />
             </span>
-            <label className="mode-select">
-              <span className="sr-only">안내 모드</span>
-              <select
-                aria-label="안내 모드"
-                value={mode}
-                onChange={(e) => setMode(e.target.value as Mode)}
+            <span>
+              <b>뚝딱 바이브</b>
+              <strong>공작소</strong>
+            </span>
+          </button>
+          <span className="sidebar-label">{t("나의 작은 앱 만들기")}</span>
+          <nav aria-label={t("주 메뉴")}>
+            {[
+              ["home", "home", "공작소 홈"],
+              ["missions", "grid", "미션 공작대"],
+              ["library", "folder", "내 작품 선반"],
+              ["teacher", "book", "교사 자료실"],
+            ].map(([path, icon, label]) => (
+              <button
+                key={path}
+                className={navActive === path ? "active" : ""}
+                aria-current={navActive === path ? "page" : undefined}
+                onClick={() => go(path)}
               >
-                <option value="child">어린이 모드</option>
-                <option value="easy">쉬운 모드 (3~4학년)</option>
-                <option value="adult">일반 입문자 모드</option>
-              </select>
-            </label>
+                <Icon name={icon} />
+                {t(label)}
+                {navActive === path ? <span className="nav-dot" /> : null}
+              </button>
+            ))}
+          </nav>
+          <div className="sidebar-tip">
+            <span className="tip-spark">✦</span>
+            <b>
+              잘 고치는 것도
+              <br />
+              멋진 만들기예요.
+            </b>
+            <p>
+              한 번에 완벽하지 않아도
+              <br />
+              괜찮아요. 다시 해 봐요!
+            </p>
+            <button
+              className="text-button"
+              onClick={() => go("mission/quiz-3")}
+            >
+              {t("버그 탐정 도전")} <Icon name="arrow" size={16} />
+            </button>
           </div>
-        </header>
-        <main id="main-content" tabIndex={-1}>
-          {updateReady ? (
-            <div role="status" className="update-banner no-print">
+          <div className="sidebar-footer">
+            <Icon name="shield" size={17} />
+            <span>
+              {t("가입 없이, 내 기기에 저장")}
+              <br />
+              <small>{t("생각을 키우는 안전한 연습실")}</small>
+            </span>
+          </div>
+        </aside>
+        <div className="main-shell">
+          <header className="topbar no-print">
+            <div className="breadcrumbs">
+              {t("나의 배움 공간")} <Icon name="chevron" size={13} />
+              <b>{pageName}</b>
+            </div>
+            <div className="topbar-actions">
+              <span
+                className={`save-state ${storageError ? "error" : ""}`}
+                role="status"
+              >
+                <span className="status-dot" />
+                {t(storageStatus)}
+              </span>
+              <label className="mode-select">
+                <span className="sr-only">{t("안내 모드")}</span>
+                <select
+                  aria-label={t("안내 모드")}
+                  value={mode}
+                  onChange={(e) => setMode(e.target.value as Mode)}
+                >
+                  <option value="child">{t("어린이 모드")}</option>
+                  <option value="easy">{t("쉬운 모드 (3~4학년)")}</option>
+                  <option value="adult">{t("일반 입문자 모드")}</option>
+                </select>
+              </label>
+              <label className="mode-select">
+                <span className="sr-only">언어 · Language</span>
+                <select
+                  aria-label="언어 · Language"
+                  value={lang}
+                  onChange={(e) => setLang(e.target.value as Lang)}
+                >
+                  {langs.map((l) => (
+                    <option key={l.id} value={l.id} lang={l.html}>
+                      {l.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          </header>
+          <main id="main-content" tabIndex={-1}>
+            {updateReady ? (
+              <div role="status" className="update-banner no-print">
+                <p>
+                  {t(
+                    "새 버전이 준비됐어요. 지금 편집 내용을 저장한 뒤 새로고침하면 적용돼요.",
+                  )}
+                </p>
+                <div className="button-row">
+                  <button
+                    className="primary"
+                    onClick={async () => {
+                      await flush();
+                      location.reload();
+                    }}
+                  >
+                    {t("저장하고 새로고침")}
+                  </button>
+                  <button onClick={() => setUpdateReady(false)}>
+                    {t("나중에")}
+                  </button>
+                </div>
+              </div>
+            ) : null}
+            {storageError ? (
+              <div role="alert" className="storage-error no-print">
+                <p>{storageError}</p>
+                <div className="button-row">
+                  <button onClick={() => void flush()}>
+                    {t("저장 다시 시도")}
+                  </button>
+                  <button disabled={!works.length} onClick={exportAll}>
+                    {t("편집 내용 파일로 내보내기")}
+                  </button>
+                </div>
+              </div>
+            ) : null}
+            {loading ? (
+              <div className="empty">
+                <p>{t("이 기기의 작품을 불러오고 있어요…")}</p>
+              </div>
+            ) : parts[0] === "home" ? (
+              <Home {...{ mode, setMode, lastWork, go, create }} />
+            ) : parts[0] === "missions" ? (
+              <Missions filter={parts[1]} works={visible} go={go} />
+            ) : parts[0] === "explore" ? (
+              <Explore go={go} />
+            ) : parts[0] === "try" ? (
+              <QuickTry go={go} create={create} />
+            ) : parts[0] === "prepare" ? (
+              <Prepare go={go} />
+            ) : parts[0] === "lesson" && /^[1-8]$/.test(parts[1] ?? "") ? (
+              <LessonLanding number={Number(parts[1])} go={go} />
+            ) : parts[0] === "share" ? (
+              <Suspense
+                fallback={<p role="status">소개 카드를 준비하고 있어요…</p>}
+              >
+                <SharePage go={go} copy={copy} />
+              </Suspense>
+            ) : parts[0] === "mission" && mission ? (
+              <MissionDetail mission={mission} create={create} share={copy} />
+            ) : parts[0] === "teacher" ? (
+              <Teacher create={create} go={go} copy={copy} message={message} />
+            ) : parts[0] === "library" ? (
+              <Library
+                works={visible}
+                go={go}
+                exportAll={() => backup(visible)}
+                importFile={() => importInput.current?.click()}
+                remove={remove}
+                nextUser={nextUser}
+                clearAll={clearAll}
+                hiddenCount={works.length - visible.length}
+                reveal={() => {
+                  setHidden([]);
+                  setting("hidden", []);
+                }}
+              />
+            ) : parts[0] === "work" && active && mission ? (
+              <Workspace
+                key={active.id + runtimeEpoch}
+                work={active}
+                mission={mission}
+                {...{
+                  step,
+                  mode,
+                  go,
+                  edit,
+                  copy,
+                  message,
+                  saveVersion,
+                  restore,
+                  deleteChecks,
+                  deleteVersion,
+                  readOnly,
+                }}
+                takeOver={lock.takeOver}
+                exportWork={() => backup([active])}
+              />
+            ) : parts[0] === "portfolio" && active ? (
+              <Portfolio
+                work={active}
+                go={go}
+                exportWork={() => backup([active])}
+              />
+            ) : (
+              <Empty title={t("이 작품이나 미션을 찾을 수 없어요")}>
+                <p>
+                  현재 브라우저에 저장된 작품 목록을 확인하거나 작품 파일을
+                  가져와 주세요.
+                </p>
+                <button onClick={() => go("library")}>
+                  {t("작품 선반으로")}
+                </button>
+              </Empty>
+            )}
+          </main>
+          <footer className="page-footer no-print">
+            <span>{t("뚝딱 바이브 공작소")}</span>
+            <span>{t("정답을 만드는 시간보다, 생각을 키우는 시간.")}</span>
+            <p className="ys-credit">
+              © 2026 엽쌤. All rights reserved. ·{" "}
+              <a
+                href="https://gmlduqzhd123-lab.github.io/YScode/"
+                target="_blank"
+                rel="noopener"
+              >
+                엽쌤의 다른 앱 보기 →
+              </a>
+            </p>
+          </footer>
+        </div>
+        <input
+          className="sr-only"
+          tabIndex={-1}
+          ref={importInput}
+          type="file"
+          accept=".json,application/json"
+          aria-label="작품 JSON 파일"
+          onChange={(e) => void importFile(e.target.files?.[0])}
+        />
+        {toast ? (
+          <div className="toast no-print" role="status">
+            <span>{toast}</span>
+            <button aria-label={t("알림 닫기")} onClick={() => setToast("")}>
+              ×
+            </button>
+          </div>
+        ) : null}
+        <dialog
+          ref={dialogRef}
+          aria-labelledby="app-dialog-title"
+          onCancel={() => {
+            setDialog(null);
+            setCopyFallback(null);
+          }}
+          className="app-dialog"
+        >
+          {copyFallback !== null ? (
+            <>
+              <h2 id="app-dialog-title">직접 선택해서 복사해 주세요</h2>
               <p>
-                새 버전이 준비됐어요. 지금 편집 내용을 저장한 뒤 새로고침하면
-                적용돼요.
+                브라우저가 클립보드 쓰기를 허용하지 않았어요. 아래 내용을 선택한
+                뒤 Ctrl+C 또는 기기의 복사 메뉴를 사용해 주세요.
               </p>
+              <Field
+                area
+                label="복사할 내용"
+                value={copyFallback}
+                onChange={setCopyFallback}
+              />
               <div className="button-row">
                 <button
+                  onClick={() =>
+                    dialogRef.current?.querySelector("textarea")?.select()
+                  }
+                >
+                  내용 전체 선택
+                </button>
+                <button
                   className="primary"
+                  onClick={() => setCopyFallback(null)}
+                >
+                  닫기
+                </button>
+              </div>
+            </>
+          ) : dialog ? (
+            <>
+              <h2 id="app-dialog-title">{dialog.title}</h2>
+              <p>{dialog.body}</p>
+              <div className="button-row">
+                {dialog.backup.length ? (
+                  <button onClick={() => backup(dialog.backup)}>
+                    <Icon name="download" />
+                    삭제 전 파일 백업
+                  </button>
+                ) : null}
+                <button disabled={dialogBusy} onClick={() => setDialog(null)}>
+                  {t("취소")}
+                </button>
+                <button
+                  className="danger"
+                  disabled={dialogBusy}
                   onClick={async () => {
-                    await flush();
-                    location.reload();
+                    setDialogBusy(true);
+                    try {
+                      await dialog.action();
+                      setDialog(null);
+                    } catch (e) {
+                      message(
+                        `처리하지 못했어요. 다시 시도해 주세요. ${e instanceof Error ? e.message : ""}`,
+                      );
+                    } finally {
+                      setDialogBusy(false);
+                    }
                   }}
                 >
-                  저장하고 새로고침
-                </button>
-                <button onClick={() => setUpdateReady(false)}>나중에</button>
-              </div>
-            </div>
-          ) : null}
-          {storageError ? (
-            <div role="alert" className="storage-error no-print">
-              <p>{storageError}</p>
-              <div className="button-row">
-                <button onClick={() => void flush()}>저장 다시 시도</button>
-                <button disabled={!works.length} onClick={exportAll}>
-                  편집 내용 파일로 내보내기
+                  {dialogBusy ? t("처리 중…") : (dialog.label ?? "대상 삭제")}
                 </button>
               </div>
-            </div>
+            </>
           ) : null}
-          {loading ? (
-            <div className="empty">
-              <p>이 기기의 작품을 불러오고 있어요…</p>
-            </div>
-          ) : parts[0] === "home" ? (
-            <Home {...{ mode, setMode, lastWork, go, create }} />
-          ) : parts[0] === "missions" ? (
-            <Missions filter={parts[1]} works={visible} go={go} />
-          ) : parts[0] === "explore" ? (
-            <Explore go={go} />
-          ) : parts[0] === "try" ? (
-            <QuickTry go={go} create={create} />
-          ) : parts[0] === "prepare" ? (
-            <Prepare go={go} />
-          ) : parts[0] === "lesson" && /^[1-8]$/.test(parts[1] ?? "") ? (
-            <LessonLanding number={Number(parts[1])} go={go} />
-          ) : parts[0] === "share" ? (
-            <Suspense
-              fallback={<p role="status">소개 카드를 준비하고 있어요…</p>}
-            >
-              <SharePage go={go} copy={copy} />
-            </Suspense>
-          ) : parts[0] === "mission" && mission ? (
-            <MissionDetail mission={mission} create={create} share={copy} />
-          ) : parts[0] === "teacher" ? (
-            <Teacher create={create} go={go} copy={copy} message={message} />
-          ) : parts[0] === "library" ? (
-            <Library
-              works={visible}
-              go={go}
-              exportAll={() => backup(visible)}
-              importFile={() => importInput.current?.click()}
-              remove={remove}
-              nextUser={nextUser}
-              clearAll={clearAll}
-              hiddenCount={works.length - visible.length}
-              reveal={() => {
-                setHidden([]);
-                setting("hidden", []);
-              }}
-            />
-          ) : parts[0] === "work" && active && mission ? (
-            <Workspace
-              key={active.id + runtimeEpoch}
-              work={active}
-              mission={mission}
-              {...{
-                step,
-                mode,
-                go,
-                edit,
-                copy,
-                message,
-                saveVersion,
-                restore,
-                deleteChecks,
-                deleteVersion,
-                readOnly,
-              }}
-              takeOver={lock.takeOver}
-              exportWork={() => backup([active])}
-            />
-          ) : parts[0] === "portfolio" && active ? (
-            <Portfolio
-              work={active}
-              go={go}
-              exportWork={() => backup([active])}
-            />
-          ) : (
-            <Empty title="이 작품이나 미션을 찾을 수 없어요">
-              <p>
-                현재 브라우저에 저장된 작품 목록을 확인하거나 작품 파일을 가져와
-                주세요.
-              </p>
-              <button onClick={() => go("library")}>작품 선반으로</button>
-            </Empty>
-          )}
-        </main>
-        <footer className="page-footer no-print">
-          <span>뚝딱 바이브 공작소</span>
-          <span>정답을 만드는 시간보다, 생각을 키우는 시간.</span>
-          <p className="ys-credit">
-            © 2026 엽쌤. All rights reserved. ·{" "}
-            <a
-              href="https://gmlduqzhd123-lab.github.io/YScode/"
-              target="_blank"
-              rel="noopener"
-            >
-              엽쌤의 다른 앱 보기 →
-            </a>
-          </p>
-        </footer>
+        </dialog>
+        <p className="sr-only" role="status" aria-live="polite">
+          {announce}
+        </p>
       </div>
-      <input
-        className="sr-only"
-        tabIndex={-1}
-        ref={importInput}
-        type="file"
-        accept=".json,application/json"
-        aria-label="작품 JSON 파일"
-        onChange={(e) => void importFile(e.target.files?.[0])}
-      />
-      {toast ? (
-        <div className="toast no-print" role="status">
-          <span>{toast}</span>
-          <button aria-label="알림 닫기" onClick={() => setToast("")}>
-            ×
-          </button>
-        </div>
-      ) : null}
-      <dialog
-        ref={dialogRef}
-        aria-labelledby="app-dialog-title"
-        onCancel={() => {
-          setDialog(null);
-          setCopyFallback(null);
-        }}
-        className="app-dialog"
-      >
-        {copyFallback !== null ? (
-          <>
-            <h2 id="app-dialog-title">직접 선택해서 복사해 주세요</h2>
-            <p>
-              브라우저가 클립보드 쓰기를 허용하지 않았어요. 아래 내용을 선택한
-              뒤 Ctrl+C 또는 기기의 복사 메뉴를 사용해 주세요.
-            </p>
-            <Field
-              area
-              label="복사할 내용"
-              value={copyFallback}
-              onChange={setCopyFallback}
-            />
-            <div className="button-row">
-              <button
-                onClick={() =>
-                  dialogRef.current?.querySelector("textarea")?.select()
-                }
-              >
-                내용 전체 선택
-              </button>
-              <button className="primary" onClick={() => setCopyFallback(null)}>
-                닫기
-              </button>
-            </div>
-          </>
-        ) : dialog ? (
-          <>
-            <h2 id="app-dialog-title">{dialog.title}</h2>
-            <p>{dialog.body}</p>
-            <div className="button-row">
-              {dialog.backup.length ? (
-                <button onClick={() => backup(dialog.backup)}>
-                  <Icon name="download" />
-                  삭제 전 파일 백업
-                </button>
-              ) : null}
-              <button disabled={dialogBusy} onClick={() => setDialog(null)}>
-                취소
-              </button>
-              <button
-                className="danger"
-                disabled={dialogBusy}
-                onClick={async () => {
-                  setDialogBusy(true);
-                  try {
-                    await dialog.action();
-                    setDialog(null);
-                  } catch (e) {
-                    message(
-                      `처리하지 못했어요. 다시 시도해 주세요. ${e instanceof Error ? e.message : ""}`,
-                    );
-                  } finally {
-                    setDialogBusy(false);
-                  }
-                }}
-              >
-                {dialogBusy ? "처리 중…" : (dialog.label ?? "대상 삭제")}
-              </button>
-            </div>
-          </>
-        ) : null}
-      </dialog>
-    </div>
+    </LangContext.Provider>
   );
 }
