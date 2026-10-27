@@ -64,10 +64,12 @@ export function useWorkLock(id: string | undefined, onRegain: () => void) {
 }
 // 저장·삭제를 다른 탭에 알려 목록과 읽기 전용 화면을 새로 고친다.
 const CHANNEL = APP_PREFIX + "changes";
+// 같은 탭이 보낸 알림은 다른 BroadcastChannel 객체로도 받으므로 탭 이름표로 거른다.
+const tabId = Math.random().toString(36).slice(2);
 export function announceChange() {
   if (typeof BroadcastChannel === "undefined") return;
   const c = new BroadcastChannel(CHANNEL);
-  c.postMessage("changed");
+  c.postMessage(tabId);
   c.close();
 }
 export function useChanges(onChange: () => void) {
@@ -76,7 +78,9 @@ export function useChanges(onChange: () => void) {
   useEffect(() => {
     if (typeof BroadcastChannel === "undefined") return;
     const c = new BroadcastChannel(CHANNEL);
-    c.onmessage = () => latest.current();
+    c.onmessage = (e) => {
+      if (e.data !== tabId) latest.current();
+    };
     return () => c.close();
   }, []);
 }
