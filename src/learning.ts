@@ -40,3 +40,23 @@ export function revisionLabel(w: Work, revision: string) {
     ? `V${index + 1} · ${w.versions[index].label}`
     : "이전 설정 (버전 저장 전)";
 }
+// 두 버전을 비교해 바뀐 규칙 줄과 바뀐 기록 항목을 찾는다.
+export function compareSnapshots(a: Snapshot, b: Snapshot) {
+  const left = configSummary(a.config);
+  const right = configSummary(b.config);
+  const fields: [string, (d: Snapshot) => string][] = [
+    ["작품 제목", (d) => d.title],
+    ["실행 전 예상", (d) => d.prediction],
+    ["원문 요청", (d) => d.originalPrompt],
+    ["정리한 요청", (d) => d.arrangedPrompt],
+    ["바꾼 동작", (d) => d.change.behavior],
+    ["수정 이유", (d) => d.change.reason],
+    ["작동 원리", (d) => d.reflection],
+  ];
+  return {
+    removed: left.filter((l) => !right.includes(l)),
+    added: right.filter((l) => !left.includes(l)),
+    sameConfig: JSON.stringify(a.config) === JSON.stringify(b.config),
+    fields: fields.filter(([, get]) => get(a) !== get(b)).map(([n]) => n),
+  };
+}

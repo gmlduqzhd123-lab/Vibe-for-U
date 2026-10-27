@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Inspection } from "./Inspection";
-import { configSummary, updatePrediction } from "./learning";
+import { compareSnapshots, configSummary, updatePrediction } from "./learning";
 import {
   arrangePrompt,
   correctionPrompt,
@@ -82,6 +82,8 @@ export function Workspace({
     patch({ change: { ...d.change, [key]: v } });
   const a = w.versions.find((v) => v.id === compareA)?.data ?? d;
   const b = w.versions.find((v) => v.id === compareB)?.data ?? d;
+  const diff = compareSnapshots(a, b);
+  const [sideBySide, setSideBySide] = useState(false);
   return (
     <>
       <div className="workspace-heading">
@@ -639,6 +641,71 @@ export function Workspace({
             ))}
           </div>
         </fieldset>
+        <section className="compare-diff" aria-labelledby="compare-diff-title">
+          <h3 id="compare-diff-title">두 버전에서 바뀐 점</h3>
+          {diff.sameConfig && !diff.fields.length ? (
+            <p>설정과 기록이 같아요.</p>
+          ) : (
+            <>
+              {diff.sameConfig ? (
+                <p>설정과 규칙은 같아요.</p>
+              ) : (
+                <ul className="diff-list">
+                  {diff.removed.map((line) => (
+                    <li key={"-" + line} className="diff-removed">
+                      <span className="sr-only">이전에만 있음: </span>
+                      {line}
+                    </li>
+                  ))}
+                  {diff.added.map((line) => (
+                    <li key={"+" + line} className="diff-added">
+                      <span className="sr-only">다음에 새로 생김: </span>
+                      {line}
+                    </li>
+                  ))}
+                  {!diff.removed.length && !diff.added.length ? (
+                    <li>
+                      요약에 드러나지 않는 설정(문항·장면 내용 등)이 바뀌었어요.
+                    </li>
+                  ) : null}
+                </ul>
+              )}
+              {diff.fields.length ? (
+                <p>바뀐 기록: {diff.fields.join(" · ")}</p>
+              ) : null}
+            </>
+          )}
+          <button
+            aria-expanded={sideBySide}
+            onClick={() => setSideBySide((v) => !v)}
+          >
+            <Icon name="play" />
+            {sideBySide ? "나란히 실행 닫기" : "두 버전 나란히 실행해 보기"}
+          </button>
+          {sideBySide ? (
+            <div className="side-by-side">
+              {[
+                { name: "이전 버전 실행", data: a },
+                { name: "다음 버전 실행", data: b },
+              ].map((v) => (
+                <section key={v.name} className="side-run" aria-label={v.name}>
+                  <h4>
+                    {v.name} · {v.data.title}
+                  </h4>
+                  <Preview
+                    key={v.data.revision}
+                    config={v.data.config}
+                    onRun={() => {}}
+                  />
+                </section>
+              ))}
+            </div>
+          ) : null}
+          <p className="small muted">
+            나란히 실행은 비교용이에요. 여기서 누른 결과는 실행 기록으로 남지
+            않아요.
+          </p>
+        </section>
         <div className="compare-grid">
           {[
             { selected: compareA, set: setCompareA, data: a },
@@ -670,7 +737,18 @@ export function Workspace({
               </p>
               <ul className="config-summary">
                 {configSummary(v.data.config).map((line, k) => (
-                  <li key={k}>{line}</li>
+                  <li
+                    key={k}
+                    className={
+                      (i === 0 ? diff.removed : diff.added).includes(line)
+                        ? i === 0
+                          ? "diff-removed"
+                          : "diff-added"
+                        : undefined
+                    }
+                  >
+                    {line}
+                  </li>
                 ))}
               </ul>
               <p>예상: {v.data.prediction || "미기록"}</p>

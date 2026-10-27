@@ -3135,3 +3135,52 @@ pre {
     grid-template-columns: 1fr;
   }
 }
+/* 버전 비교 */
+.compare-diff {
+  margin: 16px 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.diff-list {
+  padding-left: 0;
+  list-style: none;
+}
+.diff-removed,
+.diff-added {
+  border-radius: 6px;
+  padding: 2px 6px;
+}
+.diff-removed {
+  background: #fbe9e2;
+  color: #8a3d22;
+  text-decoration: line-through;
+}
+.diff-added {
+  background: #e3f1ea;
+  color: #2f5a49;
+  font-weight: 700;
+}
+.diff-list .diff-removed::before {
+  content: "− ";
+}
+.diff-list .diff-added::before {
+  content: "+ ";
+}
+.side-by-side {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 14px;
+}
+.side-run {
+  min-width: 0;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  padding: 12px;
+}
+@media (max-width: 900px) {
+  .side-by-side {
+    grid-template-columns: 1fr;
+  }
+}
