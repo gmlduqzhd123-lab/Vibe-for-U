@@ -1,4 +1,4 @@
-import { APP_PREFIX, LIMITS, SCHEMA_VERSION, uid } from "./model";
+import { APP_PREFIX, LIMITS, SCHEMA_VERSION, kinds, uid } from "./model";
 import type {
   AIData,
   Check,
@@ -164,7 +164,33 @@ function unique(ids: string[], path: string) {
 }
 export function validateConfig(value: unknown): Config {
   const c = obj(value, "설정");
-  const kind = one(c.kind, ["quiz", "story", "timer"], "프로젝트 종류");
+  const kind = one(c.kind, kinds, "프로젝트 종류");
+  if (kind === "pattern") {
+    const size = num(c.size, "판 크기", LIMITS.boardMin, LIMITS.boardMax);
+    const commands = arr(c.commands, "명령", 1, LIMITS.commands).map((v) => {
+      const m = obj(v, "명령");
+      return {
+        dir: one(m.dir, ["right", "down", "left", "up"] as const, "명령 방향"),
+        count: num(m.count, "명령 칸 수", 1, LIMITS.stepCount),
+      };
+    });
+    const target = arr(c.target, "목표 칸", 1, size * size).map((v) => {
+      const t = str(v, "목표 칸", 5);
+      const m = /^(\d+),(\d+)$/.exec(t);
+      if (!m || Number(m[1]) >= size || Number(m[2]) >= size)
+        throw new Error("목표 칸: 판 안의 칸이어야 해요.");
+      return t;
+    });
+    unique(target, "목표 칸");
+    return {
+      kind,
+      size,
+      repeat: num(c.repeat, "반복 횟수", 1, LIMITS.repeat),
+      commands,
+      edge: one(c.edge, ["stop", "wrap"] as const, "가장자리 규칙"),
+      target,
+    };
+  }
   if (kind === "quiz") {
     const questions = arr(c.questions, "문항", 1, LIMITS.questions).map(
       (v, i) => {
@@ -364,7 +390,7 @@ function validateFeedback(v: unknown): Feedback | null {
 }
 export function validateWork(v: unknown): Work {
   const w = obj(migrateWork(v), "작품");
-  const kind = one(w.kind, ["quiz", "story", "timer"], "프로젝트 종류");
+  const kind = one(w.kind, kinds, "프로젝트 종류");
   const missionId = str(w.missionId, "미션", 80);
   if (!new RegExp(`^${kind}-[1-4]$`).test(missionId))
     throw new Error("지원하지 않는 미션이에요.");

@@ -139,6 +139,7 @@ export function Workspace({
         {(d.config.kind === "quiz" &&
           (d.config.scoring === "attempt" || !d.config.resetScore)) ||
         (d.config.kind === "timer" && !d.config.showEnd) ||
+        (d.config.kind === "pattern" && d.config.edge === "wrap") ||
         (m.learningError &&
           d.config.kind === "story" &&
           d.config.scenes[0]?.choices[1]?.to === "tree") ? (

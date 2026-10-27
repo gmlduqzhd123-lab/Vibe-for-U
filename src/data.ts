@@ -1,4 +1,5 @@
-import type { Config, Kind, Mission } from "./model";
+import type { Config, Kind, Mission, PatternConfig } from "./model";
+import { kinds } from "./model";
 export const quiz: Config = {
   kind: "quiz",
   scoring: "once",
@@ -58,6 +59,72 @@ export const timer: Config = {
   showEnd: true,
   endMessage: "약속한 시간이 끝났어요! 잠깐 쉬어 가요.",
 };
+const stairs = (n: number) =>
+  Array.from({ length: n }, (_, i) => [`${i},${i}`, `${i + 1},${i}`])
+    .flat()
+    .concat(`${n},${n}`);
+// 패턴 미션은 미션마다 명령과 목표 모양이 달라 시작 설정을 따로 둔다.
+const patternStarters: PatternConfig[] = [
+  {
+    kind: "pattern",
+    size: 5,
+    repeat: 1,
+    edge: "stop",
+    commands: [
+      { dir: "right", count: 3 },
+      { dir: "down", count: 3 },
+    ],
+    target: ["0,0", "1,0", "2,0", "3,0", "3,1", "3,2", "3,3"],
+  },
+  {
+    kind: "pattern",
+    size: 5,
+    repeat: 3,
+    edge: "stop",
+    commands: [
+      { dir: "right", count: 1 },
+      { dir: "down", count: 1 },
+    ],
+    target: stairs(3),
+  },
+  {
+    kind: "pattern",
+    size: 5,
+    repeat: 6,
+    edge: "wrap",
+    commands: [
+      { dir: "right", count: 1 },
+      { dir: "down", count: 1 },
+    ],
+    target: stairs(4),
+  },
+  {
+    kind: "pattern",
+    size: 5,
+    repeat: 1,
+    edge: "stop",
+    commands: [
+      { dir: "right", count: 3 },
+      { dir: "down", count: 3 },
+      { dir: "left", count: 3 },
+    ],
+    target: [
+      "0,0",
+      "1,0",
+      "2,0",
+      "3,0",
+      "3,1",
+      "3,2",
+      "3,3",
+      "2,3",
+      "1,3",
+      "0,3",
+      "0,2",
+      "0,1",
+    ],
+  },
+];
+export const pattern: Config = patternStarters[0];
 const specifications: Record<
   Kind,
   {
@@ -303,13 +370,102 @@ const specifications: Record<
       closing: "기록을 저장할 때 실행 중인 시계까지 계속 돌아가야 할까요?",
     },
   ],
+  pattern: [
+    {
+      title: "명령은 차례대로 움직여요",
+      goal: "명령 순서대로 칸을 칠해 모양을 그려요.",
+      prediction: "오른쪽 3칸, 아래 3칸 명령이면 어떤 모양이 될까요?",
+      tests: [
+        {
+          label: "명령 순서",
+          expected: "오른쪽으로 3칸 칠한 뒤 아래로 3칸 칠해 ㄱ 모양이 된다.",
+        },
+        { label: "처음으로", expected: "빈 판의 첫 칸에서 다시 시작한다." },
+      ],
+      task: "두 명령의 순서를 바꾸면 모양이 어떻게 달라질지 예상하고 실행해 보세요.",
+      hints: [
+        "한 칸씩 그리기로 첫 명령이 끝나는 곳을 봐요.",
+        "명령은 위에서부터 차례대로 실행돼요.",
+        "명령 1과 명령 2의 방향을 서로 바꿔 보세요.",
+      ],
+      closing: "같은 명령도 순서가 바뀌면 왜 다른 모양이 될까요?",
+    },
+    {
+      title: "반복하면 계단이 돼요",
+      goal: "명령 묶음을 반복해 같은 무늬를 이어 그려요.",
+      prediction: "오른쪽 1칸·아래 1칸을 3번 반복하면 칸이 몇 개 칠해질까요?",
+      tests: [
+        {
+          label: "반복 횟수",
+          expected: "명령 묶음이 3번 실행되어 계단 모양이 된다.",
+        },
+        { label: "칠한 칸 수", expected: "첫 칸을 포함해 7칸이 칠해진다." },
+      ],
+      task: "반복을 4번으로 바꾸기 전에 칠해질 칸 수를 예상하고, 목표 모양에도 계단 한 칸을 더해 보세요.",
+      hints: [
+        "한 번 반복할 때 몇 칸이 칠해지는지 세어 봐요.",
+        "첫 칸은 처음부터 칠해져 있어요.",
+        "칠한 칸 = 1 + 반복 횟수 × 2예요.",
+      ],
+      closing:
+        "같은 명령을 여러 번 적는 것과 반복을 쓰는 것은 무엇이 다를까요?",
+    },
+    {
+      title: "어라? 그림이 반대편에서 나와요!",
+      goal: "판 끝에서 반대편으로 넘어가는 이동을 찾아 고쳐요.",
+      prediction: "계단이 판 끝에 닿은 뒤에도 명령이 남으면 어떻게 될까요?",
+      tests: [
+        {
+          label: "가장자리 확인",
+          expected: "판 끝에서 멈추고 반대편 칸을 칠하지 않는다.",
+        },
+        {
+          label: "수정 후 재검사",
+          expected: "목표 계단 9칸과 같은 모양이 된다.",
+        },
+      ],
+      task: "가장자리 규칙을 「가장자리에서 멈추기」로 바꾸고 같은 그리기를 다시 검사하세요.",
+      hints: [
+        "한 칸씩 그리기로 계단 끝을 지켜봐요.",
+        "(4,4) 다음 이동이 어디로 가는지 확인해요.",
+        "설정의 판 가장자리 규칙을 「멈추기」로 바꿔요.",
+      ],
+      closing: "판 밖으로 나가는 순간 앱은 무엇을 확인해야 할까요?",
+    },
+    {
+      title: "한 칸씩 따라가며 네모 완성",
+      goal: "한 칸씩 실행하며 위치를 기록하고 빠진 명령을 찾아요.",
+      prediction: "세 명령만으로 네모가 닫힐까요? 마지막 위치는 어디일까요?",
+      tests: [
+        {
+          label: "한 칸씩 위치",
+          expected: "명령마다 도착한 위치를 기록할 수 있다.",
+        },
+        {
+          label: "네모 완성",
+          expected: "4×4 네모 둘레 12칸이 모두 칠해진다.",
+        },
+      ],
+      task: "한 칸씩 그리기로 위치를 기록하고, 빠진 명령을 더해 네모를 완성하세요.",
+      hints: [
+        "명령이 하나 끝날 때마다 현재 위치를 적어요.",
+        "마지막 위치에서 첫 칸까지 몇 칸 남았나요?",
+        "위쪽으로 2칸 가는 명령을 추가해 보세요.",
+      ],
+      closing: "한 칸씩 실행하면 어떤 점을 더 잘 찾을 수 있나요?",
+    },
+  ],
 };
-export const missions: Mission[] = (
-  ["quiz", "story", "timer"] as Kind[]
-).flatMap((kind) =>
+export const missions: Mission[] = kinds.flatMap((kind) =>
   specifications[kind].map((s, i) => {
     const starter = structuredClone(
-      kind === "quiz" ? quiz : kind === "story" ? story : timer,
+      kind === "quiz"
+        ? quiz
+        : kind === "story"
+          ? story
+          : kind === "timer"
+            ? timer
+            : patternStarters[i],
     );
     if (kind === "quiz" && starter.kind === "quiz") {
       if (i === 2) starter.scoring = "attempt";

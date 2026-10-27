@@ -593,6 +593,13 @@ main {
 .project-card.timer:hover {
   background: #e7e3f3;
 }
+.project-card.pattern {
+  background: #eaf1f4;
+  border-color: #d6e3e9;
+}
+.project-card.pattern:hover {
+  background: #e0ecf1;
+}
 .project-card h3 {
   font-size: 18px;
   margin: 15px 0 9px;
@@ -644,6 +651,11 @@ main {
 .project-icon.timer {
   background: #dfd9f0;
   color: #695887;
+}
+.pattern .project-icon,
+.project-icon.pattern {
+  background: #d3e4ec;
+  color: #3f6273;
 }
 .project-bottom {
   display: flex;
@@ -3182,5 +3194,52 @@ pre {
 @media (max-width: 900px) {
   .side-by-side {
     grid-template-columns: 1fr;
+  }
+}
+/* 패턴 그리기 */
+.pattern-board {
+  display: grid;
+  gap: 3px;
+  width: min(100%, 280px);
+  aspect-ratio: 1;
+  margin: 12px auto;
+  padding: 6px;
+  background: #f2efe8;
+  border-radius: 10px;
+}
+.pattern-board > * {
+  aspect-ratio: 1;
+  min-width: 0;
+  border-radius: 4px;
+  background: #fff;
+  border: 1px solid var(--line);
+  padding: 0;
+}
+.pattern-board .target {
+  border: 2px dashed #3f6273;
+}
+.pattern-board .painted {
+  background: #5b8fa6;
+  border-color: #3f6273;
+}
+.pattern-board .current {
+  outline: 3px solid var(--orange);
+  outline-offset: -3px;
+}
+.target-editor button[aria-pressed="true"] {
+  background: #9fc3d3;
+}
+.command-list {
+  padding-left: 20px;
+}
+.command-list li {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 10px;
+  align-items: end;
+}
+@media (max-width: 640px) {
+  .command-list li {
+    grid-template-columns: 1fr 1fr;
   }
 }

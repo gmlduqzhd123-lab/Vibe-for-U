@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { missions, lessons, rubric } from "./data";
-import { kindNames, stageDone } from "./model";
+import { kindNames, kinds, stageDone } from "./model";
 import type { Kind, Mission, Work } from "./model";
 import { Empty, Icon, Pill } from "./ui";
 import { ClassReview } from "./ClassReview";
@@ -33,7 +33,7 @@ export function Missions({
   works: Work[];
   go: Navigate;
 }) {
-  const valid = ["quiz", "story", "timer"].includes(filter ?? "");
+  const valid = (kinds as string[]).includes(filter ?? "");
   return (
     <>
       <div className="page-heading">
@@ -44,13 +44,13 @@ export function Missions({
         </div>
       </div>
       <div className="filter-row">
-        {["all", "quiz", "story", "timer"].map((k) => (
+        {["all", ...kinds].map((k) => (
           <button
             className={(!valid && k === "all") || k === filter ? "active" : ""}
             key={k}
             onClick={() => go(k === "all" ? "missions" : `missions/${k}`)}
           >
-            {k === "all" ? "전체 12개" : kindNames[k as Kind]}
+            {k === "all" ? `전체 ${missions.length}개` : kindNames[k as Kind]}
           </button>
         ))}
       </div>
@@ -245,6 +245,21 @@ export function Teacher({
       kind: "timer",
       action: "초기화한 다음 다시 시작하기",
       expected: "설정한 시간·정지 상태로 돌아간 뒤 다시 실행된다.",
+    },
+    {
+      kind: "pattern",
+      action: "그리기 전에 모양을 예상하고 모두 그리기",
+      expected: "명령 순서대로 칸이 칠해지고 목표 모양과 같다.",
+    },
+    {
+      kind: "pattern",
+      action: "한 칸씩 그리며 위치 기록하기",
+      expected: "이동할 때마다 현재 위치가 한 칸씩 바뀐다.",
+    },
+    {
+      kind: "pattern",
+      action: "판 끝에 닿은 뒤에도 그리기",
+      expected: "판 끝에서 멈추고 반대편 칸을 칠하지 않는다.",
     },
   ];
   useEffect(() => {
@@ -492,6 +507,7 @@ export function Teacher({
               <option value="quiz">퀴즈</option>
               <option value="story">갈림길 이야기</option>
               <option value="timer">타이머</option>
+              <option value="pattern">패턴 그리기</option>
             </select>
           </label>
           <p>

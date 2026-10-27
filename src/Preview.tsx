@@ -11,6 +11,7 @@ import {
 } from "./engines";
 import type { Config } from "./model";
 import { Icon, Pill } from "./ui";
+import { PatternPreview } from "./PatternPreview";
 export function Preview({
   config,
   onRun,
@@ -41,6 +42,8 @@ export function Preview({
     };
   }, [clock.running, config]);
   const run = () => onRun();
+  if (config.kind === "pattern")
+    return <PatternPreview config={config} onRun={onRun} />;
   if (config.kind === "quiz") {
     const question = config.questions[q.index];
     return (

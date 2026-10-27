@@ -1,4 +1,5 @@
 import type { Config, Snapshot, Work } from "./model";
+import { dirNames } from "./engines";
 export function updatePrediction(d: Snapshot, prediction: string): Snapshot {
   return {
     ...d,
@@ -25,6 +26,13 @@ export function configSummary(c: Config): string[] {
             `${s.title}에서 ‘${ch.label}’ → ${c.scenes.find((t) => t.id === ch.to)?.title ?? ch.to}`,
         ),
       ),
+    ];
+  if (c.kind === "pattern")
+    return [
+      `판 ${c.size}×${c.size} · 명령 묶음 ${c.repeat}번 반복`,
+      `명령: ${c.commands.map((m) => `${dirNames[m.dir]} ${m.count}칸`).join(" → ")}`,
+      `가장자리: ${c.edge === "stop" ? "멈추기" : "반대편으로 넘어가기 (학습용 오류)"}`,
+      `목표 칸 ${c.target.length}개`,
     ];
   return [
     `제한 시간: ${c.seconds}초`,

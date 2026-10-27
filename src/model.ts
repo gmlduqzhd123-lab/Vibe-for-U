@@ -1,4 +1,5 @@
-export type Kind = "quiz" | "story" | "timer";
+export type Kind = "quiz" | "story" | "timer" | "pattern";
+export const kinds: Kind[] = ["quiz", "story", "timer", "pattern"];
 export type Mode = "child" | "adult";
 export type Question = {
   id: string;
@@ -34,7 +35,17 @@ export type TimerConfig = {
   endMessage: string;
   showEnd: boolean;
 };
-export type Config = QuizConfig | StoryConfig | TimerConfig;
+export type Direction = "right" | "down" | "left" | "up";
+// 칸 판에서 명령 묶음을 반복해 그림을 그린다. 시작은 왼쪽 위 칸(0,0)이다.
+export type PatternConfig = {
+  kind: "pattern";
+  size: number;
+  repeat: number;
+  commands: { dir: Direction; count: number }[];
+  edge: "stop" | "wrap";
+  target: string[];
+};
+export type Config = QuizConfig | StoryConfig | TimerConfig | PatternConfig;
 export type Check = {
   id: string;
   label: string;
@@ -143,6 +154,11 @@ export const LIMITS = {
   versions: 30,
   checks: 100,
   seconds: 3600,
+  commands: 12,
+  boardMin: 4,
+  boardMax: 10,
+  repeat: 10,
+  stepCount: 10,
 };
 export const uid = () => crypto.randomUUID();
 export const clone = <T>(value: T): T => structuredClone(value);
@@ -150,6 +166,34 @@ export const kindNames: Record<Kind, string> = {
   quiz: "퀴즈",
   story: "갈림길 이야기",
   timer: "타이머",
+  pattern: "패턴 그리기",
+};
+const promiseText: Record<
+  Kind,
+  { features: string; input: string; exceptions: string }
+> = {
+  quiz: {
+    features: "정답을 고르고 점수와 결과 보기",
+    input: "정답이라고 생각하는 선택지 누르기",
+    exceptions:
+      "여러 번 눌러도 문제당 한 번만 채점하고 다시 시작하면 0점으로 돌아가기",
+  },
+  story: {
+    features: "선택에 따라 다른 결말 만나기",
+    input: "이야기 속 선택지 누르기",
+    exceptions: "모든 선택은 있는 장면으로 이동하고 처음으로 돌아갈 수 있기",
+  },
+  timer: {
+    features: "시간을 정하고 시작·일시정지·초기화하기",
+    input: "시간을 입력하고 시작 버튼 누르기",
+    exceptions: "연속 시작해도 한 번만 실행하고, 멈춘 시간부터 재개하기",
+  },
+  pattern: {
+    features: "명령과 반복으로 판 위에 모양 그리기",
+    input: "명령 순서와 반복 횟수를 정하고 그리기 버튼 누르기",
+    exceptions:
+      "판 가장자리에서는 멈추고, 처음으로 누르면 빈 판의 첫 칸에서 다시 그리기",
+  },
 };
 export const now = () => new Date().toISOString();
 export function arrangePrompt(data: PromiseData, mode: Mode) {
@@ -195,6 +239,7 @@ export function makeWork(mission: Mission, normal = false): Work {
       config.resetScore = true;
     }
     if (config.kind === "timer") config.showEnd = true;
+    if (config.kind === "pattern") config.edge = "stop";
     if (config.kind === "story") {
       const start = config.scenes.find((s) => s.id === config.start)!;
       if (start.choices[1]) start.choices[1].to = "sun";
@@ -209,25 +254,10 @@ export function makeWork(mission: Mission, normal = false): Work {
     promise: {
       audience: "우리 반 친구",
       problem: mission.goal,
-      features:
-        mission.kind === "quiz"
-          ? "정답을 고르고 점수와 결과 보기"
-          : mission.kind === "story"
-            ? "선택에 따라 다른 결말 만나기"
-            : "시간을 정하고 시작·일시정지·초기화하기",
+      features: promiseText[mission.kind].features,
       done: mission.tests.map((t) => t.expected).join(" / "),
-      input:
-        mission.kind === "quiz"
-          ? "정답이라고 생각하는 선택지 누르기"
-          : mission.kind === "story"
-            ? "이야기 속 선택지 누르기"
-            : "시간을 입력하고 시작 버튼 누르기",
-      exceptions:
-        mission.kind === "quiz"
-          ? "여러 번 눌러도 문제당 한 번만 채점하고 다시 시작하면 0점으로 돌아가기"
-          : mission.kind === "story"
-            ? "모든 선택은 있는 장면으로 이동하고 처음으로 돌아갈 수 있기"
-            : "연속 시작해도 한 번만 실행하고, 멈춘 시간부터 재개하기",
+      input: promiseText[mission.kind].input,
+      exceptions: promiseText[mission.kind].exceptions,
     },
     originalPrompt: "",
     arrangedPrompt: "",

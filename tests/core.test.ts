@@ -293,8 +293,8 @@ describe("파일 신뢰 경계와 저장", () => {
     ).rejects.toThrow();
     expect((await listWorks()).length).toBe(0);
   });
-  it("모든 12개 미션은 유효한 시작 데이터를 갖는다", () => {
-    expect(missions).toHaveLength(12);
+  it("모든 16개 미션은 유효한 시작 데이터를 갖는다", () => {
+    expect(missions).toHaveLength(16);
     for (const m of missions)
       expect(validateConfig(m.starter)).toEqual(m.starter);
   });

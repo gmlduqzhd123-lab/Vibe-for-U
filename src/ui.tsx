@@ -38,6 +38,16 @@ export function Icon({ name, size = 20 }: { name: string; size?: number }) {
         <path d="M12 21V10M12 14 5 7M12 14l7-7M3 3h5v5H3zM17 3h5v5h-5z" />
       </>
     ),
+    pattern: (
+      <>
+        <rect x="3" y="3" width="18" height="18" rx="3" />
+        <path d="M3 9h18M3 15h18M9 3v18M15 3v18" />
+        <path
+          d="M3.5 3.5h5v5h-5zM9.5 9.5h5v5h-5zM15.5 15.5h5v5h-5z"
+          fill="currentColor"
+        />
+      </>
+    ),
     timer: (
       <>
         <circle cx="12" cy="13" r="8" />
