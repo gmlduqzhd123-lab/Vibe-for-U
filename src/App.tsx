@@ -7,7 +7,7 @@ import {
   useState,
 } from "react";
 import type { Mode, Work, Mission, Snapshot, Version } from "./model";
-import { APP_PREFIX, LIMITS, makeWork, uid, now, clone } from "./model";
+import { APP_PREFIX, LIMITS, makeWork, modes, uid, now, clone } from "./model";
 import { missions } from "./data";
 import {
   clearWorks,
@@ -46,9 +46,10 @@ const readRoute = () => location.hash.replace(/^#\/?/, "") || "home";
 export default function App() {
   const [route, setRoute] = useState(readRoute);
   const [runtimeEpoch, setRuntimeEpoch] = useState(0);
-  const [mode, setModeState] = useState<Mode>(() =>
-    getSetting<string>("mode", "child") === "adult" ? "adult" : "child",
-  );
+  const [mode, setModeState] = useState<Mode>(() => {
+    const saved = getSetting<string>("mode", "child");
+    return modes.includes(saved as Mode) ? (saved as Mode) : "child";
+  });
   const [works, setWorks] = useState<Work[]>([]);
   const worksRef = useRef<Work[]>([]);
   const [hidden, setHidden] = useState<string[]>(() => {
@@ -600,6 +601,7 @@ export default function App() {
                 onChange={(e) => setMode(e.target.value as Mode)}
               >
                 <option value="child">어린이 모드</option>
+                <option value="easy">쉬운 모드 (3~4학년)</option>
                 <option value="adult">일반 입문자 모드</option>
               </select>
             </label>

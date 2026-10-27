@@ -4,6 +4,7 @@ import { kindNames, kinds, stageDone } from "./model";
 import type { Kind, Mission, Work } from "./model";
 import { Empty, Icon, Pill } from "./ui";
 import { ClassReview } from "./ClassReview";
+import { SpeakButton } from "./Speak";
 const materialPath = (filename: string) =>
   `${import.meta.env.BASE_URL}materials/${filename}`;
 const classroomDocuments = [
@@ -128,6 +129,10 @@ export function MissionDetail({
           </Pill>
           <h2>이번에는 이렇게 해 봐요</h2>
           <p>{m.guide}</p>
+          <SpeakButton
+            text={`${m.title}. ${m.goal} ${m.guide} 먼저 예상하기. ${m.prediction}`}
+            label="미션 안내 듣기"
+          />
           <h3>먼저 예상하기</h3>
           <p>{m.prediction}</p>
           <h3>검사할 것</h3>

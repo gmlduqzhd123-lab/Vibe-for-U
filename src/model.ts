@@ -1,6 +1,8 @@
 export type Kind = "quiz" | "story" | "timer" | "pattern";
 export const kinds: Kind[] = ["quiz", "story", "timer", "pattern"];
-export type Mode = "child" | "adult";
+// easy: 3~4학년용. 어린이 모드 안내에 낱말 블록·읽어 주기·큰 글씨를 더한다.
+export type Mode = "child" | "adult" | "easy";
+export const modes: Mode[] = ["child", "easy", "adult"];
 export type Question = {
   id: string;
   text: string;
@@ -197,7 +199,7 @@ const promiseText: Record<
 };
 export const now = () => new Date().toISOString();
 export function arrangePrompt(data: PromiseData, mode: Mode) {
-  return mode === "child"
+  return mode !== "adult"
     ? `사용할 사람은 ${data.audience}이에요.\n해결할 문제: ${data.problem}\n누르거나 입력할 것: ${data.input}\n필요한 기능: ${data.features}\n다시 누르거나 처음으로 돌아갈 때: ${data.exceptions}\n완성이라고 할 수 있는 조건: ${data.done}`
     : `목적: ${data.problem}\n사용자: ${data.audience}\n입력: ${data.input}\n기능과 결과: ${data.features}\n예외 상황: ${data.exceptions}\n완료 조건: ${data.done}`;
 }

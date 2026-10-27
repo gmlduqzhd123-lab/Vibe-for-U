@@ -3243,3 +3243,65 @@ pre {
     grid-template-columns: 1fr 1fr;
   }
 }
+/* 쉬운 모드 (3~4학년) · 낱말 블록 · 읽어 주기 */
+.speak-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+.speak-button[aria-pressed="true"] {
+  background: #e3f1ea;
+  border-color: #c4dbd1;
+}
+.block-prompt {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin: 12px 0;
+  background: #fbf8f2;
+}
+.block-group {
+  margin: 10px 0;
+}
+.block-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+.block-chip {
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 14px;
+}
+.block-chip[aria-pressed="true"] {
+  background: var(--purple);
+  border-color: var(--purple-dark);
+  color: #fff;
+}
+.block-sentence {
+  font-size: 16px;
+  background: #fff;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  padding: 12px;
+}
+.mode-easy main .field label,
+.mode-easy main .field > span,
+.mode-easy main input,
+.mode-easy main select,
+.mode-easy main textarea,
+.mode-easy main button,
+.mode-easy main p,
+.mode-easy .prompt-question {
+  font-size: 16px;
+  line-height: 1.7;
+}
+.mode-easy main h2 {
+  font-size: 22px;
+}
+.mode-easy .block-chip {
+  font-size: 16px;
+  padding: 10px 16px;
+}

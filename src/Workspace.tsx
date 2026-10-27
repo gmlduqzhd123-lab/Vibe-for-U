@@ -15,6 +15,15 @@ import { Field, Hint, Icon, Pill } from "./ui";
 import { Settings } from "./Settings";
 import { Preview } from "./Preview";
 import { LearningWords } from "./Welcome";
+import { BlockPrompt, predictionStarters } from "./BlockPrompt";
+import { SpeakButton } from "./Speak";
+const stageGuides = [
+  "누가, 어떤 순간에 쓸 앱인지 약속해요.",
+  "내 말로 적고, 검사할 수 있는 요청으로 정리해요.",
+  "누르기 전에 예상하고, 설정과 결과를 비교해요.",
+  "기대한 결과와 실제 결과를 나란히 적어요.",
+  "어떻게 움직이는지, 무엇을 바꿨는지 설명해요.",
+];
 export const stageNames = [
   "목표 정하기",
   "요청 작성하기",
@@ -173,7 +182,7 @@ export function Workspace({
             <Pill>실제 AI 활동 · {aiStatus(d.ai)}</Pill>
             <h2>요청은 여기서, 실제 제작은 외부 도구에서</h2>
             <p>
-              {mode === "child"
+              {mode !== "adult"
                 ? "내가 쓴 요청문과 검사 조건을 교사·성인에게 전달해요. 교사·성인이 외부 AI 도구로 만들고 실행하면, 그 결과를 함께 관찰해요."
                 : "외부 AI 개발 도구에 요청문을 붙여 넣어 생성·실행한 뒤 직접 관찰한 결과를 기록하세요."}{" "}
               복사만으로 실제 제작이 완료되지는 않아요.
@@ -262,17 +271,17 @@ export function Workspace({
             <div className="step-heading">
               <Pill>STEP {String(step + 1).padStart(2, "0")}</Pill>
               <h2>{stageNames[step]}</h2>
-              <p>
-                {
-                  [
-                    "누가, 어떤 순간에 쓸 앱인지 약속해요.",
-                    "내 말로 적고, 검사할 수 있는 요청으로 정리해요.",
-                    "누르기 전에 예상하고, 설정과 결과를 비교해요.",
-                    "기대한 결과와 실제 결과를 나란히 적어요.",
-                    "어떻게 움직이는지, 무엇을 바꿨는지 설명해요.",
-                  ][step]
-                }
-              </p>
+              <p>{stageGuides[step]}</p>
+              <SpeakButton
+                text={[
+                  stageNames[step],
+                  stageGuides[step],
+                  ["", "", m.prediction, m.task, m.closing][step],
+                ]
+                  .filter(Boolean)
+                  .join(". ")}
+                label="이 단계 안내 듣기"
+              />
             </div>
             {step === 0 ? (
               <>
@@ -335,7 +344,7 @@ export function Workspace({
                     }
                   />
                 ))}
-                <details className="hint" open={mode === "child"}>
+                <details className="hint" open={mode !== "adult"}>
                   <summary>입력 · 조건 · 앱이 기억하는 값</summary>
                   <p>
                     입력은 내가 누른 답이에요. 조건은 “정답인가? 이미 답했나?”를
@@ -347,12 +356,28 @@ export function Workspace({
             ) : null}
             {step === 1 ? (
               <>
+                {mode === "easy" ? (
+                  <BlockPrompt
+                    kind={w.kind}
+                    current={d.originalPrompt}
+                    onInsert={(v) => patch({ originalPrompt: v })}
+                  />
+                ) : mode === "child" ? (
+                  <details className="hint">
+                    <summary>글쓰기가 어렵다면 · 낱말 블록으로 만들기</summary>
+                    <BlockPrompt
+                      kind={w.kind}
+                      current={d.originalPrompt}
+                      onInsert={(v) => patch({ originalPrompt: v })}
+                    />
+                  </details>
+                ) : null}
                 <Field
                   area
                   label="내가 처음 쓴 요청문 (원문)"
                   value={d.originalPrompt}
                   placeholder={
-                    mode === "child"
+                    mode !== "adult"
                       ? "우리 반 친구가 쓸 퀴즈를 만들고 싶어요. 답을 고르면…"
                       : "목적과 원하는 기능을 자유롭게 적으세요."
                   }
@@ -398,6 +423,31 @@ export function Workspace({
                     placeholder="이렇게 누르면… 이렇게 될 것 같아요. 왜냐하면…"
                     onChange={(v) => edit((s) => updatePrediction(s, v))}
                   />
+                  {mode === "easy" ? (
+                    <div
+                      className="block-row"
+                      role="group"
+                      aria-label="예상 문장 시작 블록"
+                    >
+                      {predictionStarters.map((b) => (
+                        <button
+                          key={b}
+                          type="button"
+                          className="block-chip"
+                          onClick={() =>
+                            edit((s) =>
+                              updatePrediction(
+                                s,
+                                s.prediction ? `${s.prediction} ${b}` : b,
+                              ),
+                            )
+                          }
+                        >
+                          + {b}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
                 <h3>설정과 규칙</h3>
                 <p className="muted small">
