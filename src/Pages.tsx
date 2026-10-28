@@ -5,6 +5,7 @@ import { Empty, Icon, Pill } from "./ui";
 import { StoragePanel } from "./storageHealth";
 import { SpeakButton } from "./Speak";
 import { useLang, useT } from "./i18n";
+import { localizeMission } from "./missionsEn";
 export type Navigate = (path: string) => void;
 export { Home } from "./Welcome";
 export function Missions({
@@ -28,9 +29,6 @@ export function Missions({
           <p>
             {t("처음이라면 퀴즈 1부터. 문제를 찾는 연습은 퀴즈 3을 골라요.")}
           </p>
-          {lang !== "ko" ? (
-            <p className="note">{t("미션 본문은 한국어로 되어 있어요.")}</p>
-          ) : null}
         </div>
       </div>
       <div className="filter-row">
@@ -48,6 +46,7 @@ export function Missions({
       </div>
       <div className="mission-grid">
         {missions
+          .map((m) => localizeMission(m, lang))
           .filter((m) => !valid || m.kind === filter)
           .map((m) => {
             const attempts = works.filter((w) => w.missionId === m.id);

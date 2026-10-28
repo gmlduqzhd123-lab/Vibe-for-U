@@ -5,6 +5,7 @@ import type { Kind, Mission } from "./model";
 import { Icon, Pill } from "./ui";
 import { ClassReview } from "./ClassReview";
 import type { Navigate } from "./Pages";
+import { useLang, useT } from "./i18n";
 const materialPath = (filename: string) =>
   `${import.meta.env.BASE_URL}materials/${filename}`;
 const classroomDocuments = [
@@ -34,6 +35,8 @@ export function Teacher({
   copy: (text: string) => void;
   message: (s: string) => void;
 }) {
+  const t = useT();
+  const lang = useLang();
   const [tab, setTab] = useState("lessons");
   const [cardKind, setCardKind] = useState<Kind | "all">("all");
   const lessonMissions = [
@@ -139,6 +142,11 @@ export function Teacher({
           <span className="eyebrow">모두에게 열린 학습 자료</span>
           <h1>교사 자료실</h1>
           <p>40분 × 8차시. 아이의 생각과 검사 과정을 함께 살펴보세요.</p>
+          {lang !== "ko" ? (
+            <p className="note" lang="en">
+              {t("차시 안내와 수업 자료는 한국어로 되어 있어요.")}
+            </p>
+          ) : null}
         </div>
         <button onClick={() => window.print()}>
           <Icon name="print" />

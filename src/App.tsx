@@ -44,6 +44,7 @@ import {
 import type { PeerRequest } from "./peer";
 import "./Welcome.css";
 import { LangContext, langs, translate } from "./i18n";
+import { localizeMission } from "./missionsEn";
 import type { Lang } from "./i18n";
 const SharePage = lazy(() => import("./SharePage"));
 // 첫 화면에 필요 없는 화면은 열 때 불러온다(오프라인 캐시에는 미리 들어간다).
@@ -313,9 +314,8 @@ export default function App() {
       );
     return readOnly;
   };
-  const mission = missions.find(
-    (m) => m.id === (active?.missionId ?? parts[1]),
-  );
+  const found = missions.find((m) => m.id === (active?.missionId ?? parts[1]));
+  const mission = found && localizeMission(found, lang);
   useEffect(() => {
     if (active && parts[0] === "work") {
       setLastId(active.id);

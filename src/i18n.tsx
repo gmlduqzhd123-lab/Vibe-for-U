@@ -69,7 +69,8 @@ const en: Record<string, string> = {
   "한 번에 하나씩, 나의 속도로": "One at a time, at my own pace",
   "처음이라면 퀴즈 1부터. 문제를 찾는 연습은 퀴즈 3을 골라요.":
     "New here? Start with Quiz 1. To practise finding bugs, pick Quiz 3.",
-  "미션 본문은 한국어로 되어 있어요.": "Mission texts are in Korean.",
+  "차시 안내와 수업 자료는 한국어로 되어 있어요.":
+    "Lesson plans and classroom materials are in Korean.",
   "전체 {n}개": "All {n}",
   퀴즈: "Quiz",
   "갈림길 이야기": "Branching story",
