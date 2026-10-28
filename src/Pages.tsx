@@ -4,6 +4,7 @@ import { kindNames, kinds, stageDone } from "./model";
 import type { Kind, Mission, Work } from "./model";
 import { Empty, Icon, Pill } from "./ui";
 import { ClassReview } from "./ClassReview";
+import { StoragePanel } from "./storageHealth";
 import { SpeakButton } from "./Speak";
 import { useLang, useT } from "./i18n";
 const materialPath = (filename: string) =>
@@ -641,6 +642,7 @@ export function Library({
   clearAll,
   hiddenCount,
   reveal,
+  message,
 }: {
   works: Work[];
   go: Navigate;
@@ -651,6 +653,7 @@ export function Library({
   clearAll: () => void;
   hiddenCount: number;
   reveal: () => void;
+  message: (s: string) => void;
 }) {
   const t = useT();
   return (
@@ -737,6 +740,7 @@ export function Library({
           </button>
         </Empty>
       )}
+      <StoragePanel message={message} />
       <div className="shared-device panel">
         <div>
           <h2>{t("공용 기기 정리")}</h2>

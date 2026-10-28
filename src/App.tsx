@@ -775,6 +775,7 @@ export default function App() {
                   nextUser={nextUser}
                   clearAll={clearAll}
                   hiddenCount={works.length - visible.length}
+                  message={message}
                   reveal={() => {
                     setHidden([]);
                     setting("hidden", []);

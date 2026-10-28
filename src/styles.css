@@ -3315,3 +3315,16 @@ pre {
 .crash h1 {
   font-size: 24px;
 }
+.storage-health {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 24px;
+}
+.storage-health h2 {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
