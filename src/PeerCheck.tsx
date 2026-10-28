@@ -6,6 +6,7 @@ import { downloadText } from "./storage";
 import { Preview } from "./Preview";
 import { Empty, Field, Icon, Pill } from "./ui";
 import { missions } from "./data";
+import { ShareButton } from "./Share";
 // 친구의 작품을 내 기기에서 직접 써 보고 검사 결과 파일을 만들어 돌려준다. 내 기기에는 저장하지 않는다.
 export function PeerCheck({
   request,
@@ -40,6 +41,17 @@ export function PeerCheck({
     }
   };
   const mission = missions.find((m) => m.id === request?.missionId);
+  const responseText = () =>
+    JSON.stringify({
+      format: "ttukttak-vibe-peer-response",
+      version: 1,
+      workId: request!.workId,
+      revision: request!.revision,
+      reviewer,
+      results,
+      comment,
+      at: now(),
+    });
   const filled = results.some((r) => r.actual.trim()) || comment.trim();
   return (
     <>
@@ -142,16 +154,7 @@ export function PeerCheck({
                 onClick={() => {
                   downloadText(
                     `친구검사결과-${request.title}.json`,
-                    JSON.stringify({
-                      format: "ttukttak-vibe-peer-response",
-                      version: 1,
-                      workId: request.workId,
-                      revision: request.revision,
-                      reviewer,
-                      results,
-                      comment,
-                      at: now(),
-                    }),
+                    responseText(),
                     "application/json",
                   );
                   message(
@@ -162,6 +165,14 @@ export function PeerCheck({
                 <Icon name="download" />
                 검사 결과 파일 내려받기
               </button>
+              {filled ? (
+                <ShareButton
+                  name={`친구검사결과-${request.title}.json`}
+                  text={responseText}
+                  title="친구 검사 결과"
+                  message={message}
+                />
+              ) : null}
               <button onClick={() => setRequest(null)}>닫기</button>
             </div>
           </section>

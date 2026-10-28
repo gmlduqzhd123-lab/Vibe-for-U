@@ -906,6 +906,7 @@ export default function App() {
                   work={active}
                   go={go}
                   exportWork={() => backup([active])}
+                  message={message}
                 />
               ) : (
                 <Empty title={t("이 작품이나 미션을 찾을 수 없어요")}>

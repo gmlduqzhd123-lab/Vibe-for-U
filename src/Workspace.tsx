@@ -21,7 +21,8 @@ import { useT } from "./i18n";
 import { rubric } from "./data";
 import { RubricChoices } from "./Rubric";
 import { makePeerRequest } from "./peer";
-import { downloadText } from "./storage";
+import { backupFiles, downloadText } from "./storage";
+import { ShareButton } from "./Share";
 const stageGuides = [
   "누가, 어떤 순간에 쓸 앱인지 약속해요.",
   "내 말로 적고, 검사할 수 있는 요청으로 정리해요.",
@@ -160,6 +161,12 @@ export function Workspace({
             <Icon name="download" />
             {t("파일 백업")}
           </button>
+          <ShareButton
+            name={`뚝딱-작품-${d.title || "작품"}.json`}
+            text={() => backupFiles([w])[0]}
+            title={d.title || "뚝딱 작품"}
+            message={message}
+          />
           <button onClick={() => go(`portfolio/${w.id}`)}>
             {t("과정 포트폴리오")} <Icon name="arrow" />
           </button>
@@ -585,6 +592,13 @@ export function Workspace({
                     <Icon name="download" />
                     친구 검사 요청 파일 만들기
                   </button>
+                  <ShareButton
+                    name={`친구검사요청-${d.title || "작품"}.json`}
+                    text={() => JSON.stringify(makePeerRequest(w))}
+                    title="친구 검사 요청"
+                    message={message}
+                    label="요청 파일 공유로 보내기"
+                  />
                 </div>
                 <button className="subtle" onClick={() => go(`work/${w.id}/2`)}>
                   설정으로 돌아가 수정하기 <Icon name="arrow" />

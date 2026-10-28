@@ -4,6 +4,8 @@ import { Icon, Pill } from "./ui";
 import type { Navigate } from "./Pages";
 import { configSummary, revisionLabel } from "./learning";
 import { rubric } from "./data";
+import { ShareButton } from "./Share";
+import { backupFiles } from "./storage";
 import { levelNames } from "./classReview";
 const text = (v: string) => v || "아직 기록하지 않았어요.";
 const hasAssessment = (f: Feedback | null) =>
@@ -12,10 +14,12 @@ export function Portfolio({
   work: w,
   go,
   exportWork,
+  message = () => {},
 }: {
   work: Work;
   go: Navigate;
   exportWork: () => void;
+  message?: (s: string) => void;
 }) {
   const d = w.draft;
   return (
@@ -28,6 +32,12 @@ export function Portfolio({
         </div>
         <div className="button-row">
           <button onClick={() => go(`work/${w.id}/4`)}>이어서 기록하기</button>
+          <ShareButton
+            name={`뚝딱-작품-${d.title || "작품"}.json`}
+            text={() => backupFiles([w])[0]}
+            title={d.title || "뚝딱 작품"}
+            message={message}
+          />
           <button onClick={exportWork}>
             <Icon name="download" />
             작품 파일

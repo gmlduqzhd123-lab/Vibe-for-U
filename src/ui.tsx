@@ -38,6 +38,12 @@ export function Icon({ name, size = 20 }: { name: string; size?: number }) {
         <path d="M12 21V10M12 14 5 7M12 14l7-7M3 3h5v5H3zM17 3h5v5h-5z" />
       </>
     ),
+    send: (
+      <>
+        <path d="M21 3 3 10l7 3 3 7z" />
+        <path d="m10 13 4-4" />
+      </>
+    ),
     sound: (
       <>
         <path d="M4 9v6h4l5 4V5L8 9H4z" />
