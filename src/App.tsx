@@ -28,6 +28,7 @@ import { Explore, Prepare, QuickTry, LessonLanding } from "./Welcome";
 import { announceChange, useChanges, useWorkLock } from "./tabLock";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { PeerCheck } from "./PeerCheck";
+import { Present } from "./Present";
 import {
   applyPeerResponse,
   peerFileKind,
@@ -586,7 +587,7 @@ export default function App() {
     parts[0],
   )
     ? "home"
-    : ["teacher", "prepare"].includes(parts[0])
+    : ["teacher", "prepare", "present"].includes(parts[0])
       ? "teacher"
       : ["library", "portfolio", "peer"].includes(parts[0])
         ? "library"
@@ -603,13 +604,15 @@ export default function App() {
             ? "QR 소개 카드"
             : parts[0] === "peer"
               ? "친구 작품 검사하기"
-              : navActive === "home"
-                ? "공작소 홈"
-                : navActive === "missions"
-                  ? "미션 공작대"
-                  : navActive === "library"
-                    ? "내 작품 선반"
-                    : "교사 자료실",
+              : parts[0] === "present"
+                ? "수업 진행 화면"
+                : navActive === "home"
+                  ? "공작소 홈"
+                  : navActive === "missions"
+                    ? "미션 공작대"
+                    : navActive === "library"
+                      ? "내 작품 선반"
+                      : "교사 자료실",
   );
   const pageTitle =
     parts[0] === "work" && active
@@ -643,7 +646,7 @@ export default function App() {
   return (
     <LangContext.Provider value={lang}>
       <div
-        className={`app mode-${mode}${parts[0] === "home" ? " home-screen" : ""}`}
+        className={`app mode-${mode}${parts[0] === "home" ? " home-screen" : ""}${parts[0] === "present" ? " present-screen" : ""}`}
       >
         <a
           className="skip-link"
@@ -846,6 +849,16 @@ export default function App() {
                   go={go}
                   copy={copy}
                   message={message}
+                />
+              ) : parts[0] === "present" && mission ? (
+                <Present
+                  mission={mission}
+                  lessonNumber={
+                    /^[1-8]$/.test(parts[2] ?? "")
+                      ? Number(parts[2])
+                      : undefined
+                  }
+                  go={go}
                 />
               ) : parts[0] === "peer" ? (
                 <PeerCheck

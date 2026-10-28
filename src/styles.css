@@ -3399,3 +3399,110 @@ pre {
   color: #8a3d22;
   font-weight: 700;
 }
+/* 교사용 수업 진행 화면 (프로젝터) */
+.app.present-screen {
+  display: block;
+  min-height: 100vh;
+}
+.present-screen > .sidebar,
+.present-screen .topbar,
+.present-screen .page-footer {
+  display: none;
+}
+.present-screen .main-shell {
+  width: 100%;
+  margin-left: 0;
+}
+.present-screen main {
+  max-width: none;
+  padding: 24px 32px;
+}
+.present {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-areas:
+    "top top"
+    "slide timer"
+    "nav timer";
+  gap: 20px;
+  align-items: start;
+}
+.present-top {
+  grid-area: top;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.present-count {
+  margin-left: 12px;
+  color: var(--muted);
+}
+.present-slide {
+  grid-area: slide;
+  min-height: 52vh;
+  padding: 40px 48px;
+  border-radius: 20px;
+  background: #fff;
+  border: 1px solid var(--line);
+}
+.present-slide h1 {
+  font-size: clamp(28px, 4vw, 52px);
+  margin: 0 0 24px;
+}
+.present-slide p {
+  font-size: clamp(20px, 2.6vw, 34px);
+  line-height: 1.5;
+  margin: 0 0 16px;
+}
+.present-slide .present-lead {
+  font-weight: 700;
+  color: var(--purple-dark);
+}
+.present-nav {
+  grid-area: nav;
+}
+.present-nav .active {
+  background: var(--purple);
+  color: #fff;
+}
+.present-timer {
+  grid-area: timer;
+  display: grid;
+  gap: 12px;
+}
+.present-clock {
+  font-size: 64px;
+  font-weight: 800;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.present-roles {
+  font-size: 16px;
+  margin: 0;
+}
+.present-swap {
+  position: fixed;
+  left: 50%;
+  bottom: 32px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 18px 26px;
+  border-radius: 16px;
+  background: #fff1e6;
+  border: 2px solid var(--orange);
+  font-size: 22px;
+  box-shadow: 0 10px 30px #0002;
+}
+@media (max-width: 900px) {
+  .present {
+    grid-template-columns: 1fr;
+    grid-template-areas: "top" "slide" "nav" "timer";
+  }
+  .present-slide {
+    padding: 24px;
+  }
+}

@@ -431,6 +431,14 @@ export function Teacher({
                       </button>
                       <button
                         onClick={() =>
+                          go(`present/${lessonMissions[i]}/${i + 1}`)
+                        }
+                      >
+                        <Icon name="play" size={16} />
+                        수업 진행 화면
+                      </button>
+                      <button
+                        onClick={() =>
                           copy(
                             `${location.href.split("#")[0]}#/mission/${lessonMissions[i]}`,
                           )
