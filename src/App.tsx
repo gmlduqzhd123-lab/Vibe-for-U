@@ -7,7 +7,16 @@ import {
   useState,
 } from "react";
 import type { Mode, Work, Mission, Snapshot, Version } from "./model";
-import { APP_PREFIX, LIMITS, makeWork, modes, uid, now, clone } from "./model";
+import {
+  APP_PREFIX,
+  LIMITS,
+  makeWork,
+  modes,
+  stageNames,
+  uid,
+  now,
+  clone,
+} from "./model";
 import { missions } from "./data";
 import {
   clearWorks,
@@ -20,15 +29,12 @@ import {
   saveWork,
   jsonBytes,
 } from "./storage";
-import { Home, Library, Missions, MissionDetail, Teacher } from "./Pages";
-import { Workspace, stageNames } from "./Workspace";
-import { Portfolio } from "./Portfolio";
+import { Home, Library, Missions, MissionDetail } from "./Pages";
 import { Icon, Mascot, Empty, Field } from "./ui";
 import { Explore, Prepare, QuickTry, LessonLanding } from "./Welcome";
 import { announceChange, useChanges, useWorkLock } from "./tabLock";
 import { ErrorBoundary } from "./ErrorBoundary";
-import { PeerCheck } from "./PeerCheck";
-import { Present } from "./Present";
+
 import {
   applyPeerResponse,
   peerFileKind,
@@ -40,6 +46,22 @@ import "./Welcome.css";
 import { LangContext, langs, translate } from "./i18n";
 import type { Lang } from "./i18n";
 const SharePage = lazy(() => import("./SharePage"));
+// 첫 화면에 필요 없는 화면은 열 때 불러온다(오프라인 캐시에는 미리 들어간다).
+const Workspace = lazy(() =>
+  import("./Workspace").then((m) => ({ default: m.Workspace })),
+);
+const Portfolio = lazy(() =>
+  import("./Portfolio").then((m) => ({ default: m.Portfolio })),
+);
+const Teacher = lazy(() =>
+  import("./Teacher").then((m) => ({ default: m.Teacher })),
+);
+const PeerCheck = lazy(() =>
+  import("./PeerCheck").then((m) => ({ default: m.PeerCheck })),
+);
+const Present = lazy(() =>
+  import("./Present").then((m) => ({ default: m.Present })),
+);
 function getSetting<T>(key: string, fallback: T): T {
   try {
     const s = localStorage.getItem(APP_PREFIX + key);
@@ -819,119 +841,131 @@ export default function App() {
               resetKey={`${route}:${runtimeEpoch}`}
               onLibrary={() => go("library")}
             >
-              {loading ? (
-                <div className="empty">
-                  <p>{t("이 기기의 작품을 불러오고 있어요…")}</p>
-                </div>
-              ) : parts[0] === "home" ? (
-                <Home {...{ mode, setMode, lastWork, go, create }} />
-              ) : parts[0] === "missions" ? (
-                <Missions filter={parts[1]} works={visible} go={go} />
-              ) : parts[0] === "explore" ? (
-                <Explore go={go} />
-              ) : parts[0] === "try" ? (
-                <QuickTry go={go} create={create} />
-              ) : parts[0] === "prepare" ? (
-                <Prepare go={go} />
-              ) : parts[0] === "lesson" && /^[1-8]$/.test(parts[1] ?? "") ? (
-                <LessonLanding number={Number(parts[1])} go={go} />
-              ) : parts[0] === "share" ? (
-                <Suspense
-                  fallback={<p role="status">소개 카드를 준비하고 있어요…</p>}
-                >
-                  <SharePage go={go} copy={copy} />
-                </Suspense>
-              ) : parts[0] === "mission" && mission ? (
-                <MissionDetail mission={mission} create={create} share={copy} />
-              ) : parts[0] === "teacher" ? (
-                <Teacher
-                  create={create}
-                  go={go}
-                  copy={copy}
-                  message={message}
-                />
-              ) : parts[0] === "present" && mission ? (
-                <Present
-                  mission={mission}
-                  lessonNumber={
-                    /^[1-8]$/.test(parts[2] ?? "")
-                      ? Number(parts[2])
-                      : undefined
-                  }
-                  go={go}
-                />
-              ) : parts[0] === "peer" ? (
-                <PeerCheck
-                  request={peerRequest}
-                  setRequest={setPeerRequest}
-                  message={message}
-                />
-              ) : parts[0] === "library" ? (
-                <Library
-                  works={visible}
-                  go={go}
-                  exportAll={() => backup(visible)}
-                  importFile={() => importInput.current?.click()}
-                  remove={remove}
-                  nextUser={nextUser}
-                  clearAll={clearAll}
-                  hiddenCount={works.length - visible.length}
-                  message={message}
-                  reveal={() => {
-                    setHidden([]);
-                    setting("hidden", []);
-                  }}
-                />
-              ) : parts[0] === "work" && active && mission ? (
-                <Workspace
-                  key={active.id + runtimeEpoch}
-                  work={active}
-                  mission={mission}
-                  {...{
-                    step,
-                    mode,
-                    go,
-                    edit,
-                    copy,
-                    message,
-                    saveVersion,
-                    restore,
-                    deleteChecks,
-                    deleteVersion,
-                    readOnly,
-                  }}
-                  takeOver={lock.takeOver}
-                  updateWork={updateWork}
-                  undo={
-                    history?.undo.length
-                      ? () => moveInHistory("undo")
-                      : undefined
-                  }
-                  redo={
-                    history?.redo.length
-                      ? () => moveInHistory("redo")
-                      : undefined
-                  }
-                  exportWork={() => backup([active])}
-                />
-              ) : parts[0] === "portfolio" && active ? (
-                <Portfolio
-                  work={active}
-                  go={go}
-                  exportWork={() => backup([active])}
-                  message={message}
-                />
-              ) : (
-                <Empty title={t("이 작품이나 미션을 찾을 수 없어요")}>
-                  <p>
-                    현재 브라우저에 저장된 작품 목록을 확인하거나 작품 파일을
-                    가져와 주세요.
+              <Suspense
+                fallback={
+                  <p role="status" className="empty">
+                    {t("화면을 불러오고 있어요…")}
                   </p>
-                  <button onClick={() => go("library")}>
-                    {t("작품 선반으로")}
-                  </button>
-                </Empty>
-              )}
+                }
+              >
+                {loading ? (
+                  <div className="empty">
+                    <p>{t("이 기기의 작품을 불러오고 있어요…")}</p>
+                  </div>
+                ) : parts[0] === "home" ? (
+                  <Home {...{ mode, setMode, lastWork, go, create }} />
+                ) : parts[0] === "missions" ? (
+                  <Missions filter={parts[1]} works={visible} go={go} />
+                ) : parts[0] === "explore" ? (
+                  <Explore go={go} />
+                ) : parts[0] === "try" ? (
+                  <QuickTry go={go} create={create} />
+                ) : parts[0] === "prepare" ? (
+                  <Prepare go={go} />
+                ) : parts[0] === "lesson" && /^[1-8]$/.test(parts[1] ?? "") ? (
+                  <LessonLanding number={Number(parts[1])} go={go} />
+                ) : parts[0] === "share" ? (
+                  <Suspense
+                    fallback={<p role="status">소개 카드를 준비하고 있어요…</p>}
+                  >
+                    <SharePage go={go} copy={copy} />
+                  </Suspense>
+                ) : parts[0] === "mission" && mission ? (
+                  <MissionDetail
+                    mission={mission}
+                    create={create}
+                    share={copy}
+                  />
+                ) : parts[0] === "teacher" ? (
+                  <Teacher
+                    create={create}
+                    go={go}
+                    copy={copy}
+                    message={message}
+                  />
+                ) : parts[0] === "present" && mission ? (
+                  <Present
+                    mission={mission}
+                    lessonNumber={
+                      /^[1-8]$/.test(parts[2] ?? "")
+                        ? Number(parts[2])
+                        : undefined
+                    }
+                    go={go}
+                  />
+                ) : parts[0] === "peer" ? (
+                  <PeerCheck
+                    request={peerRequest}
+                    setRequest={setPeerRequest}
+                    message={message}
+                  />
+                ) : parts[0] === "library" ? (
+                  <Library
+                    works={visible}
+                    go={go}
+                    exportAll={() => backup(visible)}
+                    importFile={() => importInput.current?.click()}
+                    remove={remove}
+                    nextUser={nextUser}
+                    clearAll={clearAll}
+                    hiddenCount={works.length - visible.length}
+                    message={message}
+                    reveal={() => {
+                      setHidden([]);
+                      setting("hidden", []);
+                    }}
+                  />
+                ) : parts[0] === "work" && active && mission ? (
+                  <Workspace
+                    key={active.id + runtimeEpoch}
+                    work={active}
+                    mission={mission}
+                    {...{
+                      step,
+                      mode,
+                      go,
+                      edit,
+                      copy,
+                      message,
+                      saveVersion,
+                      restore,
+                      deleteChecks,
+                      deleteVersion,
+                      readOnly,
+                    }}
+                    takeOver={lock.takeOver}
+                    updateWork={updateWork}
+                    undo={
+                      history?.undo.length
+                        ? () => moveInHistory("undo")
+                        : undefined
+                    }
+                    redo={
+                      history?.redo.length
+                        ? () => moveInHistory("redo")
+                        : undefined
+                    }
+                    exportWork={() => backup([active])}
+                  />
+                ) : parts[0] === "portfolio" && active ? (
+                  <Portfolio
+                    work={active}
+                    go={go}
+                    exportWork={() => backup([active])}
+                    message={message}
+                  />
+                ) : (
+                  <Empty title={t("이 작품이나 미션을 찾을 수 없어요")}>
+                    <p>
+                      현재 브라우저에 저장된 작품 목록을 확인하거나 작품 파일을
+                      가져와 주세요.
+                    </p>
+                    <button onClick={() => go("library")}>
+                      {t("작품 선반으로")}
+                    </button>
+                  </Empty>
+                )}
+              </Suspense>
             </ErrorBoundary>
           </main>
           <footer className="page-footer no-print">

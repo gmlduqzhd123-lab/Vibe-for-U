@@ -8,12 +8,12 @@ import {
   levelNames,
   summarize,
   toCSV,
-} from "./classReview";
-import type { Entry } from "./classReview";
+} from "./classSummary";
+import type { Entry } from "./classSummary";
 import { Empty, Field, Icon, Pill } from "./ui";
 import { RubricChoices } from "./Rubric";
 import { rubric } from "./data";
-import { stageNames } from "./Workspace";
+import { stageNames } from "./model";
 const fileBase = (name: string) => name.replace(/\.json$/i, "");
 export function ClassReview({ message }: { message: (s: string) => void }) {
   const [entries, setEntries] = useState<Entry[]>([]);

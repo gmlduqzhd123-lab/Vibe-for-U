@@ -11,6 +11,7 @@ import {
 } from "./model";
 import type { Work, Snapshot, Mode, Mission, Version } from "./model";
 import type { Navigate } from "./Pages";
+import { stageNames } from "./model";
 import { Field, Hint, Icon, Pill } from "./ui";
 import { Settings } from "./Settings";
 import { Preview } from "./Preview";
@@ -29,13 +30,6 @@ const stageGuides = [
   "누르기 전에 예상하고, 설정과 결과를 비교해요.",
   "기대한 결과와 실제 결과를 나란히 적어요.",
   "어떻게 움직이는지, 무엇을 바꿨는지 설명해요.",
-];
-export const stageNames = [
-  "목표 정하기",
-  "요청 작성하기",
-  "예상하고 실행",
-  "검사하고 수정",
-  "설명하고 저장",
 ];
 type Props = {
   work: Work;

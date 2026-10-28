@@ -6,7 +6,7 @@ import { configSummary, revisionLabel } from "./learning";
 import { rubric } from "./data";
 import { ShareButton } from "./Share";
 import { backupFiles } from "./storage";
-import { levelNames } from "./classReview";
+import { levelNames } from "./classSummary";
 const text = (v: string) => v || "아직 기록하지 않았어요.";
 const hasAssessment = (f: Feedback | null) =>
   Boolean(f && (f.levels.some((l) => l > 0) || f.note.trim()));

@@ -35,6 +35,7 @@ const en: Record<string, string> = {
   "저장소 연결 실패": "Storage unavailable",
   "이 앱의 데이터 삭제됨": "App data deleted",
   "이 기기의 작품을 불러오고 있어요…": "Loading works on this device…",
+  "화면을 불러오고 있어요…": "Loading this screen…",
   "이 작품이나 미션을 찾을 수 없어요": "This work or mission was not found",
   "작품 선반으로": "Go to my works",
   "저장 다시 시도": "Retry saving",

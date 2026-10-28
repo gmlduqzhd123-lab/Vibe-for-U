@@ -1,5 +1,5 @@
 import { rubric } from "./data";
-import { levelNames } from "./classReview";
+import { levelNames } from "./classSummary";
 // 과정 평가표 네 항목의 단계를 고른다. 교사 평가와 학생 자기 평가에서 함께 쓴다.
 export function RubricChoices({
   name,

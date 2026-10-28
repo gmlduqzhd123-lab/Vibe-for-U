@@ -148,6 +148,14 @@ export type Mission = {
   learningError: boolean;
   starter: Config;
 };
+// 다섯 학습 단계의 이름
+export const stageNames = [
+  "목표 정하기",
+  "요청 작성하기",
+  "예상하고 실행",
+  "검사하고 수정",
+  "설명하고 저장",
+];
 export const APP_PREFIX = "ttukttak-vibe:";
 export const LIMITS = {
   bytes: 2 * 1024 * 1024,

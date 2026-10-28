@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { missions } from "../src/data";
 import { makeWork } from "../src/model";
-import { emptyFeedback, graded, summarize, toCSV } from "../src/classReview";
+import { emptyFeedback, graded, summarize, toCSV } from "../src/classSummary";
 describe("학급 작품 모으기", () => {
   it("다섯 단계와 직접 검사·버전 수를 요약한다", () => {
     const w = makeWork(missions[2]);
