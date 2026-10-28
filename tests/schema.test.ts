@@ -8,6 +8,7 @@ import {
   listWorks,
   migrateWork,
   parseImport,
+  readAllWorks,
   saveWork,
 } from "../src/storage";
 // 스키마 1 시절의 작품: feedback 필드가 없다.
@@ -64,5 +65,26 @@ describe("저장 형식 변환", () => {
     expect(() => parseImport(exportJSON([w]))).toThrow("평가 단계");
     w.feedback = { levels: [1, 2], note: "", at: w.createdAt };
     expect(() => parseImport(exportJSON([w]))).toThrow("평가 단계");
+  });
+});
+describe("기기 저장소의 망가진 기록", () => {
+  beforeEach(async () => {
+    await clearWorks();
+  });
+  it("읽지 못한 기록만 따로 두고 나머지 작품은 읽는다", async () => {
+    const good = makeWork(missions[0]);
+    await saveWork(good);
+    const future = { ...makeWork(missions[1]), schemaVersion: 99 };
+    const unknownKind = {
+      ...makeWork(missions[1]),
+      kind: "rocket",
+    };
+    const broken = { id: "broken", schemaVersion: 2 };
+    for (const raw of [future, unknownKind, broken])
+      await saveWork(raw as unknown as ReturnType<typeof makeWork>);
+    const { works, unreadable } = await readAllWorks();
+    expect(works.map((w) => w.id)).toEqual([good.id]);
+    expect(unreadable).toHaveLength(3);
+    expect((await listWorks()).map((w) => w.id)).toEqual([good.id]);
   });
 });

@@ -50,10 +50,31 @@ async function transaction<T>(
   });
 }
 // 기기에 남은 옛 형식 작품은 읽을 때 새 형식으로 바꾸고, 다음 저장 때 새 형식으로 기록한다.
-export const listWorks = () =>
-  (transaction("readonly", (s) => s.getAll()) as Promise<unknown[]>).then(
-    (all) => all.map((w) => migrateWork(w) as Work),
-  );
+// 기록 하나가 망가지거나 더 새로운 앱의 형식이어도 나머지 작품은 열 수 있게, 읽지 못한 기록은 원본 그대로 따로 모은다.
+export async function readAllWorks() {
+  const all = (await transaction("readonly", (s) => s.getAll())) as unknown[];
+  const works: Work[] = [];
+  const unreadable: unknown[] = [];
+  for (const raw of all) {
+    try {
+      const w = migrateWork(raw) as Work;
+      const d = w.draft as Partial<Work["draft"]> | undefined;
+      if (
+        typeof w.id !== "string" ||
+        !kinds.includes(w.kind) ||
+        !d?.config ||
+        d.config.kind !== w.kind ||
+        !Array.isArray(w.versions)
+      )
+        throw new Error("작품 형식을 알 수 없어요.");
+      works.push(w);
+    } catch {
+      unreadable.push(raw);
+    }
+  }
+  return { works, unreadable };
+}
+export const listWorks = () => readAllWorks().then((r) => r.works);
 export const saveWork = (w: Work) => transaction("readwrite", (s) => s.put(w));
 export const deleteWork = (id: string) =>
   transaction("readwrite", (s) => s.delete(id));
