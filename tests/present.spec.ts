@@ -32,7 +32,7 @@ test("교사가 차시에서 수업 진행 화면을 열고 단계·타이머·�
   await expect(page.getByTestId("present-clock")).toHaveText("30:00");
   await timer.getByRole("button", { name: /시작/ }).click();
   await expect(timer).toContainText("운전자: 짝 A");
-  await page.clock.runFor(10 * 60 * 1000 + 500);
+  await page.clock.fastForward(10 * 60 * 1000 + 500);
   const swap = page.getByRole("alert").filter({ hasText: "역할을 바꿔요" });
   await expect(swap).toContainText("이제 운전자는 짝 B");
   await expect(page.getByTestId("present-clock")).toHaveText("20:00");
@@ -43,7 +43,7 @@ test("교사가 차시에서 수업 진행 화면을 열고 단계·타이머·�
   await timer.getByRole("button", { name: "정리 5분" }).click();
   await expect(page.getByTestId("present-clock")).toHaveText("05:00");
   await timer.getByRole("button", { name: /시작/ }).click();
-  await page.clock.runFor(5 * 60 * 1000 + 500);
+  await page.clock.fastForward(5 * 60 * 1000 + 500);
   await expect(timer.getByRole("status")).toHaveText(
     "활동 시간이 끝났어요. 정리해 볼까요?",
   );
