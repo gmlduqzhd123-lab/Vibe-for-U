@@ -117,6 +117,9 @@ export type PatternState = {
   step: number;
   wrapped: number;
   blocked: number;
+  turns: number;
+  // 조건으로 돈 방향은 그 명령이 끝날 때까지 이어진다.
+  heading: { dir: Direction; command: number } | null;
   event: string;
 };
 export const dirNames: Record<Direction, string> = {
@@ -131,6 +134,12 @@ const delta: Record<Direction, [number, number]> = {
   left: [-1, 0],
   up: [0, -1],
 };
+const rightOf: Record<Direction, Direction> = {
+  right: "down",
+  down: "left",
+  left: "up",
+  up: "right",
+};
 export const cell = (x: number, y: number) => `${x},${y}`;
 export const initialPattern = (): PatternState => ({
   x: 0,
@@ -139,43 +148,80 @@ export const initialPattern = (): PatternState => ({
   step: 0,
   wrapped: 0,
   blocked: 0,
+  turns: 0,
+  heading: null,
   event: "첫 칸(0,0)에서 시작해요.",
 });
-// 반복 × 명령 × 칸 수를 한 칸짜리 이동 목록으로 펼친다.
-export function patternMoves(c: PatternConfig): Direction[] {
-  const once = c.commands.flatMap((m) =>
-    Array.from({ length: m.count }, () => m.dir),
+// 반복 × 명령 × 칸 수를 한 칸짜리 이동 목록으로 펼친다. command는 몇 번째로 실행하는 명령인지다.
+export function patternSteps(c: PatternConfig) {
+  const once = c.commands.flatMap((m, i) =>
+    Array.from({ length: m.count }, () => ({ dir: m.dir, command: i })),
   );
-  return Array.from({ length: c.repeat }, () => once).flat();
+  return Array.from({ length: c.repeat }, (_, r) =>
+    once.map((m) => ({ ...m, command: r * c.commands.length + m.command })),
+  ).flat();
 }
+export const patternMoves = (c: PatternConfig): Direction[] =>
+  patternSteps(c).map((m) => m.dir);
 export function stepPattern(c: PatternConfig, s: PatternState): PatternState {
-  const moves = patternMoves(c);
-  if (s.step >= moves.length) return s;
-  const dir = moves[s.step];
-  const [dx, dy] = delta[dir];
-  let x = s.x + dx;
-  let y = s.y + dy;
-  const outside = x < 0 || y < 0 || x >= c.size || y >= c.size;
-  if (outside && c.edge === "stop")
+  const steps = patternSteps(c);
+  if (s.step >= steps.length) return s;
+  const { command } = steps[s.step];
+  const dir =
+    s.heading?.command === command ? s.heading.dir : steps[s.step].dir;
+  const target = (d: Direction) => {
+    const [dx, dy] = delta[d];
+    const x = s.x + dx;
+    const y = s.y + dy;
+    return {
+      x,
+      y,
+      outside: x < 0 || y < 0 || x >= c.size || y >= c.size,
+      painted: s.painted.includes(cell(x, y)),
+    };
+  };
+  const next = target(dir);
+  // 조건: 다음 칸이 판 밖이거나 이미 칠한 칸이면 오른쪽으로 돈다.
+  if (c.turn === "right" && (next.outside || next.painted)) {
+    const turned = rightOf[dir];
+    const t = target(turned);
+    if (t.outside || t.painted)
+      return {
+        ...s,
+        step: s.step + 1,
+        blocked: s.blocked + 1,
+        event: `${dirNames[dir]} 막힘 → 오른쪽으로 돌아도 막힘 → 멈춤 (위치 ${cell(s.x, s.y)})`,
+      };
+    const at = cell(t.x, t.y);
+    return {
+      ...s,
+      x: t.x,
+      y: t.y,
+      step: s.step + 1,
+      turns: s.turns + 1,
+      heading: { dir: turned, command },
+      painted: [...s.painted, at],
+      event: `${dirNames[dir]} 막힘 → 만약 막히면 오른쪽으로 돌기 → ${dirNames[turned]} 한 칸 → 위치 ${at} 칠하기`,
+    };
+  }
+  if (next.outside && c.edge === "stop")
     return {
       ...s,
       step: s.step + 1,
       blocked: s.blocked + 1,
       event: `${dirNames[dir]} 한 칸 → 판 가장자리 → 멈춤 (위치 ${cell(s.x, s.y)})`,
     };
-  if (outside) {
-    x = (x + c.size) % c.size;
-    y = (y + c.size) % c.size;
-  }
+  const x = next.outside ? (next.x + c.size) % c.size : next.x;
+  const y = next.outside ? (next.y + c.size) % c.size : next.y;
   const at = cell(x, y);
   return {
+    ...s,
     x,
     y,
     step: s.step + 1,
     painted: s.painted.includes(at) ? s.painted : [...s.painted, at],
-    blocked: s.blocked,
-    wrapped: s.wrapped + (outside ? 1 : 0),
-    event: `${dirNames[dir]} 한 칸 → ${outside ? "판 밖 → 반대편으로 넘어감 → " : ""}위치 ${at} 칠하기`,
+    wrapped: s.wrapped + (next.outside ? 1 : 0),
+    event: `${dirNames[dir]} 한 칸 → ${next.outside ? "판 밖 → 반대편으로 넘어감 → " : ""}위치 ${at} 칠하기`,
   };
 }
 export function runPattern(c: PatternConfig, s = initialPattern()) {

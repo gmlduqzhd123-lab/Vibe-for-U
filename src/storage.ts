@@ -1,4 +1,5 @@
 import { APP_PREFIX, LIMITS, SCHEMA_VERSION, kinds, uid } from "./model";
+import { missions } from "./data";
 import type {
   AIData,
   Check,
@@ -209,6 +210,9 @@ export function validateConfig(value: unknown): Config {
       repeat: num(c.repeat, "반복 횟수", 1, LIMITS.repeat),
       commands,
       edge: one(c.edge, ["stop", "wrap"] as const, "가장자리 규칙"),
+      ...(c.turn === undefined
+        ? {}
+        : { turn: one(c.turn, ["none", "right"] as const, "조건 규칙") }),
       target,
     };
   }
@@ -413,7 +417,7 @@ export function validateWork(v: unknown): Work {
   const w = obj(migrateWork(v), "작품");
   const kind = one(w.kind, kinds, "프로젝트 종류");
   const missionId = str(w.missionId, "미션", 80);
-  if (!new RegExp(`^${kind}-[1-4]$`).test(missionId))
+  if (!missions.some((m) => m.id === missionId && m.kind === kind))
     throw new Error("지원하지 않는 미션이에요.");
   const versions = arr(w.versions, "버전", 1, LIMITS.versions).map((v) => {
     const b = obj(v, "버전");

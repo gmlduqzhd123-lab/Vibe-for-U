@@ -119,9 +119,11 @@ export function PatternPreview({
       <details className="trace" open>
         <summary>동작 설명 · 지금 앱이 기억하는 값</summary>
         <p>
-          명령 묶음을 {config.repeat}번 반복 → 한 칸씩 이동 → 판 밖이면{" "}
-          {config.edge === "stop" ? "멈추기" : "반대편으로 넘어가기"} → 도착한
-          칸 칠하기
+          명령 묶음을 {config.repeat}번 반복 → 한 칸씩 이동 →{" "}
+          {config.turn === "right"
+            ? "만약 다음 칸이 막혀 있으면 오른쪽으로 돌기"
+            : `판 밖이면 ${config.edge === "stop" ? "멈추기" : "반대편으로 넘어가기"}`}{" "}
+          → 도착한 칸 칠하기
         </p>
         <dl>
           <div>
@@ -144,6 +146,12 @@ export function PatternPreview({
               {s.wrapped} · {s.blocked}
             </dd>
           </div>
+          {config.turn === "right" ? (
+            <div>
+              <dt>조건으로 돈 횟수</dt>
+              <dd>{s.turns}</dd>
+            </div>
+          ) : null}
         </dl>
         <p>{s.event}</p>
         <small>

@@ -124,6 +124,25 @@ const patternStarters: PatternConfig[] = [
     ],
   },
 ];
+// 5×5 판의 테두리 16칸
+const ring = Array.from({ length: 16 }, (_, i) =>
+  i < 5
+    ? `${i},0`
+    : i < 9
+      ? `4,${i - 4}`
+      : i < 13
+        ? `${12 - i},4`
+        : `0,${16 - i}`,
+);
+patternStarters.push({
+  kind: "pattern",
+  size: 5,
+  repeat: 1,
+  edge: "stop",
+  turn: "none",
+  commands: [{ dir: "right", count: 15 }],
+  target: ring,
+});
 export const pattern: Config = patternStarters[0];
 const specifications: Record<
   Kind,
@@ -453,6 +472,29 @@ const specifications: Record<
         "위쪽으로 2칸 가는 명령을 추가해 보세요.",
       ],
       closing: "한 칸씩 실행하면 어떤 점을 더 잘 찾을 수 있나요?",
+    },
+    {
+      title: "막히면 돌아서 테두리 그리기",
+      goal: "‘만약 막히면 오른쪽으로 돌기’ 조건으로 명령 하나만 써서 테두리를 그려요.",
+      prediction: "오른쪽 15칸 명령 하나로 판 테두리를 모두 칠할 수 있을까요?",
+      tests: [
+        {
+          label: "조건 없이 실행",
+          expected: "판 끝에서 막혀 윗줄 5칸만 칠해진다.",
+        },
+        {
+          label: "조건 넣고 재검사",
+          expected: "막힐 때마다 오른쪽으로 돌아 테두리 16칸이 칠해진다.",
+        },
+      ],
+      task: "조건 규칙을 「오른쪽으로 돌아서 계속 가기」로 바꾸고 같은 명령으로 다시 그려 보세요.",
+      hints: [
+        "조건 없이 그리면 몇 칸에서 멈추는지 세어 봐요.",
+        "판 끝은 ‘막힌 칸’이에요. 막히면 어떻게 할지 정할 수 있어요.",
+        "설정의 조건 규칙을 「오른쪽으로 돌아서 계속 가기」로 바꿔요.",
+      ],
+      closing:
+        "‘만약 ~이면 ~한다’ 조건이 없다면 같은 테두리를 그리는 데 명령이 몇 개 필요할까요?",
     },
   ],
 };

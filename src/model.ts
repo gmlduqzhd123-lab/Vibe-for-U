@@ -45,6 +45,8 @@ export type PatternConfig = {
   repeat: number;
   commands: { dir: Direction; count: number }[];
   edge: "stop" | "wrap";
+  // 조건 규칙: "right"이면 다음 칸이 판 밖이거나 이미 칠한 칸일 때 오른쪽으로 돈다. 없으면 조건 없음.
+  turn?: "none" | "right";
   target: string[];
 };
 export type Config = QuizConfig | StoryConfig | TimerConfig | PatternConfig;
@@ -160,7 +162,7 @@ export const LIMITS = {
   boardMin: 4,
   boardMax: 10,
   repeat: 10,
-  stepCount: 10,
+  stepCount: 20,
 };
 export const uid = () => crypto.randomUUID();
 export const clone = <T>(value: T): T => structuredClone(value);
