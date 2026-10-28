@@ -2,6 +2,7 @@ import type { Config, QuizConfig, StoryConfig } from "./model";
 import { LIMITS, uid } from "./model";
 import { Field, Icon } from "./ui";
 import { PatternSettings } from "./PatternSettings";
+import { StoryMap } from "./StoryMap";
 export function Settings({
   config,
   onChange,
@@ -208,6 +209,7 @@ export function Settings({
       });
     return (
       <div className="settings">
+        <StoryMap config={config} />
         <label className="field">
           <span>시작 장면</span>
           <select
