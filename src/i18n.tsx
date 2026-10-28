@@ -55,6 +55,8 @@ const en: Record<string, string> = {
   "기록 완료": "Recorded",
   "기록할 내용 있음": "Still to record",
   "파일 백업": "Back up file",
+  되돌리기: "Undo",
+  "다시 하기": "Redo",
   "과정 포트폴리오": "Process portfolio",
   "다음 단계": "Next step",
   "이 약속으로 만들기": "Make it with this plan",

@@ -38,7 +38,8 @@ type Props = {
   step: number;
   mode: Mode;
   go: Navigate;
-  edit: (fn: (d: Snapshot) => Snapshot) => void;
+  // track=false: 실행 기록처럼 학생이 고친 것이 아닌 변경은 되돌리기에 넣지 않는다.
+  edit: (fn: (d: Snapshot) => Snapshot, track?: boolean) => void;
   copy: (text: string) => void;
   message: (s: string) => void;
   saveVersion: (label: string) => void;
@@ -48,6 +49,8 @@ type Props = {
   deleteVersion: (v: Version) => void;
   readOnly?: boolean;
   takeOver?: () => void;
+  undo?: () => void;
+  redo?: () => void;
 };
 export function Workspace({
   work: w,
@@ -65,6 +68,8 @@ export function Workspace({
   deleteVersion,
   readOnly = false,
   takeOver,
+  undo,
+  redo,
 }: Props) {
   const t = useT();
   const d = w.draft;
@@ -88,7 +93,24 @@ export function Workspace({
   const [compareA, setCompareA] = useState(w.versions[0]?.id ?? "");
   const [compareB, setCompareB] = useState("current");
   const checks = d.checks.filter((c) => c.revision === d.revision);
-  const patch = (p: Partial<Snapshot>) => edit((s) => ({ ...s, ...p }));
+  const patch = (p: Partial<Snapshot>, track = true) =>
+    edit((s) => ({ ...s, ...p }), track);
+  // 글 입력 칸 밖에서 Ctrl+Z / Ctrl+Shift+Z(또는 Ctrl+Y). 입력 칸 안은 브라우저의 글자 되돌리기를 쓴다.
+  useEffect(() => {
+    const key = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+      const el = e.target as HTMLElement;
+      if (el.closest("input, textarea, select, [contenteditable]")) return;
+      const k = e.key.toLowerCase();
+      const action =
+        k === "z" ? (e.shiftKey ? redo : undo) : k === "y" ? redo : undefined;
+      if (!action) return;
+      e.preventDefault();
+      action();
+    };
+    addEventListener("keydown", key);
+    return () => removeEventListener("keydown", key);
+  }, [undo, redo]);
   const change = (key: keyof Snapshot["change"], v: string) =>
     patch({ change: { ...d.change, [key]: v } });
   const a = w.versions.find((v) => v.id === compareA)?.data ?? d;
@@ -106,6 +128,20 @@ export function Workspace({
           <h1>{d.title || "제목 없는 작품"}</h1>
         </div>
         <div className="button-row">
+          <button
+            disabled={!undo || readOnly}
+            aria-keyshortcuts="Control+Z"
+            onClick={undo}
+          >
+            ↶ {t("되돌리기")}
+          </button>
+          <button
+            disabled={!redo || readOnly}
+            aria-keyshortcuts="Control+Shift+Z Control+Y"
+            onClick={redo}
+          >
+            ↷ {t("다시 하기")}
+          </button>
           <button onClick={exportWork}>
             <Icon name="download" />
             {t("파일 백업")}
@@ -618,7 +654,7 @@ export function Workspace({
             config={d.config}
             onRun={() => {
               if (d.prediction.trim() && d.runRevision !== d.revision)
-                patch({ runRevision: d.revision });
+                patch({ runRevision: d.revision }, false);
             }}
           />
           <div className="preview-advice">

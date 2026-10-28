@@ -72,6 +72,15 @@ export default function App() {
   const [storageStatus, setStorageStatus] = useState("불러오는 중");
   const [storageError, setStorageError] = useState("");
   const [unreadable, setUnreadable] = useState<unknown[]>([]);
+  // 작품별 되돌리기 기록(현재 탭에서만 기억)
+  const histories = useRef(
+    new Map<string, { undo: Snapshot[]; redo: Snapshot[]; at: number }>(),
+  );
+  const historyOf = (id: string) => {
+    let h = histories.current.get(id);
+    if (!h) histories.current.set(id, (h = { undo: [], redo: [], at: 0 }));
+    return h;
+  };
   const [toast, setToast] = useState("");
   const [copyFallback, setCopyFallback] = useState<string | null>(null);
   const [dialog, setDialog] = useState<Dialog | null>(null);
@@ -281,9 +290,20 @@ export default function App() {
       setting("last", active.id);
     }
   }, [active?.id, parts[0], setting]);
-  const edit = (fn: (d: Snapshot) => Snapshot) => {
+  const edit = (fn: (d: Snapshot) => Snapshot, track = true) => {
     if (!active || readOnly) return;
     const current = worksRef.current.find((w) => w.id === active.id)!;
+    if (track) {
+      const h = historyOf(active.id);
+      // 잇달아 입력하는 글자는 한 번의 되돌리기로 묶는다.
+      const stamp = Date.now();
+      if (stamp - h.at > 800 || !h.undo.length) {
+        h.undo.push(current.draft);
+        if (h.undo.length > 50) h.undo.shift();
+      }
+      h.at = stamp;
+      h.redo = [];
+    }
     persist({
       ...current,
       draft: fn(current.draft),
@@ -292,6 +312,20 @@ export default function App() {
         : "현재 편집본",
     });
   };
+  const moveInHistory = (from: "undo" | "redo") => {
+    if (!active || blocked()) return;
+    const h = historyOf(active.id);
+    const target = h[from].pop();
+    if (!target) return;
+    const current = worksRef.current.find((w) => w.id === active.id)!;
+    h[from === "undo" ? "redo" : "undo"].push(current.draft);
+    h.at = 0;
+    persist({ ...current, draft: target });
+    message(
+      from === "undo" ? "한 단계 되돌렸어요." : "되돌린 것을 다시 했어요.",
+    );
+  };
+  const history = active ? historyOf(active.id) : undefined;
   const copy = async (text: string) => {
     if (!text.trim()) {
       message("먼저 복사할 내용을 작성해 주세요.");
@@ -800,6 +834,16 @@ export default function App() {
                     readOnly,
                   }}
                   takeOver={lock.takeOver}
+                  undo={
+                    history?.undo.length
+                      ? () => moveInHistory("undo")
+                      : undefined
+                  }
+                  redo={
+                    history?.redo.length
+                      ? () => moveInHistory("redo")
+                      : undefined
+                  }
                   exportWork={() => backup([active])}
                 />
               ) : parts[0] === "portfolio" && active ? (
