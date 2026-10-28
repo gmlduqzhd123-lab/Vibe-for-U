@@ -27,6 +27,14 @@ import { Icon, Mascot, Empty, Field } from "./ui";
 import { Explore, Prepare, QuickTry, LessonLanding } from "./Welcome";
 import { announceChange, useChanges, useWorkLock } from "./tabLock";
 import { ErrorBoundary } from "./ErrorBoundary";
+import { PeerCheck } from "./PeerCheck";
+import {
+  applyPeerResponse,
+  peerFileKind,
+  validatePeerRequest,
+  validatePeerResponse,
+} from "./peer";
+import type { PeerRequest } from "./peer";
 import "./Welcome.css";
 import { LangContext, langs, translate } from "./i18n";
 import type { Lang } from "./i18n";
@@ -72,6 +80,7 @@ export default function App() {
   const [storageStatus, setStorageStatus] = useState("불러오는 중");
   const [storageError, setStorageError] = useState("");
   const [unreadable, setUnreadable] = useState<unknown[]>([]);
+  const [peerRequest, setPeerRequest] = useState<PeerRequest | null>(null);
   // 작품별 되돌리기 기록(현재 탭에서만 기억)
   const histories = useRef(
     new Map<string, { undo: Snapshot[]; redo: Snapshot[]; at: number }>(),
@@ -525,7 +534,38 @@ export default function App() {
     try {
       if (file.size > LIMITS.bytes)
         throw new Error("파일은 2MB 이하여야 해요.");
-      const imported = parseImport(await file.text());
+      const text = await file.text();
+      let data: unknown = null;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        // 아래 parseImport가 읽을 수 없는 파일이라고 알린다.
+      }
+      const peer = peerFileKind(data);
+      if (peer === "request") {
+        setPeerRequest(validatePeerRequest(data));
+        go("peer");
+        message(
+          "친구 검사 요청 파일이에요. 친구 작품 검사하기 화면에서 열었어요.",
+        );
+        return;
+      }
+      if (peer === "response") {
+        const r = validatePeerResponse(data);
+        await flush();
+        const target = worksRef.current.find((w) => w.id === r.workId);
+        if (!target)
+          throw new Error(
+            "이 기기에서 친구 검사를 요청한 작품을 찾을 수 없어요. 요청 파일을 만든 기기에서 가져와 주세요.",
+          );
+        persist(applyPeerResponse(target, r));
+        go(`work/${target.id}/3`);
+        message(
+          `${r.reviewer.trim() || "친구"}의 검사 결과를 ‘친구·교사 의견’ 기록으로 더했어요.`,
+        );
+        return;
+      }
+      const imported = parseImport(text);
       await flush();
       await importWorks(imported);
       announceChange();
@@ -548,7 +588,7 @@ export default function App() {
     ? "home"
     : ["teacher", "prepare"].includes(parts[0])
       ? "teacher"
-      : parts[0] === "library" || parts[0] === "portfolio"
+      : ["library", "portfolio", "peer"].includes(parts[0])
         ? "library"
         : "missions";
   const step = Math.max(0, Math.min(4, Number(parts[2]) || 0));
@@ -561,13 +601,15 @@ export default function App() {
           ? "교사 수업 준비"
           : parts[0] === "share"
             ? "QR 소개 카드"
-            : navActive === "home"
-              ? "공작소 홈"
-              : navActive === "missions"
-                ? "미션 공작대"
-                : navActive === "library"
-                  ? "내 작품 선반"
-                  : "교사 자료실",
+            : parts[0] === "peer"
+              ? "친구 작품 검사하기"
+              : navActive === "home"
+                ? "공작소 홈"
+                : navActive === "missions"
+                  ? "미션 공작대"
+                  : navActive === "library"
+                    ? "내 작품 선반"
+                    : "교사 자료실",
   );
   const pageTitle =
     parts[0] === "work" && active
@@ -803,6 +845,12 @@ export default function App() {
                   create={create}
                   go={go}
                   copy={copy}
+                  message={message}
+                />
+              ) : parts[0] === "peer" ? (
+                <PeerCheck
+                  request={peerRequest}
+                  setRequest={setPeerRequest}
                   message={message}
                 />
               ) : parts[0] === "library" ? (

@@ -665,6 +665,7 @@ export function Library({
           <p>{t("자동 저장된 편집본과 직접 남긴 수정 버전을 다시 만나요.")}</p>
         </div>
         <div className="button-row">
+          <button onClick={() => go("peer")}>{t("친구 작품 검사하기")}</button>
           <button onClick={importFile}>
             <Icon name="folder" />
             {t("파일 가져오기")}

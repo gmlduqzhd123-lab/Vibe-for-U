@@ -82,6 +82,7 @@ const en: Record<string, string> = {
   "자동 저장된 편집본과 직접 남긴 수정 버전을 다시 만나요.":
     "Open your autosaved drafts and saved versions again.",
   "파일 가져오기": "Import file",
+  "친구 작품 검사하기": "Check a friend's work",
   "목록 백업": "Back up list",
   "작품 열기": "Open",
   포트폴리오: "Portfolio",

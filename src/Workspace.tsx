@@ -20,6 +20,8 @@ import { SpeakButton } from "./Speak";
 import { useT } from "./i18n";
 import { rubric } from "./data";
 import { RubricChoices } from "./Rubric";
+import { makePeerRequest } from "./peer";
+import { downloadText } from "./storage";
 const stageGuides = [
   "누가, 어떤 순간에 쓸 앱인지 약속해요.",
   "내 말로 적고, 검사할 수 있는 요청으로 정리해요.",
@@ -563,6 +565,27 @@ export function Workspace({
                     수정 요청문 복사
                   </button>
                 </details>
+                <div className="note peer-request">
+                  <b>친구에게 검사 부탁하기</b>
+                  <p>
+                    요청 파일에는 앱 설정과 검사 항목만 들어가요. 친구가 자기
+                    기기의 <b>친구 작품 검사하기</b>에서 열어 결과 파일을
+                    돌려주면, <b>파일 가져오기</b>로 열어 친구 의견 기록으로
+                    더해요.
+                  </p>
+                  <button
+                    onClick={() =>
+                      downloadText(
+                        `친구검사요청-${d.title || "작품"}.json`,
+                        JSON.stringify(makePeerRequest(w)),
+                        "application/json",
+                      )
+                    }
+                  >
+                    <Icon name="download" />
+                    친구 검사 요청 파일 만들기
+                  </button>
+                </div>
                 <button className="subtle" onClick={() => go(`work/${w.id}/2`)}>
                   설정으로 돌아가 수정하기 <Icon name="arrow" />
                 </button>
