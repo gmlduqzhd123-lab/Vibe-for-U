@@ -73,6 +73,16 @@ export function PatternSettings({
           <option value="wrap">반대편으로 넘어가기 (학습용 규칙)</option>
         </select>
       </label>
+      <label className="field">
+        <span>조건 규칙 · 만약 다음 칸이 막혀 있으면 (판 끝·이미 칠한 칸)</span>
+        <select
+          value={config.turn ?? "none"}
+          onChange={(e) => edit({ turn: e.target.value as "none" | "right" })}
+        >
+          <option value="none">조건 없음 (가장자리 규칙을 따름)</option>
+          <option value="right">오른쪽으로 돌아서 계속 가기</option>
+        </select>
+      </label>
       <h4>명령 묶음 · 위에서부터 차례대로</h4>
       <ol className="command-list">
         {config.commands.map((m, i) => (

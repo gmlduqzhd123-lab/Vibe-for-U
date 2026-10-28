@@ -45,6 +45,8 @@ export type PatternConfig = {
   repeat: number;
   commands: { dir: Direction; count: number }[];
   edge: "stop" | "wrap";
+  // 조건 규칙: "right"이면 다음 칸이 판 밖이거나 이미 칠한 칸일 때 오른쪽으로 돈다. 없으면 조건 없음.
+  turn?: "none" | "right";
   target: string[];
 };
 export type Config = QuizConfig | StoryConfig | TimerConfig | PatternConfig;
@@ -113,7 +115,7 @@ export type Feedback = {
   note: string;
   at: string;
 };
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 export type Work = {
   schemaVersion: typeof SCHEMA_VERSION;
   id: string;
@@ -125,6 +127,10 @@ export type Work = {
   draft: Snapshot;
   versions: Version[];
   feedback: Feedback | null;
+  // 미션 힌트를 몇 번째까지 열어 보았는지(0 = 열지 않음)
+  hintsUsed: number;
+  // 학생이 과정 평가표로 스스로 매긴 단계
+  selfAssessment: Feedback | null;
 };
 export type Mission = {
   id: string;
@@ -142,6 +148,14 @@ export type Mission = {
   learningError: boolean;
   starter: Config;
 };
+// 다섯 학습 단계의 이름
+export const stageNames = [
+  "목표 정하기",
+  "요청 작성하기",
+  "예상하고 실행",
+  "검사하고 수정",
+  "설명하고 저장",
+];
 export const APP_PREFIX = "ttukttak-vibe:";
 export const LIMITS = {
   bytes: 2 * 1024 * 1024,
@@ -160,7 +174,7 @@ export const LIMITS = {
   boardMin: 4,
   boardMax: 10,
   repeat: 10,
-  stepCount: 10,
+  stepCount: 20,
 };
 export const uid = () => crypto.randomUUID();
 export const clone = <T>(value: T): T => structuredClone(value);
@@ -307,5 +321,7 @@ export function makeWork(mission: Mission, normal = false): Work {
       },
     ],
     feedback: null,
+    hintsUsed: 0,
+    selfAssessment: null,
   };
 }

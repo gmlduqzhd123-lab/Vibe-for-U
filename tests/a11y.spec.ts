@@ -35,14 +35,27 @@ test("영어로 바꾸면 화면 틀·문서 언어·제목이 바뀌고 기록�
 
   await nav.getByRole("button", { name: "Missions" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Missions");
-  await expect(page.getByText("Mission texts are in Korean.")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /Huh\? The score keeps going up!/ }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: /Huh\? The score keeps going up!/ })
+    .click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Huh? The score keeps going up!",
+  );
+  await page.goto("#/teacher");
+  await expect(
+    page.getByText("Lesson plans and classroom materials are in Korean."),
+  ).toBeVisible();
+  await page.goto("#/missions");
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await page.getByLabel("언어 · Language").selectOption("ko");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "미션 공작대",
   );
-  await expect(page.getByRole("button", { name: "전체 16개" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "전체 17개" })).toBeVisible();
 });
 
 test("누른 버튼이 사라지는 화면 이동 뒤에도 초점이 본문에 남고 새 화면을 알린다", async ({

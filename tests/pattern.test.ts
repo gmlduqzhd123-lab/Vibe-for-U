@@ -69,4 +69,50 @@ describe("패턴 그리기", () => {
     ).toThrow("방향");
     expect(() => validateConfig({ ...c, edge: "bounce" })).toThrow("가장자리");
   });
+  it("조건 규칙: 막히면 오른쪽으로 돌아 명령 하나로 테두리를 그린다", () => {
+    const c = starter("pattern-5");
+    const plain = runPattern(c);
+    expect(plain.painted).toHaveLength(5);
+    expect(plain.blocked).toBe(11);
+    expect(autoChecks(c, "r")[0].status).toBe("fail");
+    c.turn = "right";
+    const ring = runPattern(c);
+    expect(ring.painted).toHaveLength(16);
+    expect(ring.turns).toBe(3);
+    expect([ring.x, ring.y]).toEqual([0, 1]);
+    expect(autoChecks(c, "r").every((r) => r.status === "pass")).toBe(true);
+    expect(configSummary(c)).toContain(
+      "조건: 만약 다음 칸이 막히면 오른쪽으로 돌기",
+    );
+  });
+  it("돈 방향은 그 명령 안에서만 이어지고 이미 칠한 칸도 막힌 칸이다", () => {
+    const c: PatternConfig = {
+      kind: "pattern",
+      size: 5,
+      repeat: 1,
+      edge: "stop",
+      turn: "right",
+      commands: [
+        { dir: "right", count: 6 },
+        { dir: "up", count: 1 },
+      ],
+      target: ["0,0"],
+    };
+    let s = runPattern(c);
+    // 오른쪽 4칸 → 막혀서 아래로 2칸 → 다음 명령은 다시 위쪽(이미 칠한 칸이라 오른쪽으로 돌기 → 판 밖이라 멈춤)
+    expect([s.x, s.y]).toEqual([4, 2]);
+    expect(s.blocked).toBe(1);
+    s = initialPattern();
+    expect(s.heading).toBeNull();
+  });
+  it("조건 규칙은 파일로 오가도 유지되고, 값이 없으면 넣지 않는다", () => {
+    const w = makeWork(missions.find((m) => m.id === "pattern-5")!);
+    (w.draft.config as PatternConfig).turn = "right";
+    expect(parseImport(exportJSON([w]))[0].draft.config).toEqual(
+      w.draft.config,
+    );
+    const old = starter("pattern-1");
+    expect("turn" in validateConfig(old)).toBe(false);
+    expect(() => validateConfig({ ...old, turn: "left" })).toThrow("조건");
+  });
 });

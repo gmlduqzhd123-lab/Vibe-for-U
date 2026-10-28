@@ -38,6 +38,12 @@ export function Icon({ name, size = 20 }: { name: string; size?: number }) {
         <path d="M12 21V10M12 14 5 7M12 14l7-7M3 3h5v5H3zM17 3h5v5h-5z" />
       </>
     ),
+    send: (
+      <>
+        <path d="M21 3 3 10l7 3 3 7z" />
+        <path d="m10 13 4-4" />
+      </>
+    ),
     sound: (
       <>
         <path d="M4 9v6h4l5 4V5L8 9H4z" />
@@ -255,14 +261,26 @@ export function Empty({
     </div>
   );
 }
-export function Hint({ hints }: { hints: string[] }) {
+export function Hint({
+  hints,
+  onOpen,
+}: {
+  hints: string[];
+  // 힌트를 펼치면 몇 번째 힌트인지(1부터) 알린다.
+  onOpen?: (n: number) => void;
+}) {
   return (
     <details className="hint">
       <summary>
         <Icon name="help" /> 막히면 힌트를 열어 보세요
       </summary>
       {hints.map((h, i) => (
-        <details key={h}>
+        <details
+          key={h}
+          onToggle={(e) => {
+            if (e.currentTarget.open) onOpen?.(i + 1);
+          }}
+        >
           <summary>힌트 {i + 1}</summary>
           <p>{h}</p>
         </details>

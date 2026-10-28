@@ -1,19 +1,25 @@
-import type { Work } from "./model";
+import type { Feedback, Work } from "./model";
 import { aiStatus, kindNames, stageDone, correctionPrompt } from "./model";
 import { Icon, Pill } from "./ui";
 import type { Navigate } from "./Pages";
 import { configSummary, revisionLabel } from "./learning";
 import { rubric } from "./data";
-import { levelNames } from "./classReview";
+import { ShareButton } from "./Share";
+import { backupFiles } from "./storage";
+import { levelNames } from "./classSummary";
 const text = (v: string) => v || "아직 기록하지 않았어요.";
+const hasAssessment = (f: Feedback | null) =>
+  Boolean(f && (f.levels.some((l) => l > 0) || f.note.trim()));
 export function Portfolio({
   work: w,
   go,
   exportWork,
+  message = () => {},
 }: {
   work: Work;
   go: Navigate;
   exportWork: () => void;
+  message?: (s: string) => void;
 }) {
   const d = w.draft;
   return (
@@ -26,6 +32,12 @@ export function Portfolio({
         </div>
         <div className="button-row">
           <button onClick={() => go(`work/${w.id}/4`)}>이어서 기록하기</button>
+          <ShareButton
+            name={`뚝딱-작품-${d.title || "작품"}.json`}
+            text={() => backupFiles([w])[0]}
+            title={d.title || "뚝딱 작품"}
+            message={message}
+          />
           <button onClick={exportWork}>
             <Icon name="download" />
             작품 파일
@@ -190,6 +202,12 @@ export function Portfolio({
           <p className="preserve">{text(d.reflection)}</p>
           <h3>도움받은 내용</h3>
           <p className="preserve">{text(d.help)}</p>
+          <p>
+            미션 힌트:{" "}
+            {w.hintsUsed
+              ? `${w.hintsUsed}번째 힌트까지 열어 봄`
+              : "열어 보지 않음"}
+          </p>
         </section>
         <section>
           <h2>06. 실제 AI 제작 활동 (별도 기록)</h2>
@@ -213,30 +231,65 @@ export function Portfolio({
             코드를 자동으로 검증하지 않습니다.
           </small>
         </section>
-        {w.feedback &&
-        (w.feedback.levels.some((l) => l > 0) || w.feedback.note.trim()) ? (
+        {hasAssessment(w.feedback) || hasAssessment(w.selfAssessment) ? (
           <section className="teacher-feedback">
-            <h2>07. 선생님의 과정 평가</h2>
+            <h2>07. 과정 평가 · 나와 선생님</h2>
             <p className="small muted">
-              {new Date(w.feedback.at).toLocaleString("ko-KR")}에 남긴 평가예요.
-              작품 기록을 근거로 한 단계와 의견이에요.
+              작품 기록을 근거로 매긴 단계예요. 앱이 자동으로 매긴 점수가
+              아니에요.
             </p>
-            <dl className="record-list">
-              {rubric.map((row, i) => {
-                const level = w.feedback!.levels[i];
-                return (
-                  <div key={row[0]}>
-                    <dt>{row[0]}</dt>
-                    <dd>
-                      <b>{levelNames[level]}</b>
-                      {level ? ` · ${row[level]}` : ""}
-                    </dd>
-                  </div>
-                );
-              })}
-            </dl>
-            <h3>확인한 근거와 다음 도움</h3>
-            <p className="preserve">{text(w.feedback.note)}</p>
+            <div
+              className="table-scroll"
+              tabIndex={0}
+              role="region"
+              aria-label="과정 평가 비교표 · 좌우 방향키로 이동해 읽기"
+            >
+              <table>
+                <thead>
+                  <tr>
+                    <th>관찰 항목</th>
+                    <th>나의 평가</th>
+                    <th>선생님의 평가</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rubric.map((row, i) => (
+                    <tr key={row[0]}>
+                      <td>{row[0]}</td>
+                      {[w.selfAssessment, w.feedback].map((f, k) => {
+                        const level = f?.levels[i] ?? 0;
+                        return (
+                          <td key={k}>
+                            <b>{levelNames[level]}</b>
+                            {level ? (
+                              <>
+                                <br />
+                                <small>{row[level]}</small>
+                              </>
+                            ) : null}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {w.selfAssessment?.note.trim() ? (
+              <>
+                <h3>스스로 돌아보며 다음에 해 볼 것</h3>
+                <p className="preserve">{w.selfAssessment.note}</p>
+              </>
+            ) : null}
+            {w.feedback ? (
+              <>
+                <h3>선생님 · 확인한 근거와 다음 도움</h3>
+                <p className="preserve">{text(w.feedback.note)}</p>
+                <p className="small muted">
+                  선생님 평가: {new Date(w.feedback.at).toLocaleString("ko-KR")}
+                </p>
+              </>
+            ) : null}
           </section>
         ) : null}
       </article>

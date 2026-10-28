@@ -35,6 +35,7 @@ const en: Record<string, string> = {
   "저장소 연결 실패": "Storage unavailable",
   "이 앱의 데이터 삭제됨": "App data deleted",
   "이 기기의 작품을 불러오고 있어요…": "Loading works on this device…",
+  "화면을 불러오고 있어요…": "Loading this screen…",
   "이 작품이나 미션을 찾을 수 없어요": "This work or mission was not found",
   "작품 선반으로": "Go to my works",
   "저장 다시 시도": "Retry saving",
@@ -55,6 +56,8 @@ const en: Record<string, string> = {
   "기록 완료": "Recorded",
   "기록할 내용 있음": "Still to record",
   "파일 백업": "Back up file",
+  되돌리기: "Undo",
+  "다시 하기": "Redo",
   "과정 포트폴리오": "Process portfolio",
   "다음 단계": "Next step",
   "이 약속으로 만들기": "Make it with this plan",
@@ -66,7 +69,8 @@ const en: Record<string, string> = {
   "한 번에 하나씩, 나의 속도로": "One at a time, at my own pace",
   "처음이라면 퀴즈 1부터. 문제를 찾는 연습은 퀴즈 3을 골라요.":
     "New here? Start with Quiz 1. To practise finding bugs, pick Quiz 3.",
-  "미션 본문은 한국어로 되어 있어요.": "Mission texts are in Korean.",
+  "차시 안내와 수업 자료는 한국어로 되어 있어요.":
+    "Lesson plans and classroom materials are in Korean.",
   "전체 {n}개": "All {n}",
   퀴즈: "Quiz",
   "갈림길 이야기": "Branching story",
@@ -80,6 +84,7 @@ const en: Record<string, string> = {
   "자동 저장된 편집본과 직접 남긴 수정 버전을 다시 만나요.":
     "Open your autosaved drafts and saved versions again.",
   "파일 가져오기": "Import file",
+  "친구 작품 검사하기": "Check a friend's work",
   "목록 백업": "Back up list",
   "작품 열기": "Open",
   포트폴리오: "Portfolio",

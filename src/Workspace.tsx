@@ -11,6 +11,7 @@ import {
 } from "./model";
 import type { Work, Snapshot, Mode, Mission, Version } from "./model";
 import type { Navigate } from "./Pages";
+import { stageNames } from "./model";
 import { Field, Hint, Icon, Pill } from "./ui";
 import { Settings } from "./Settings";
 import { Preview } from "./Preview";
@@ -18,6 +19,11 @@ import { LearningWords } from "./Welcome";
 import { BlockPrompt, predictionStarters } from "./BlockPrompt";
 import { SpeakButton } from "./Speak";
 import { useT } from "./i18n";
+import { rubric } from "./data";
+import { RubricChoices } from "./Rubric";
+import { makePeerRequest } from "./peer";
+import { backupFiles, downloadText } from "./storage";
+import { ShareButton } from "./Share";
 const stageGuides = [
   "누가, 어떤 순간에 쓸 앱인지 약속해요.",
   "내 말로 적고, 검사할 수 있는 요청으로 정리해요.",
@@ -25,20 +31,14 @@ const stageGuides = [
   "기대한 결과와 실제 결과를 나란히 적어요.",
   "어떻게 움직이는지, 무엇을 바꿨는지 설명해요.",
 ];
-export const stageNames = [
-  "목표 정하기",
-  "요청 작성하기",
-  "예상하고 실행",
-  "검사하고 수정",
-  "설명하고 저장",
-];
 type Props = {
   work: Work;
   mission: Mission;
   step: number;
   mode: Mode;
   go: Navigate;
-  edit: (fn: (d: Snapshot) => Snapshot) => void;
+  // track=false: 실행 기록처럼 학생이 고친 것이 아닌 변경은 되돌리기에 넣지 않는다.
+  edit: (fn: (d: Snapshot) => Snapshot, track?: boolean) => void;
   copy: (text: string) => void;
   message: (s: string) => void;
   saveVersion: (label: string) => void;
@@ -48,6 +48,9 @@ type Props = {
   deleteVersion: (v: Version) => void;
   readOnly?: boolean;
   takeOver?: () => void;
+  undo?: () => void;
+  redo?: () => void;
+  updateWork?: (patch: Partial<Work>) => void;
 };
 export function Workspace({
   work: w,
@@ -65,6 +68,9 @@ export function Workspace({
   deleteVersion,
   readOnly = false,
   takeOver,
+  undo,
+  redo,
+  updateWork = () => {},
 }: Props) {
   const t = useT();
   const d = w.draft;
@@ -88,7 +94,32 @@ export function Workspace({
   const [compareA, setCompareA] = useState(w.versions[0]?.id ?? "");
   const [compareB, setCompareB] = useState("current");
   const checks = d.checks.filter((c) => c.revision === d.revision);
-  const patch = (p: Partial<Snapshot>) => edit((s) => ({ ...s, ...p }));
+  const hintOpened = (n: number) => {
+    if (n > w.hintsUsed) updateWork({ hintsUsed: n });
+  };
+  const self = w.selfAssessment ?? {
+    levels: rubric.map(() => 0),
+    note: "",
+    at: new Date().toISOString(),
+  };
+  const patch = (p: Partial<Snapshot>, track = true) =>
+    edit((s) => ({ ...s, ...p }), track);
+  // 글 입력 칸 밖에서 Ctrl+Z / Ctrl+Shift+Z(또는 Ctrl+Y). 입력 칸 안은 브라우저의 글자 되돌리기를 쓴다.
+  useEffect(() => {
+    const key = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+      const el = e.target as HTMLElement;
+      if (el.closest("input, textarea, select, [contenteditable]")) return;
+      const k = e.key.toLowerCase();
+      const action =
+        k === "z" ? (e.shiftKey ? redo : undo) : k === "y" ? redo : undefined;
+      if (!action) return;
+      e.preventDefault();
+      action();
+    };
+    addEventListener("keydown", key);
+    return () => removeEventListener("keydown", key);
+  }, [undo, redo]);
   const change = (key: keyof Snapshot["change"], v: string) =>
     patch({ change: { ...d.change, [key]: v } });
   const a = w.versions.find((v) => v.id === compareA)?.data ?? d;
@@ -106,10 +137,30 @@ export function Workspace({
           <h1>{d.title || "제목 없는 작품"}</h1>
         </div>
         <div className="button-row">
+          <button
+            disabled={!undo || readOnly}
+            aria-keyshortcuts="Control+Z"
+            onClick={undo}
+          >
+            ↶ {t("되돌리기")}
+          </button>
+          <button
+            disabled={!redo || readOnly}
+            aria-keyshortcuts="Control+Shift+Z Control+Y"
+            onClick={redo}
+          >
+            ↷ {t("다시 하기")}
+          </button>
           <button onClick={exportWork}>
             <Icon name="download" />
             {t("파일 백업")}
           </button>
+          <ShareButton
+            name={`뚝딱-작품-${d.title || "작품"}.json`}
+            text={() => backupFiles([w])[0]}
+            title={d.title || "뚝딱 작품"}
+            message={message}
+          />
           <button onClick={() => go(`portfolio/${w.id}`)}>
             {t("과정 포트폴리오")} <Icon name="arrow" />
           </button>
@@ -462,7 +513,7 @@ export function Workspace({
                     edit((s) => ({ ...s, config, revision: uid() }))
                   }
                 />
-                <Hint hints={m.hints} />
+                <Hint hints={m.hints} onOpen={hintOpened} />
               </>
             ) : null}
             {step === 3 ? (
@@ -515,10 +566,38 @@ export function Workspace({
                     수정 요청문 복사
                   </button>
                 </details>
+                <div className="note peer-request">
+                  <b>친구에게 검사 부탁하기</b>
+                  <p>
+                    요청 파일에는 앱 설정과 검사 항목만 들어가요. 친구가 자기
+                    기기의 <b>친구 작품 검사하기</b>에서 열어 결과 파일을
+                    돌려주면, <b>파일 가져오기</b>로 열어 친구 의견 기록으로
+                    더해요.
+                  </p>
+                  <button
+                    onClick={() =>
+                      downloadText(
+                        `친구검사요청-${d.title || "작품"}.json`,
+                        JSON.stringify(makePeerRequest(w)),
+                        "application/json",
+                      )
+                    }
+                  >
+                    <Icon name="download" />
+                    친구 검사 요청 파일 만들기
+                  </button>
+                  <ShareButton
+                    name={`친구검사요청-${d.title || "작품"}.json`}
+                    text={() => JSON.stringify(makePeerRequest(w))}
+                    title="친구 검사 요청"
+                    message={message}
+                    label="요청 파일 공유로 보내기"
+                  />
+                </div>
                 <button className="subtle" onClick={() => go(`work/${w.id}/2`)}>
                   설정으로 돌아가 수정하기 <Icon name="arrow" />
                 </button>
-                <Hint hints={m.hints} />
+                <Hint hints={m.hints} onOpen={hintOpened} />
               </>
             ) : null}
             {step === 4 ? (
@@ -554,6 +633,44 @@ export function Workspace({
                   배지는 확인 가능한 기록에 연결돼요. 이해도나 창의성 점수는
                   자동으로 매기지 않아요.
                 </p>
+                <section
+                  className="self-assessment"
+                  aria-labelledby="self-assessment-title"
+                >
+                  <h3 id="self-assessment-title">나의 과정 스스로 평가하기</h3>
+                  <p className="small muted">
+                    내 기록을 보고 네 가지 항목에서 어디까지 했는지 골라요.
+                    선생님 평가와 함께 포트폴리오에 나와요.
+                  </p>
+                  <RubricChoices
+                    name={`self-${w.id}`}
+                    levels={self.levels}
+                    disabled={readOnly}
+                    onChange={(levels) =>
+                      updateWork({
+                        selfAssessment: {
+                          ...self,
+                          levels,
+                          at: new Date().toISOString(),
+                        },
+                      })
+                    }
+                  />
+                  <Field
+                    area
+                    label="스스로 돌아보며 다음에 해 볼 것"
+                    value={self.note}
+                    onChange={(note) =>
+                      updateWork({
+                        selfAssessment: {
+                          ...self,
+                          note,
+                          at: new Date().toISOString(),
+                        },
+                      })
+                    }
+                  />
+                </section>
                 <button
                   className="primary"
                   onClick={() => go(`portfolio/${w.id}`)}
@@ -618,7 +735,7 @@ export function Workspace({
             config={d.config}
             onRun={() => {
               if (d.prediction.trim() && d.runRevision !== d.revision)
-                patch({ runRevision: d.revision });
+                patch({ runRevision: d.revision }, false);
             }}
           />
           <div className="preview-advice">

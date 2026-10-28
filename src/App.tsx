@@ -7,28 +7,62 @@ import {
   useState,
 } from "react";
 import type { Mode, Work, Mission, Snapshot, Version } from "./model";
-import { APP_PREFIX, LIMITS, makeWork, modes, uid, now, clone } from "./model";
+import {
+  APP_PREFIX,
+  LIMITS,
+  makeWork,
+  modes,
+  stageNames,
+  uid,
+  now,
+  clone,
+} from "./model";
 import { missions } from "./data";
 import {
   clearWorks,
   deleteWork,
   downloadWorks,
   importWorks,
-  listWorks,
+  readAllWorks,
+  downloadText,
   parseImport,
   saveWork,
   jsonBytes,
 } from "./storage";
-import { Home, Library, Missions, MissionDetail, Teacher } from "./Pages";
-import { Workspace, stageNames } from "./Workspace";
-import { Portfolio } from "./Portfolio";
+import { Home, Library, Missions, MissionDetail } from "./Pages";
 import { Icon, Mascot, Empty, Field } from "./ui";
 import { Explore, Prepare, QuickTry, LessonLanding } from "./Welcome";
 import { announceChange, useChanges, useWorkLock } from "./tabLock";
+import { ErrorBoundary } from "./ErrorBoundary";
+
+import {
+  applyPeerResponse,
+  peerFileKind,
+  validatePeerRequest,
+  validatePeerResponse,
+} from "./peer";
+import type { PeerRequest } from "./peer";
 import "./Welcome.css";
 import { LangContext, langs, translate } from "./i18n";
+import { localizeMission } from "./missionsEn";
 import type { Lang } from "./i18n";
 const SharePage = lazy(() => import("./SharePage"));
+// 첫 화면에 필요 없는 화면은 열 때 불러온다(오프라인 캐시에는 미리 들어간다).
+const Workspace = lazy(() =>
+  import("./Workspace").then((m) => ({ default: m.Workspace })),
+);
+const Portfolio = lazy(() =>
+  import("./Portfolio").then((m) => ({ default: m.Portfolio })),
+);
+const Teacher = lazy(() =>
+  import("./Teacher").then((m) => ({ default: m.Teacher })),
+);
+const PeerCheck = lazy(() =>
+  import("./PeerCheck").then((m) => ({ default: m.PeerCheck })),
+);
+const Present = lazy(() =>
+  import("./Present").then((m) => ({ default: m.Present })),
+);
 function getSetting<T>(key: string, fallback: T): T {
   try {
     const s = localStorage.getItem(APP_PREFIX + key);
@@ -69,6 +103,17 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [storageStatus, setStorageStatus] = useState("불러오는 중");
   const [storageError, setStorageError] = useState("");
+  const [unreadable, setUnreadable] = useState<unknown[]>([]);
+  const [peerRequest, setPeerRequest] = useState<PeerRequest | null>(null);
+  // 작품별 되돌리기 기록(현재 탭에서만 기억)
+  const histories = useRef(
+    new Map<string, { undo: Snapshot[]; redo: Snapshot[]; at: number }>(),
+  );
+  const historyOf = (id: string) => {
+    let h = histories.current.get(id);
+    if (!h) histories.current.set(id, (h = { undo: [], redo: [], at: 0 }));
+    return h;
+  };
   const [toast, setToast] = useState("");
   const [copyFallback, setCopyFallback] = useState<string | null>(null);
   const [dialog, setDialog] = useState<Dialog | null>(null);
@@ -145,8 +190,9 @@ export default function App() {
   );
   // 다른 탭이 저장·삭제하면 아직 저장 전인 이 탭의 편집본은 그대로 두고 목록을 새로 읽는다.
   const refresh = useCallback(() => {
-    void listWorks()
-      .then((all) => {
+    void readAllWorks()
+      .then(({ works: all, unreadable }) => {
+        setUnreadable(unreadable);
         const ids = new Set(all.map((w) => w.id));
         setAll([
           ...all.map((w) => pending.current.get(w.id) ?? w),
@@ -158,10 +204,11 @@ export default function App() {
   useChanges(refresh);
   useEffect(() => {
     let alive = true;
-    listWorks()
-      .then((all) => {
+    readAllWorks()
+      .then(({ works: all, unreadable }) => {
         if (alive) {
           setAll(all);
+          setUnreadable(unreadable);
           setStorageStatus("기기에 저장됨");
         }
       })
@@ -267,18 +314,28 @@ export default function App() {
       );
     return readOnly;
   };
-  const mission = missions.find(
-    (m) => m.id === (active?.missionId ?? parts[1]),
-  );
+  const found = missions.find((m) => m.id === (active?.missionId ?? parts[1]));
+  const mission = found && localizeMission(found, lang);
   useEffect(() => {
     if (active && parts[0] === "work") {
       setLastId(active.id);
       setting("last", active.id);
     }
   }, [active?.id, parts[0], setting]);
-  const edit = (fn: (d: Snapshot) => Snapshot) => {
+  const edit = (fn: (d: Snapshot) => Snapshot, track = true) => {
     if (!active || readOnly) return;
     const current = worksRef.current.find((w) => w.id === active.id)!;
+    if (track) {
+      const h = historyOf(active.id);
+      // 잇달아 입력하는 글자는 한 번의 되돌리기로 묶는다.
+      const stamp = Date.now();
+      if (stamp - h.at > 800 || !h.undo.length) {
+        h.undo.push(current.draft);
+        if (h.undo.length > 50) h.undo.shift();
+      }
+      h.at = stamp;
+      h.redo = [];
+    }
     persist({
       ...current,
       draft: fn(current.draft),
@@ -287,6 +344,20 @@ export default function App() {
         : "현재 편집본",
     });
   };
+  const moveInHistory = (from: "undo" | "redo") => {
+    if (!active || blocked()) return;
+    const h = historyOf(active.id);
+    const target = h[from].pop();
+    if (!target) return;
+    const current = worksRef.current.find((w) => w.id === active.id)!;
+    h[from === "undo" ? "redo" : "undo"].push(current.draft);
+    h.at = 0;
+    persist({ ...current, draft: target });
+    message(
+      from === "undo" ? "한 단계 되돌렸어요." : "되돌린 것을 다시 했어요.",
+    );
+  };
+  const undoHistory = active ? historyOf(active.id) : undefined;
   const copy = async (text: string) => {
     if (!text.trim()) {
       message("먼저 복사할 내용을 작성해 주세요.");
@@ -462,6 +533,12 @@ export default function App() {
       },
     });
   };
+  // 힌트 사용과 자기 평가는 편집본이 아닌 작품 전체의 기록이라 되돌리기에 넣지 않는다.
+  const updateWork = (patch: Partial<Work>) => {
+    if (!active || readOnly) return;
+    const current = worksRef.current.find((w) => w.id === active.id)!;
+    persist({ ...current, ...patch });
+  };
   const deleteVersion = (v: Version) => {
     if (!active || active.versions[0].id === v.id || blocked()) return;
     ask({
@@ -480,7 +557,38 @@ export default function App() {
     try {
       if (file.size > LIMITS.bytes)
         throw new Error("파일은 2MB 이하여야 해요.");
-      const imported = parseImport(await file.text());
+      const text = await file.text();
+      let data: unknown = null;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        // 아래 parseImport가 읽을 수 없는 파일이라고 알린다.
+      }
+      const peer = peerFileKind(data);
+      if (peer === "request") {
+        setPeerRequest(validatePeerRequest(data));
+        go("peer");
+        message(
+          "친구 검사 요청 파일이에요. 친구 작품 검사하기 화면에서 열었어요.",
+        );
+        return;
+      }
+      if (peer === "response") {
+        const r = validatePeerResponse(data);
+        await flush();
+        const target = worksRef.current.find((w) => w.id === r.workId);
+        if (!target)
+          throw new Error(
+            "이 기기에서 친구 검사를 요청한 작품을 찾을 수 없어요. 요청 파일을 만든 기기에서 가져와 주세요.",
+          );
+        persist(applyPeerResponse(target, r));
+        go(`work/${target.id}/3`);
+        message(
+          `${r.reviewer.trim() || "친구"}의 검사 결과를 ‘친구·교사 의견’ 기록으로 더했어요.`,
+        );
+        return;
+      }
+      const imported = parseImport(text);
       await flush();
       await importWorks(imported);
       announceChange();
@@ -501,9 +609,9 @@ export default function App() {
     parts[0],
   )
     ? "home"
-    : ["teacher", "prepare"].includes(parts[0])
+    : ["teacher", "prepare", "present"].includes(parts[0])
       ? "teacher"
-      : parts[0] === "library" || parts[0] === "portfolio"
+      : ["library", "portfolio", "peer"].includes(parts[0])
         ? "library"
         : "missions";
   const step = Math.max(0, Math.min(4, Number(parts[2]) || 0));
@@ -516,13 +624,17 @@ export default function App() {
           ? "교사 수업 준비"
           : parts[0] === "share"
             ? "QR 소개 카드"
-            : navActive === "home"
-              ? "공작소 홈"
-              : navActive === "missions"
-                ? "미션 공작대"
-                : navActive === "library"
-                  ? "내 작품 선반"
-                  : "교사 자료실",
+            : parts[0] === "peer"
+              ? "친구 작품 검사하기"
+              : parts[0] === "present"
+                ? "수업 진행 화면"
+                : navActive === "home"
+                  ? "공작소 홈"
+                  : navActive === "missions"
+                    ? "미션 공작대"
+                    : navActive === "library"
+                      ? "내 작품 선반"
+                      : "교사 자료실",
   );
   const pageTitle =
     parts[0] === "work" && active
@@ -556,7 +668,7 @@ export default function App() {
   return (
     <LangContext.Provider value={lang}>
       <div
-        className={`app mode-${mode}${parts[0] === "home" ? " home-screen" : ""}`}
+        className={`app mode-${mode}${parts[0] === "home" ? " home-screen" : ""}${parts[0] === "present" ? " present-screen" : ""}`}
       >
         <a
           className="skip-link"
@@ -705,85 +817,156 @@ export default function App() {
                 </div>
               </div>
             ) : null}
-            {loading ? (
-              <div className="empty">
-                <p>{t("이 기기의 작품을 불러오고 있어요…")}</p>
-              </div>
-            ) : parts[0] === "home" ? (
-              <Home {...{ mode, setMode, lastWork, go, create }} />
-            ) : parts[0] === "missions" ? (
-              <Missions filter={parts[1]} works={visible} go={go} />
-            ) : parts[0] === "explore" ? (
-              <Explore go={go} />
-            ) : parts[0] === "try" ? (
-              <QuickTry go={go} create={create} />
-            ) : parts[0] === "prepare" ? (
-              <Prepare go={go} />
-            ) : parts[0] === "lesson" && /^[1-8]$/.test(parts[1] ?? "") ? (
-              <LessonLanding number={Number(parts[1])} go={go} />
-            ) : parts[0] === "share" ? (
-              <Suspense
-                fallback={<p role="status">소개 카드를 준비하고 있어요…</p>}
-              >
-                <SharePage go={go} copy={copy} />
-              </Suspense>
-            ) : parts[0] === "mission" && mission ? (
-              <MissionDetail mission={mission} create={create} share={copy} />
-            ) : parts[0] === "teacher" ? (
-              <Teacher create={create} go={go} copy={copy} message={message} />
-            ) : parts[0] === "library" ? (
-              <Library
-                works={visible}
-                go={go}
-                exportAll={() => backup(visible)}
-                importFile={() => importInput.current?.click()}
-                remove={remove}
-                nextUser={nextUser}
-                clearAll={clearAll}
-                hiddenCount={works.length - visible.length}
-                reveal={() => {
-                  setHidden([]);
-                  setting("hidden", []);
-                }}
-              />
-            ) : parts[0] === "work" && active && mission ? (
-              <Workspace
-                key={active.id + runtimeEpoch}
-                work={active}
-                mission={mission}
-                {...{
-                  step,
-                  mode,
-                  go,
-                  edit,
-                  copy,
-                  message,
-                  saveVersion,
-                  restore,
-                  deleteChecks,
-                  deleteVersion,
-                  readOnly,
-                }}
-                takeOver={lock.takeOver}
-                exportWork={() => backup([active])}
-              />
-            ) : parts[0] === "portfolio" && active ? (
-              <Portfolio
-                work={active}
-                go={go}
-                exportWork={() => backup([active])}
-              />
-            ) : (
-              <Empty title={t("이 작품이나 미션을 찾을 수 없어요")}>
+            {unreadable.length && !loading ? (
+              <div role="alert" className="warning no-print">
                 <p>
-                  현재 브라우저에 저장된 작품 목록을 확인하거나 작품 파일을
-                  가져와 주세요.
+                  이 기기에 읽지 못한 기록이 {unreadable.length}개 있어요. 더
+                  새로운 앱에서 만들었거나 손상된 기록일 수 있어요. 나머지
+                  작품은 그대로 쓸 수 있고, 읽지 못한 기록은 지우지 않았어요.
                 </p>
-                <button onClick={() => go("library")}>
-                  {t("작품 선반으로")}
+                <button
+                  onClick={() =>
+                    downloadText(
+                      "뚝딱-읽지-못한-기록.json",
+                      JSON.stringify(unreadable),
+                      "application/json",
+                    )
+                  }
+                >
+                  읽지 못한 기록 원본 내려받기
                 </button>
-              </Empty>
-            )}
+              </div>
+            ) : null}
+            <ErrorBoundary
+              resetKey={`${route}:${runtimeEpoch}`}
+              onLibrary={() => go("library")}
+            >
+              <Suspense
+                fallback={
+                  <p role="status" className="empty">
+                    {t("화면을 불러오고 있어요…")}
+                  </p>
+                }
+              >
+                {loading ? (
+                  <div className="empty">
+                    <p>{t("이 기기의 작품을 불러오고 있어요…")}</p>
+                  </div>
+                ) : parts[0] === "home" ? (
+                  <Home {...{ mode, setMode, lastWork, go, create }} />
+                ) : parts[0] === "missions" ? (
+                  <Missions filter={parts[1]} works={visible} go={go} />
+                ) : parts[0] === "explore" ? (
+                  <Explore go={go} />
+                ) : parts[0] === "try" ? (
+                  <QuickTry go={go} create={create} />
+                ) : parts[0] === "prepare" ? (
+                  <Prepare go={go} />
+                ) : parts[0] === "lesson" && /^[1-8]$/.test(parts[1] ?? "") ? (
+                  <LessonLanding number={Number(parts[1])} go={go} />
+                ) : parts[0] === "share" ? (
+                  <Suspense
+                    fallback={<p role="status">소개 카드를 준비하고 있어요…</p>}
+                  >
+                    <SharePage go={go} copy={copy} />
+                  </Suspense>
+                ) : parts[0] === "mission" && mission ? (
+                  <MissionDetail
+                    mission={mission}
+                    create={create}
+                    share={copy}
+                  />
+                ) : parts[0] === "teacher" ? (
+                  <Teacher
+                    create={create}
+                    go={go}
+                    copy={copy}
+                    message={message}
+                  />
+                ) : parts[0] === "present" && mission ? (
+                  <Present
+                    mission={mission}
+                    lessonNumber={
+                      /^[1-8]$/.test(parts[2] ?? "")
+                        ? Number(parts[2])
+                        : undefined
+                    }
+                    go={go}
+                  />
+                ) : parts[0] === "peer" ? (
+                  <PeerCheck
+                    request={peerRequest}
+                    setRequest={setPeerRequest}
+                    message={message}
+                  />
+                ) : parts[0] === "library" ? (
+                  <Library
+                    works={visible}
+                    go={go}
+                    exportAll={() => backup(visible)}
+                    importFile={() => importInput.current?.click()}
+                    remove={remove}
+                    nextUser={nextUser}
+                    clearAll={clearAll}
+                    hiddenCount={works.length - visible.length}
+                    message={message}
+                    reveal={() => {
+                      setHidden([]);
+                      setting("hidden", []);
+                    }}
+                  />
+                ) : parts[0] === "work" && active && mission ? (
+                  <Workspace
+                    key={active.id + runtimeEpoch}
+                    work={active}
+                    mission={mission}
+                    {...{
+                      step,
+                      mode,
+                      go,
+                      edit,
+                      copy,
+                      message,
+                      saveVersion,
+                      restore,
+                      deleteChecks,
+                      deleteVersion,
+                      readOnly,
+                    }}
+                    takeOver={lock.takeOver}
+                    updateWork={updateWork}
+                    undo={
+                      undoHistory?.undo.length
+                        ? () => moveInHistory("undo")
+                        : undefined
+                    }
+                    redo={
+                      undoHistory?.redo.length
+                        ? () => moveInHistory("redo")
+                        : undefined
+                    }
+                    exportWork={() => backup([active])}
+                  />
+                ) : parts[0] === "portfolio" && active ? (
+                  <Portfolio
+                    work={active}
+                    go={go}
+                    exportWork={() => backup([active])}
+                    message={message}
+                  />
+                ) : (
+                  <Empty title={t("이 작품이나 미션을 찾을 수 없어요")}>
+                    <p>
+                      현재 브라우저에 저장된 작품 목록을 확인하거나 작품 파일을
+                      가져와 주세요.
+                    </p>
+                    <button onClick={() => go("library")}>
+                      {t("작품 선반으로")}
+                    </button>
+                  </Empty>
+                )}
+              </Suspense>
+            </ErrorBoundary>
           </main>
           <footer className="page-footer no-print">
             <span>{t("뚝딱 바이브 공작소")}</span>

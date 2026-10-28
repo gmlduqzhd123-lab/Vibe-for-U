@@ -284,7 +284,7 @@ test("JSON 내보내기·가져오기 왕복과 오류 보존", async ({ page })
     ),
   });
   await expect(
-    page.getByRole("status").filter({ hasText: "스키마 버전 1~2" }),
+    page.getByRole("status").filter({ hasText: "스키마 버전 1~3" }),
   ).toBeVisible();
   await expect(page.locator(".work-card")).toHaveCount(2);
 });
@@ -434,9 +434,9 @@ test("클립보드 실패는 직접 선택 대체 UI를 연다", async ({ page }
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).not.toBeVisible();
 });
-test("16개 미션·8차시·검사표·평가표·공유 경로", async ({ page }) => {
+test("17개 미션·8차시·검사표·평가표·공유 경로", async ({ page }) => {
   await page.goto("#/missions");
-  await expect(page.locator(".mission-card")).toHaveCount(16);
+  await expect(page.locator(".mission-card")).toHaveCount(17);
   await page.goto("#/teacher");
   await expect(page.locator(".lesson")).toHaveCount(8);
   await savePdf(page, "test-results/evidence/teacher-check.pdf");

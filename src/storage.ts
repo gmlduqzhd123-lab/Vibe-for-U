@@ -1,4 +1,5 @@
 import { APP_PREFIX, LIMITS, SCHEMA_VERSION, kinds, uid } from "./model";
+import { missions } from "./data";
 import type {
   AIData,
   Check,
@@ -50,10 +51,31 @@ async function transaction<T>(
   });
 }
 // 기기에 남은 옛 형식 작품은 읽을 때 새 형식으로 바꾸고, 다음 저장 때 새 형식으로 기록한다.
-export const listWorks = () =>
-  (transaction("readonly", (s) => s.getAll()) as Promise<unknown[]>).then(
-    (all) => all.map((w) => migrateWork(w) as Work),
-  );
+// 기록 하나가 망가지거나 더 새로운 앱의 형식이어도 나머지 작품은 열 수 있게, 읽지 못한 기록은 원본 그대로 따로 모은다.
+export async function readAllWorks() {
+  const all = (await transaction("readonly", (s) => s.getAll())) as unknown[];
+  const works: Work[] = [];
+  const unreadable: unknown[] = [];
+  for (const raw of all) {
+    try {
+      const w = migrateWork(raw) as Work;
+      const d = w.draft as Partial<Work["draft"]> | undefined;
+      if (
+        typeof w.id !== "string" ||
+        !kinds.includes(w.kind) ||
+        !d?.config ||
+        d.config.kind !== w.kind ||
+        !Array.isArray(w.versions)
+      )
+        throw new Error("작품 형식을 알 수 없어요.");
+      works.push(w);
+    } catch {
+      unreadable.push(raw);
+    }
+  }
+  return { works, unreadable };
+}
+export const listWorks = () => readAllWorks().then((r) => r.works);
 export const saveWork = (w: Work) => transaction("readwrite", (s) => s.put(w));
 export const deleteWork = (id: string) =>
   transaction("readwrite", (s) => s.delete(id));
@@ -188,6 +210,9 @@ export function validateConfig(value: unknown): Config {
       repeat: num(c.repeat, "반복 횟수", 1, LIMITS.repeat),
       commands,
       edge: one(c.edge, ["stop", "wrap"] as const, "가장자리 규칙"),
+      ...(c.turn === undefined
+        ? {}
+        : { turn: one(c.turn, ["none", "right"] as const, "조건 규칙") }),
       target,
     };
   }
@@ -355,6 +380,8 @@ function validateSnapshot(v: unknown, kind: Kind): Snapshot {
 const migrations: Record<number, (w: Obj) => Obj> = {
   // 1 → 2: 교사 평가 기록(feedback)을 더했다.
   1: (w) => ({ ...w, schemaVersion: 2, feedback: null }),
+  // 2 → 3: 힌트 사용 기록(hintsUsed)과 학생 자기 평가(selfAssessment)를 더했다.
+  2: (w) => ({ ...w, schemaVersion: 3, hintsUsed: 0, selfAssessment: null }),
 };
 const supported = `스키마 버전 1~${SCHEMA_VERSION}`;
 function checkVersion(v: unknown, what: string) {
@@ -377,9 +404,9 @@ export function migrateWork(v: unknown): unknown {
   }
   return w;
 }
-function validateFeedback(v: unknown): Feedback | null {
+function validateFeedback(v: unknown, what = "교사 평가"): Feedback | null {
   if (v === null) return null;
-  const f = obj(v, "교사 평가");
+  const f = obj(v, what);
   return {
     levels: arr(f.levels, "평가 단계", 4, 4).map((l) =>
       num(l, "평가 단계", 0, 3),
@@ -392,7 +419,7 @@ export function validateWork(v: unknown): Work {
   const w = obj(migrateWork(v), "작품");
   const kind = one(w.kind, kinds, "프로젝트 종류");
   const missionId = str(w.missionId, "미션", 80);
-  if (!new RegExp(`^${kind}-[1-4]$`).test(missionId))
+  if (!missions.some((m) => m.id === missionId && m.kind === kind))
     throw new Error("지원하지 않는 미션이에요.");
   const versions = arr(w.versions, "버전", 1, LIMITS.versions).map((v) => {
     const b = obj(v, "버전");
@@ -423,6 +450,8 @@ export function validateWork(v: unknown): Work {
     draft: validateSnapshot(w.draft, kind),
     versions,
     feedback: validateFeedback(w.feedback),
+    hintsUsed: num(w.hintsUsed, "힌트 사용", 0, 10),
+    selfAssessment: validateFeedback(w.selfAssessment, "자기 평가"),
   };
 }
 export function parseImport(text: string): Work[] {

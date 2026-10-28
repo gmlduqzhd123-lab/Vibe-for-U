@@ -11,7 +11,7 @@ test("패턴 그리기: 넘어가는 그림을 재현하고 가장자리 규칙�
   page,
 }) => {
   await page.goto("#/missions/pattern");
-  await expect(page.locator(".mission-card")).toHaveCount(4);
+  await expect(page.locator(".mission-card")).toHaveCount(5);
   await page
     .getByRole("button", { name: /어라\? 그림이 반대편에서 나와요!/ })
     .click();
@@ -87,4 +87,28 @@ test("패턴 설정: 명령 추가와 목표 칸 고르기, 휴대전화 화면 
     .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
     .analyze();
   expect(audit.violations).toEqual([]);
+});
+
+test("패턴 조건: 막히면 오른쪽으로 돌기로 명령 하나로 테두리를 그린다", async ({
+  page,
+}) => {
+  await page.goto("#/mission/pattern-5");
+  await page
+    .getByRole("button", { name: "이 미션 시작하기", exact: true })
+    .click();
+  await step(page, 2);
+  const preview = page.locator(".preview-panel");
+  await preview.getByRole("button", { name: "모두 그리기" }).click();
+  await expect(preview.getByTestId("painted")).toHaveText("5");
+  await expect(preview.getByRole("status")).toContainText("빠진 칸 11개");
+  await page.getByRole("combobox", { name: /조건 규칙/ }).selectOption("right");
+  await preview.getByRole("button", { name: "모두 그리기" }).click();
+  await expect(preview.getByTestId("painted")).toHaveText("16");
+  await expect(preview.getByRole("status")).toContainText("목표 모양과 같아요");
+  await expect(preview.locator(".trace")).toContainText("조건으로 돈 횟수3");
+  await step(page, 3);
+  await page
+    .getByRole("button", { name: "현재 설정 자동 검사", exact: true })
+    .click();
+  await expect(page.locator(".check-card.fail")).toHaveCount(0);
 });

@@ -32,6 +32,9 @@ export function configSummary(c: Config): string[] {
       `판 ${c.size}×${c.size} · 명령 묶음 ${c.repeat}번 반복`,
       `명령: ${c.commands.map((m) => `${dirNames[m.dir]} ${m.count}칸`).join(" → ")}`,
       `가장자리: ${c.edge === "stop" ? "멈추기" : "반대편으로 넘어가기 (학습용 오류)"}`,
+      ...(c.turn === "right"
+        ? ["조건: 만약 다음 칸이 막히면 오른쪽으로 돌기"]
+        : []),
       `목표 칸 ${c.target.length}개`,
     ];
   return [
