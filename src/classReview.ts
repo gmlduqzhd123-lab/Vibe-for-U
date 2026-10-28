@@ -25,6 +25,7 @@ export function summarize(w: Work) {
       d.checks.some((c) => c.revision !== d.revision) &&
       current.some((c) => c.status === "pass"),
     versions: w.versions.length,
+    hintsUsed: w.hintsUsed,
     updatedAt: w.updatedAt,
   };
 }
@@ -49,7 +50,9 @@ export function toCSV(entries: Entry[]) {
     "미확인·수정 필요",
     "재검사",
     "버전 수",
+    "힌트 사용",
     "최근 수정",
+    ...rubric.map((r) => `스스로: ${r[0]}`),
     ...rubric.map((r) => r[0]),
     "평가 의견",
   ];
@@ -66,7 +69,9 @@ export function toCSV(entries: Entry[]) {
       s.pending,
       s.retested ? "예" : "아니요",
       s.versions,
+      s.hintsUsed,
       new Date(s.updatedAt).toLocaleString("ko-KR"),
+      ...rubric.map((_, i) => levelNames[work.selfAssessment?.levels[i] ?? 0]),
       ...rubric.map((_, i) => levelNames[f?.levels[i] ?? 0]),
       f?.note ?? "",
     ];

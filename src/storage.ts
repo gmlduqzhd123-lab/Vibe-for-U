@@ -380,6 +380,8 @@ function validateSnapshot(v: unknown, kind: Kind): Snapshot {
 const migrations: Record<number, (w: Obj) => Obj> = {
   // 1 → 2: 교사 평가 기록(feedback)을 더했다.
   1: (w) => ({ ...w, schemaVersion: 2, feedback: null }),
+  // 2 → 3: 힌트 사용 기록(hintsUsed)과 학생 자기 평가(selfAssessment)를 더했다.
+  2: (w) => ({ ...w, schemaVersion: 3, hintsUsed: 0, selfAssessment: null }),
 };
 const supported = `스키마 버전 1~${SCHEMA_VERSION}`;
 function checkVersion(v: unknown, what: string) {
@@ -402,9 +404,9 @@ export function migrateWork(v: unknown): unknown {
   }
   return w;
 }
-function validateFeedback(v: unknown): Feedback | null {
+function validateFeedback(v: unknown, what = "교사 평가"): Feedback | null {
   if (v === null) return null;
-  const f = obj(v, "교사 평가");
+  const f = obj(v, what);
   return {
     levels: arr(f.levels, "평가 단계", 4, 4).map((l) =>
       num(l, "평가 단계", 0, 3),
@@ -448,6 +450,8 @@ export function validateWork(v: unknown): Work {
     draft: validateSnapshot(w.draft, kind),
     versions,
     feedback: validateFeedback(w.feedback),
+    hintsUsed: num(w.hintsUsed, "힌트 사용", 0, 10),
+    selfAssessment: validateFeedback(w.selfAssessment, "자기 평가"),
   };
 }
 export function parseImport(text: string): Work[] {

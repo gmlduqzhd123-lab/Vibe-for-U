@@ -18,6 +18,8 @@ import { LearningWords } from "./Welcome";
 import { BlockPrompt, predictionStarters } from "./BlockPrompt";
 import { SpeakButton } from "./Speak";
 import { useT } from "./i18n";
+import { rubric } from "./data";
+import { RubricChoices } from "./Rubric";
 const stageGuides = [
   "누가, 어떤 순간에 쓸 앱인지 약속해요.",
   "내 말로 적고, 검사할 수 있는 요청으로 정리해요.",
@@ -51,6 +53,7 @@ type Props = {
   takeOver?: () => void;
   undo?: () => void;
   redo?: () => void;
+  updateWork?: (patch: Partial<Work>) => void;
 };
 export function Workspace({
   work: w,
@@ -70,6 +73,7 @@ export function Workspace({
   takeOver,
   undo,
   redo,
+  updateWork = () => {},
 }: Props) {
   const t = useT();
   const d = w.draft;
@@ -93,6 +97,14 @@ export function Workspace({
   const [compareA, setCompareA] = useState(w.versions[0]?.id ?? "");
   const [compareB, setCompareB] = useState("current");
   const checks = d.checks.filter((c) => c.revision === d.revision);
+  const hintOpened = (n: number) => {
+    if (n > w.hintsUsed) updateWork({ hintsUsed: n });
+  };
+  const self = w.selfAssessment ?? {
+    levels: rubric.map(() => 0),
+    note: "",
+    at: new Date().toISOString(),
+  };
   const patch = (p: Partial<Snapshot>, track = true) =>
     edit((s) => ({ ...s, ...p }), track);
   // 글 입력 칸 밖에서 Ctrl+Z / Ctrl+Shift+Z(또는 Ctrl+Y). 입력 칸 안은 브라우저의 글자 되돌리기를 쓴다.
@@ -498,7 +510,7 @@ export function Workspace({
                     edit((s) => ({ ...s, config, revision: uid() }))
                   }
                 />
-                <Hint hints={m.hints} />
+                <Hint hints={m.hints} onOpen={hintOpened} />
               </>
             ) : null}
             {step === 3 ? (
@@ -554,7 +566,7 @@ export function Workspace({
                 <button className="subtle" onClick={() => go(`work/${w.id}/2`)}>
                   설정으로 돌아가 수정하기 <Icon name="arrow" />
                 </button>
-                <Hint hints={m.hints} />
+                <Hint hints={m.hints} onOpen={hintOpened} />
               </>
             ) : null}
             {step === 4 ? (
@@ -590,6 +602,44 @@ export function Workspace({
                   배지는 확인 가능한 기록에 연결돼요. 이해도나 창의성 점수는
                   자동으로 매기지 않아요.
                 </p>
+                <section
+                  className="self-assessment"
+                  aria-labelledby="self-assessment-title"
+                >
+                  <h3 id="self-assessment-title">나의 과정 스스로 평가하기</h3>
+                  <p className="small muted">
+                    내 기록을 보고 네 가지 항목에서 어디까지 했는지 골라요.
+                    선생님 평가와 함께 포트폴리오에 나와요.
+                  </p>
+                  <RubricChoices
+                    name={`self-${w.id}`}
+                    levels={self.levels}
+                    disabled={readOnly}
+                    onChange={(levels) =>
+                      updateWork({
+                        selfAssessment: {
+                          ...self,
+                          levels,
+                          at: new Date().toISOString(),
+                        },
+                      })
+                    }
+                  />
+                  <Field
+                    area
+                    label="스스로 돌아보며 다음에 해 볼 것"
+                    value={self.note}
+                    onChange={(note) =>
+                      updateWork({
+                        selfAssessment: {
+                          ...self,
+                          note,
+                          at: new Date().toISOString(),
+                        },
+                      })
+                    }
+                  />
+                </section>
                 <button
                   className="primary"
                   onClick={() => go(`portfolio/${w.id}`)}

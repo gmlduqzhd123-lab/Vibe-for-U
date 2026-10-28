@@ -44,6 +44,7 @@ describe("학급 작품 모으기", () => {
     expect(csv.charCodeAt(0)).toBe(0xfeff);
     const [head, row] = csv.slice(1).split("\r\n");
     expect(head).toContain("문제와 요구사항");
+    expect(head).toContain("힌트 사용,최근 수정,스스로: 문제와 요구사항");
     expect(row).toContain(`"'=HYPERLINK(""x"")"`);
     expect(row).toContain("설명·적용,수행,시작,미평가");
     expect(row).toContain('"줄\n바꿈, 쉼표"');

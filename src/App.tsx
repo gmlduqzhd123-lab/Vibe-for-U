@@ -501,6 +501,12 @@ export default function App() {
       },
     });
   };
+  // 힌트 사용과 자기 평가는 편집본이 아닌 작품 전체의 기록이라 되돌리기에 넣지 않는다.
+  const updateWork = (patch: Partial<Work>) => {
+    if (!active || readOnly) return;
+    const current = worksRef.current.find((w) => w.id === active.id)!;
+    persist({ ...current, ...patch });
+  };
   const deleteVersion = (v: Version) => {
     if (!active || active.versions[0].id === v.id || blocked()) return;
     ask({
@@ -834,6 +840,7 @@ export default function App() {
                     readOnly,
                   }}
                   takeOver={lock.takeOver}
+                  updateWork={updateWork}
                   undo={
                     history?.undo.length
                       ? () => moveInHistory("undo")

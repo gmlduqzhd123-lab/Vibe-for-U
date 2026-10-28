@@ -99,7 +99,7 @@ test("교사가 학생 파일을 모아 단계 표를 보고 평가를 학생에
   await expect(home.locator(".work-card")).toHaveCount(1);
   await home.getByRole("button", { name: "포트폴리오" }).click();
   const feedback = home.locator(".teacher-feedback");
-  await expect(feedback).toContainText("선생님의 과정 평가");
+  await expect(feedback).toContainText("07. 과정 평가 · 나와 선생님");
   await expect(feedback).toContainText("수행");
   await expect(feedback).toContainText("약속을 고쳐 썼어요.");
   await studentDevice.close();

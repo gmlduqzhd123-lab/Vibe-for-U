@@ -284,7 +284,7 @@ test("JSON 내보내기·가져오기 왕복과 오류 보존", async ({ page })
     ),
   });
   await expect(
-    page.getByRole("status").filter({ hasText: "스키마 버전 1~2" }),
+    page.getByRole("status").filter({ hasText: "스키마 버전 1~3" }),
   ).toBeVisible();
   await expect(page.locator(".work-card")).toHaveCount(2);
 });

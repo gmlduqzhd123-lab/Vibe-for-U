@@ -1,5 +1,4 @@
 import { useRef, useState } from "react";
-import { rubric } from "./data";
 import { LIMITS, now, stageDone } from "./model";
 import type { Feedback } from "./model";
 import { downloadText, exportJSON, parseImport } from "./storage";
@@ -12,6 +11,8 @@ import {
 } from "./classReview";
 import type { Entry } from "./classReview";
 import { Empty, Field, Icon, Pill } from "./ui";
+import { RubricChoices } from "./Rubric";
+import { rubric } from "./data";
 import { stageNames } from "./Workspace";
 const fileBase = (name: string) => name.replace(/\.json$/i, "");
 export function ClassReview({ message }: { message: (s: string) => void }) {
@@ -168,6 +169,7 @@ export function ClassReview({ message }: { message: (s: string) => void }) {
                     ))}
                     <th>직접 확인</th>
                     <th>버전</th>
+                    <th>힌트</th>
                     <th>평가</th>
                   </tr>
                 </thead>
@@ -195,6 +197,9 @@ export function ClassReview({ message }: { message: (s: string) => void }) {
                         </td>
                         <td>{s.versions}개</td>
                         <td>
+                          {s.hintsUsed ? `${s.hintsUsed}번째까지` : "안 봄"}
+                        </td>
+                        <td>
                           {graded(e.work.feedback) ? (
                             <Pill tone="green">평가 완료</Pill>
                           ) : (
@@ -212,7 +217,7 @@ export function ClassReview({ message }: { message: (s: string) => void }) {
                         {entries.length}
                       </td>
                     ))}
-                    <td colSpan={3} />
+                    <td colSpan={4} />
                   </tr>
                 </tbody>
               </table>
@@ -287,31 +292,29 @@ function ReviewCard({
           <dt>도움받은 내용</dt>
           <dd className="preserve">{d.help || "미기록"}</dd>
         </div>
+        <div>
+          <dt>학생 자기 평가</dt>
+          <dd>
+            {e.work.selfAssessment?.levels.some((l) => l > 0)
+              ? rubric
+                  .map(
+                    (r, i) =>
+                      `${r[0]}: ${levelNames[e.work.selfAssessment!.levels[i]]}`,
+                  )
+                  .join(" / ")
+              : "미기록"}
+            {e.work.selfAssessment?.note.trim()
+              ? ` · ${e.work.selfAssessment.note}`
+              : ""}
+          </dd>
+        </div>
       </dl>
       <h3>과정 평가</h3>
-      {rubric.map((row, i) => (
-        <fieldset className="rubric-choice" key={row[0]}>
-          <legend>{row[0]}</legend>
-          {levelNames.map((name, level) => (
-            <label key={name}>
-              <input
-                type="radio"
-                name={`${e.key}-${i}`}
-                checked={f.levels[i] === level}
-                onChange={() =>
-                  onChange({
-                    levels: f.levels.map((l, j) => (j === i ? level : l)),
-                  })
-                }
-              />
-              <span>
-                <b>{name}</b>
-                {level ? <small>{row[level]}</small> : null}
-              </span>
-            </label>
-          ))}
-        </fieldset>
-      ))}
+      <RubricChoices
+        name={e.key}
+        levels={f.levels}
+        onChange={(levels) => onChange({ levels })}
+      />
       <Field
         area
         label="확인한 근거와 다음 도움"

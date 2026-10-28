@@ -115,7 +115,7 @@ export type Feedback = {
   note: string;
   at: string;
 };
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 export type Work = {
   schemaVersion: typeof SCHEMA_VERSION;
   id: string;
@@ -127,6 +127,10 @@ export type Work = {
   draft: Snapshot;
   versions: Version[];
   feedback: Feedback | null;
+  // 미션 힌트를 몇 번째까지 열어 보았는지(0 = 열지 않음)
+  hintsUsed: number;
+  // 학생이 과정 평가표로 스스로 매긴 단계
+  selfAssessment: Feedback | null;
 };
 export type Mission = {
   id: string;
@@ -309,5 +313,7 @@ export function makeWork(mission: Mission, normal = false): Work {
       },
     ],
     feedback: null,
+    hintsUsed: 0,
+    selfAssessment: null,
   };
 }
