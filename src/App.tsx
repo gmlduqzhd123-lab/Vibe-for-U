@@ -357,7 +357,7 @@ export default function App() {
       from === "undo" ? "한 단계 되돌렸어요." : "되돌린 것을 다시 했어요.",
     );
   };
-  const history = active ? historyOf(active.id) : undefined;
+  const undoHistory = active ? historyOf(active.id) : undefined;
   const copy = async (text: string) => {
     if (!text.trim()) {
       message("먼저 복사할 내용을 작성해 주세요.");
@@ -936,12 +936,12 @@ export default function App() {
                     takeOver={lock.takeOver}
                     updateWork={updateWork}
                     undo={
-                      history?.undo.length
+                      undoHistory?.undo.length
                         ? () => moveInHistory("undo")
                         : undefined
                     }
                     redo={
-                      history?.redo.length
+                      undoHistory?.redo.length
                         ? () => moveInHistory("redo")
                         : undefined
                     }
