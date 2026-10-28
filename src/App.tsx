@@ -657,11 +657,27 @@ export default function App() {
       return;
     }
     setAnnounce(pageTitle);
-    const frame = requestAnimationFrame(() => {
+    // 새 화면 파일을 불러오는 동안에는 이전 화면이 숨겨진 채 남았다가 나중에 사라지므로,
+    // 한 번만 보지 않고 잠시 동안 매 프레임 초점이 사라졌거나 숨겨진 요소에 있는지 확인한다.
+    const until = performance.now() + 10000;
+    const start = document.activeElement;
+    const lost = (el: Element | null) =>
+      !el ||
+      el === document.body ||
+      !el.isConnected ||
+      !el.getClientRects().length;
+    let frame = 0;
+    const check = () => {
       const focused = document.activeElement;
-      if (!focused || focused === document.body || !focused.isConnected)
+      // 사용자가 새 화면의 다른 곳으로 초점을 옮겼으면 그대로 둔다.
+      if (focused !== start && !lost(focused)) return;
+      if (lost(focused)) {
         document.getElementById("main-content")?.focus({ preventScroll: true });
-    });
+        return;
+      }
+      if (performance.now() < until) frame = requestAnimationFrame(check);
+    };
+    frame = requestAnimationFrame(check);
     return () => cancelAnimationFrame(frame);
     // 화면 경로가 바뀔 때만 알린다.
   }, [route]);
