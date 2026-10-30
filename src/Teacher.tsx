@@ -23,6 +23,14 @@ const classroomDocuments = [
     pages: 16,
     downloadName: "뚝딱_바이브_차시별_학생_활동지",
   },
+  {
+    id: "new-features-guide",
+    title: "새 기능 수업 보충 안내",
+    description:
+      "패턴 그리기·쉬운 모드·친구 검사·자기 평가·수업 진행 화면·되돌리기·영어 화면 · 친구 검사 기록지 1쪽",
+    pages: 4,
+    downloadName: "뚝딱_바이브_새_기능_수업_보충_안내",
+  },
 ];
 export function Teacher({
   create,

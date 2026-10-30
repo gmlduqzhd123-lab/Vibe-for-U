@@ -63,6 +63,12 @@ export function saveHistory(id: string, h: History) {
   });
 }
 export function forgetHistory(id?: string) {
+  // 아직 쓰지 않은 기록이 지운 뒤에 다시 써지지 않게 먼저 취소한다.
+  for (const [k, p] of pending)
+    if (!id || k === id) {
+      clearTimeout(p.timer);
+      pending.delete(k);
+    }
   try {
     for (let i = sessionStorage.length - 1; i >= 0; i--) {
       const k = sessionStorage.key(i);

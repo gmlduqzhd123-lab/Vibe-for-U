@@ -492,6 +492,9 @@ export default function App() {
         const ids = worksRef.current.map((w) => w.id);
         setting("hidden", ids);
         setting("last", "");
+        // 다음 사용자가 이전 사용자의 편집을 되돌려 보지 않게 되돌리기 기록도 비운다.
+        histories.current.clear();
+        forgetHistory();
         setHidden(ids);
         setLastId("");
         go("home");
