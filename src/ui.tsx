@@ -1,6 +1,7 @@
 import { useId } from "react";
 import type { ReactNode } from "react";
 import { LIMITS } from "./model";
+import { useT } from "./i18n";
 export function Icon({ name, size = 20 }: { name: string; size?: number }) {
   const paths: Record<string, ReactNode> = {
     home: (
@@ -123,12 +124,13 @@ export function Icon({ name, size = 20 }: { name: string; size?: number }) {
   );
 }
 export function Mascot({ mini = false }: { mini?: boolean }) {
+  const t = useT();
   return (
     <svg
       className={mini ? "mascot-mini" : "mascot"}
       viewBox="0 0 300 240"
       role="img"
-      aria-label="작은 생각을 만드는 공작소 친구"
+      aria-label={t("작은 생각을 만드는 공작소 친구")}
     >
       <ellipse cx="151" cy="215" rx="88" ry="12" fill="#dfcdb8" opacity=".5" />
       <path
@@ -269,10 +271,11 @@ export function Hint({
   // 힌트를 펼치면 몇 번째 힌트인지(1부터) 알린다.
   onOpen?: (n: number) => void;
 }) {
+  const t = useT();
   return (
     <details className="hint">
       <summary>
-        <Icon name="help" /> 막히면 힌트를 열어 보세요
+        <Icon name="help" /> {t("막히면 힌트를 열어 보세요")}
       </summary>
       {hints.map((h, i) => (
         <details
@@ -281,7 +284,7 @@ export function Hint({
             if (e.currentTarget.open) onOpen?.(i + 1);
           }}
         >
-          <summary>힌트 {i + 1}</summary>
+          <summary>{t("힌트 {n}", { n: i + 1 })}</summary>
           <p>{h}</p>
         </details>
       ))}

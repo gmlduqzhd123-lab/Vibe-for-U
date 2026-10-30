@@ -3506,3 +3506,20 @@ pre {
     padding: 24px;
   }
 }
+.peer-apply-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+.peer-apply-list li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.peer-apply-list li > div {
+  display: grid;
+  gap: 4px;
+}

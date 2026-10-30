@@ -49,3 +49,64 @@ test("되돌리기·다시 하기: 버튼과 단축키로 편집을 되돌리고
   await page.reload();
   await expect(title).toHaveValue("첫 제목");
 });
+
+test("버전 복원도 되돌릴 수 있고, 같은 탭에서는 새로고침해도 되돌리기가 남는다", async ({
+  page,
+}) => {
+  await page.goto("#/mission/quiz-1");
+  await page
+    .getByRole("button", { name: "이 미션 시작하기", exact: true })
+    .click();
+  const title = page.getByLabel("작품 제목", { exact: true });
+  await title.fill("복원 전 제목");
+  await expect(page.getByText("기기에 저장됨", { exact: true })).toBeVisible();
+  await page.getByText("수정 버전 · 비교와 복원", { exact: true }).click();
+  const versions = page.locator(".version-list > div");
+  await expect(versions).toHaveCount(1);
+  await page.getByRole("button", { name: "이 버전 복원" }).first().click();
+  await expect(title).toHaveValue("선택이 정답을 만났을 때");
+  await expect(versions).toHaveCount(2);
+
+  await page.reload();
+  const undo = page.getByRole("button", { name: "↶ 되돌리기" });
+  await expect(undo).toBeEnabled();
+  await undo.click();
+  await expect(title).toHaveValue("복원 전 제목");
+  await page.getByText("수정 버전 · 비교와 복원", { exact: true }).click();
+  await expect(versions).toHaveCount(1);
+  await page.getByRole("button", { name: "↷ 다시 하기" }).click();
+  await expect(title).toHaveValue("선택이 정답을 만났을 때");
+  await expect(versions).toHaveCount(2);
+});
+test("다음 사용자를 시작하면 이전 사용자의 되돌리기 기록을 지운다", async ({
+  page,
+}) => {
+  await page.goto("#/mission/quiz-1");
+  await page
+    .getByRole("button", { name: "이 미션 시작하기", exact: true })
+    .click();
+  const title = page.getByLabel("작품 제목", { exact: true });
+  await title.fill("이전 사용자 제목");
+  await expect(page.getByText("기기에 저장됨", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "↶ 되돌리기" })).toBeEnabled();
+  const id = page.url().split("/work/")[1].split("/")[0];
+
+  await page.goto("#/library");
+  await page.getByRole("button", { name: "다음 사용자 시작" }).click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "다음 사용자로 시작" })
+    .click();
+  await expect(page.locator(".toast")).toContainText(
+    "다음 사용자는 새 작품으로 시작해요.",
+  );
+  const kept = await page.evaluate(() =>
+    Object.keys(sessionStorage).filter((k) => k.includes(":undo:")),
+  );
+  expect(kept).toEqual([]);
+
+  // 접힌 기록을 일부러 다시 열어도 이전 편집은 되돌릴 수 없다.
+  await page.goto(`#/work/${id}/0`);
+  await expect(title).toHaveValue("이전 사용자 제목");
+  await expect(page.getByRole("button", { name: "↶ 되돌리기" })).toBeDisabled();
+});

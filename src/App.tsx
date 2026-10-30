@@ -19,6 +19,7 @@ import {
 } from "./model";
 import { missions } from "./data";
 import {
+  clearClassSession,
   clearWorks,
   deleteWork,
   downloadWorks,
@@ -31,9 +32,18 @@ import {
 } from "./storage";
 import { Home, Library, Missions, MissionDetail } from "./Pages";
 import { Icon, Mascot, Empty, Field } from "./ui";
-import { Explore, Prepare, QuickTry, LessonLanding } from "./Welcome";
+
 import { announceChange, useChanges, useWorkLock } from "./tabLock";
 import { ErrorBoundary } from "./ErrorBoundary";
+import {
+  forgetHistory,
+  loadHistory,
+  move,
+  remember,
+  saveHistory,
+  stepOf,
+} from "./undoHistory";
+import type { History } from "./undoHistory";
 
 import {
   applyPeerResponse,
@@ -41,10 +51,14 @@ import {
   validatePeerRequest,
   validatePeerResponse,
 } from "./peer";
-import type { PeerRequest } from "./peer";
+import type { PeerRequest, PeerResponse } from "./peer";
 import "./Welcome.css";
 import { LangContext, langs, translate } from "./i18n";
-import { localizeMission } from "./missionsEn";
+import {
+  englishReady,
+  loadEnglishMissions,
+  localizeMission,
+} from "./missionText";
 import type { Lang } from "./i18n";
 const SharePage = lazy(() => import("./SharePage"));
 // 첫 화면에 필요 없는 화면은 열 때 불러온다(오프라인 캐시에는 미리 들어간다).
@@ -60,8 +74,23 @@ const Teacher = lazy(() =>
 const PeerCheck = lazy(() =>
   import("./PeerCheck").then((m) => ({ default: m.PeerCheck })),
 );
+const PeerApply = lazy(() =>
+  import("./PeerCheck").then((m) => ({ default: m.PeerApply })),
+);
 const Present = lazy(() =>
   import("./Present").then((m) => ({ default: m.Present })),
+);
+const Explore = lazy(() =>
+  import("./Welcome").then((m) => ({ default: m.Explore })),
+);
+const Prepare = lazy(() =>
+  import("./Welcome").then((m) => ({ default: m.Prepare })),
+);
+const QuickTry = lazy(() =>
+  import("./Welcome").then((m) => ({ default: m.QuickTry })),
+);
+const LessonLanding = lazy(() =>
+  import("./Welcome").then((m) => ({ default: m.LessonLanding })),
 );
 function getSetting<T>(key: string, fallback: T): T {
   try {
@@ -90,7 +119,16 @@ export default function App() {
     const saved = getSetting<string>("lang", "ko");
     return langs.some((l) => l.id === saved) ? (saved as Lang) : "ko";
   });
-  const t = (s: string) => translate(lang, s);
+  const t = (s: string, vars?: Record<string, string | number>) =>
+    translate(lang, s, vars);
+  // 영어를 고르면 영어 미션 글을 불러오고, 다 오면 다시 그린다.
+  const [, setEnglishLoaded] = useState(englishReady());
+  useEffect(() => {
+    if (lang === "en" && !englishReady())
+      loadEnglishMissions()
+        .then(() => setEnglishLoaded(true))
+        .catch(() => {});
+  }, [lang]);
   const [works, setWorks] = useState<Work[]>([]);
   const worksRef = useRef<Work[]>([]);
   const [hidden, setHidden] = useState<string[]>(() => {
@@ -105,14 +143,18 @@ export default function App() {
   const [storageError, setStorageError] = useState("");
   const [unreadable, setUnreadable] = useState<unknown[]>([]);
   const [peerRequest, setPeerRequest] = useState<PeerRequest | null>(null);
-  // 작품별 되돌리기 기록(현재 탭에서만 기억)
-  const histories = useRef(
-    new Map<string, { undo: Snapshot[]; redo: Snapshot[]; at: number }>(),
-  );
+  const [peerResponse, setPeerResponse] = useState<PeerResponse | null>(null);
+  // 작품별 되돌리기 기록(같은 탭에서는 새로고침해도 남는다)
+  const histories = useRef(new Map<string, History>());
   const historyOf = (id: string) => {
     let h = histories.current.get(id);
-    if (!h) histories.current.set(id, (h = { undo: [], redo: [], at: 0 }));
+    if (!h) histories.current.set(id, (h = loadHistory(id)));
     return h;
+  };
+  // 바꾸기 전 모습을 되돌리기에 남긴다. coalesce는 연속 입력을 한 단계로 묶는다.
+  const track = (w: Work, coalesce = false) => {
+    const h = historyOf(w.id);
+    if (remember(h, stepOf(w), coalesce)) saveHistory(w.id, h);
   };
   const [toast, setToast] = useState("");
   const [copyFallback, setCopyFallback] = useState<string | null>(null);
@@ -164,7 +206,8 @@ export default function App() {
       } catch (error) {
         setStorageStatus("저장 실패 · 편집 내용 유지 중");
         setStorageError(
-          `기기에 저장하지 못했어요. 브라우저의 저장 공간과 권한을 확인하고 다시 시도하거나 파일로 내보내세요. ${error instanceof Error ? error.message : ""}`,
+          // 첫 줄은 화면 언어로 바꿔 보여 주고, 둘째 줄의 브라우저 오류는 그대로 둔다.
+          `기기에 저장하지 못했어요. 브라우저의 저장 공간과 권한을 확인하고 다시 시도하거나 파일로 내보내세요.\n${error instanceof Error ? error.message : ""}`,
         );
       }
     });
@@ -316,26 +359,18 @@ export default function App() {
   };
   const found = missions.find((m) => m.id === (active?.missionId ?? parts[1]));
   const mission = found && localizeMission(found, lang);
+  const activeId = active?.id;
+  const view = parts[0];
   useEffect(() => {
-    if (active && parts[0] === "work") {
-      setLastId(active.id);
-      setting("last", active.id);
+    if (activeId && view === "work") {
+      setLastId(activeId);
+      setting("last", activeId);
     }
-  }, [active?.id, parts[0], setting]);
-  const edit = (fn: (d: Snapshot) => Snapshot, track = true) => {
+  }, [activeId, view, setting]);
+  const edit = (fn: (d: Snapshot) => Snapshot, record = true) => {
     if (!active || readOnly) return;
     const current = worksRef.current.find((w) => w.id === active.id)!;
-    if (track) {
-      const h = historyOf(active.id);
-      // 잇달아 입력하는 글자는 한 번의 되돌리기로 묶는다.
-      const stamp = Date.now();
-      if (stamp - h.at > 800 || !h.undo.length) {
-        h.undo.push(current.draft);
-        if (h.undo.length > 50) h.undo.shift();
-      }
-      h.at = stamp;
-      h.redo = [];
-    }
+    if (record) track(current, true);
     persist({
       ...current,
       draft: fn(current.draft),
@@ -347,12 +382,13 @@ export default function App() {
   const moveInHistory = (from: "undo" | "redo") => {
     if (!active || blocked()) return;
     const h = historyOf(active.id);
-    const target = h[from].pop();
-    if (!target) return;
     const current = worksRef.current.find((w) => w.id === active.id)!;
-    h[from === "undo" ? "redo" : "undo"].push(current.draft);
-    h.at = 0;
-    persist({ ...current, draft: target });
+    const target = move(h, from, stepOf(current));
+    if (!target) return;
+    saveHistory(active.id, h);
+    // 버전 복원을 되돌릴 때처럼 설정이 통째로 바뀌면 실행 화면을 처음 상태로 연다.
+    if (target.versions !== current.versions) setRuntimeEpoch((n) => n + 1);
+    persist({ ...current, ...target });
     message(
       from === "undo" ? "한 단계 되돌렸어요." : "되돌린 것을 다시 했어요.",
     );
@@ -375,7 +411,10 @@ export default function App() {
       const count = downloadWorks(items);
       message(
         count > 1
-          ? `${count}개로 나눈 파일의 다운로드를 요청했어요. 브라우저의 여러 파일 다운로드를 허용하고 모두 보관해 주세요.`
+          ? t(
+              "{n}개로 나눈 파일의 다운로드를 요청했어요. 브라우저의 여러 파일 다운로드를 허용하고 모두 보관해 주세요.",
+              { n: count },
+            )
           : "작품 JSON 파일의 다운로드를 요청했어요.",
       );
     } catch (e) {
@@ -394,11 +433,16 @@ export default function App() {
   const remove = (w: Work) =>
     ask({
       title: "이 작품을 삭제할까요?",
-      body: `「${w.draft.title}」의 현재 편집본, 버전 ${w.versions.length}개와 모든 검사 기록을 이 기기에서 삭제해요. 먼저 파일로 백업할 수 있어요.`,
+      body: t(
+        "「{title}」의 현재 편집본, 버전 {n}개와 모든 검사 기록을 이 기기에서 삭제해요. 먼저 파일로 백업할 수 있어요.",
+        { title: w.draft.title, n: w.versions.length },
+      ),
       backup: [w],
       action: async () => {
         await flush();
         await deleteWork(w.id);
+        histories.current.delete(w.id);
+        forgetHistory(w.id);
         announceChange();
         pending.current.delete(w.id);
         setAll(worksRef.current.filter((t) => t.id !== w.id));
@@ -412,11 +456,17 @@ export default function App() {
   const clearAll = () =>
     ask({
       title: "이 앱의 데이터 전체를 삭제할까요?",
-      body: `이 브라우저의 뚝딱 작품 ${works.length}개와 모든 버전·학습 기록·모드 설정을 삭제해요. 같은 주소의 다른 앱 데이터는 지우지 않아요.`,
+      body: t(
+        "이 브라우저의 뚝딱 작품 {n}개와 모든 버전·학습 기록·모드 설정·학급 평가 목록을 삭제해요. 같은 주소의 다른 앱 데이터는 지우지 않아요.",
+        { n: works.length },
+      ),
       backup: works,
       action: async () => {
         await flush();
         await clearWorks();
+        await clearClassSession().catch(() => {});
+        histories.current.clear();
+        forgetHistory();
         announceChange();
         pending.current.clear();
         setAll([]);
@@ -442,6 +492,9 @@ export default function App() {
         const ids = worksRef.current.map((w) => w.id);
         setting("hidden", ids);
         setting("last", "");
+        // 다음 사용자가 이전 사용자의 편집을 되돌려 보지 않게 되돌리기 기록도 비운다.
+        histories.current.clear();
+        forgetHistory();
         setHidden(ids);
         setLastId("");
         go("home");
@@ -473,9 +526,12 @@ export default function App() {
       );
       return;
     }
+    track(active);
     persist({ ...active, versions });
     message(
-      `「${version.label}」을 버전으로 저장 중이에요. 저장 상태를 확인해 주세요.`,
+      t("「{label}」을 버전으로 저장 중이에요. 저장 상태를 확인해 주세요.", {
+        label: version.label,
+      }),
     );
   };
   const restore = (v: Version) => {
@@ -501,6 +557,7 @@ export default function App() {
       return;
     }
     setRuntimeEpoch((n) => n + 1);
+    track(active);
     persist({
       ...active,
       draft: clone(v.data),
@@ -515,13 +572,17 @@ export default function App() {
     if (!active || blocked()) return;
     ask({
       title: "선택한 학습 기록을 삭제할까요?",
-      body: `「${active.draft.title}」에서 선택한 검사 기록 ${ids.length}개를 현재 편집본과 저장 버전에서 삭제해요. 작품 설정과 나머지 기록은 유지돼요.`,
+      body: t(
+        "「{title}」에서 선택한 검사 기록 {n}개를 현재 편집본과 저장 버전에서 삭제해요. 작품 설정과 나머지 기록은 유지돼요.",
+        { title: active.draft.title, n: ids.length },
+      ),
       backup: [active],
       action: () => {
         const filter = (d: Snapshot) => ({
           ...d,
           checks: d.checks.filter((c) => !ids.includes(c.id)),
         });
+        track(active);
         persist({
           ...active,
           draft: filter(active.draft),
@@ -543,14 +604,29 @@ export default function App() {
     if (!active || active.versions[0].id === v.id || blocked()) return;
     ask({
       title: "이 수정 버전을 삭제할까요?",
-      body: `「${v.label}」의 저장된 설정과 검사 묶음을 삭제해요. 현재 편집본과 다른 버전은 유지돼요. 처음 시작 버전은 보존해요.`,
+      body: t(
+        "「{label}」의 저장된 설정과 검사 묶음을 삭제해요. 현재 편집본과 다른 버전은 유지돼요. 처음 시작 버전은 보존해요.",
+        { label: v.label },
+      ),
       backup: [active],
-      action: () =>
+      action: () => {
+        track(active);
         persist({
           ...active,
           versions: active.versions.filter((t) => t.id !== v.id),
-        }),
+        });
+      },
     });
+  };
+  const applyPeer = (target: Work, r: PeerResponse) => {
+    persist(applyPeerResponse(target, r));
+    setPeerResponse(null);
+    go(`work/${target.id}/3`);
+    message(
+      t("{who}의 검사 결과를 ‘친구·교사 의견’ 기록으로 더했어요.", {
+        who: r.reviewer.trim() || t("친구"),
+      }),
+    );
   };
   const importFile = async (file?: File) => {
     if (!file) return;
@@ -577,15 +653,13 @@ export default function App() {
         const r = validatePeerResponse(data);
         await flush();
         const target = worksRef.current.find((w) => w.id === r.workId);
-        if (!target)
-          throw new Error(
-            "이 기기에서 친구 검사를 요청한 작품을 찾을 수 없어요. 요청 파일을 만든 기기에서 가져와 주세요.",
-          );
-        persist(applyPeerResponse(target, r));
-        go(`work/${target.id}/3`);
-        message(
-          `${r.reviewer.trim() || "친구"}의 검사 결과를 ‘친구·교사 의견’ 기록으로 더했어요.`,
-        );
+        // 작품을 파일로 옮겨 이름표가 바뀌었으면 학생이 붙일 작품을 고른다.
+        if (!target) {
+          setPeerResponse(r);
+          go("peer-apply");
+          return;
+        }
+        applyPeer(target, r);
         return;
       }
       const imported = parseImport(text);
@@ -593,11 +667,15 @@ export default function App() {
       await importWorks(imported);
       announceChange();
       setAll([...worksRef.current, ...imported]);
-      message(`작품 ${imported.length}개를 새 ID의 복사본으로 가져왔어요.`);
+      message(
+        t("작품 {n}개를 새 ID의 복사본으로 가져왔어요.", {
+          n: imported.length,
+        }),
+      );
       go("library");
     } catch (e) {
       message(
-        `가져오지 못했어요. ${e instanceof Error ? e.message : "내보낸 JSON 파일을 다시 선택해 주세요."} 기존 작품은 그대로예요.`,
+        `${t("가져오지 못했어요.")} ${e instanceof Error ? e.message : t("내보낸 JSON 파일을 다시 선택해 주세요.")} ${t("기존 작품은 그대로예요.")}`,
       );
     } finally {
       if (importInput.current) importInput.current.value = "";
@@ -611,7 +689,7 @@ export default function App() {
     ? "home"
     : ["teacher", "prepare", "present"].includes(parts[0])
       ? "teacher"
-      : ["library", "portfolio", "peer"].includes(parts[0])
+      : ["library", "portfolio", "peer", "peer-apply"].includes(parts[0])
         ? "library"
         : "missions";
   const step = Math.max(0, Math.min(4, Number(parts[2]) || 0));
@@ -624,7 +702,7 @@ export default function App() {
           ? "교사 수업 준비"
           : parts[0] === "share"
             ? "QR 소개 카드"
-            : parts[0] === "peer"
+            : parts[0] === "peer" || parts[0] === "peer-apply"
               ? "친구 작품 검사하기"
               : parts[0] === "present"
                 ? "수업 진행 화면"
@@ -638,7 +716,7 @@ export default function App() {
   );
   const pageTitle =
     parts[0] === "work" && active
-      ? `${active.draft.title || "제목 없는 작품"} · ${t(stageNames[step])}`
+      ? `${active.draft.title || t("제목 없는 작품")} · ${t(stageNames[step])}`
       : parts[0] === "mission" && mission
         ? mission.title
         : pageName;
@@ -649,6 +727,8 @@ export default function App() {
     document.documentElement.lang =
       langs.find((l) => l.id === lang)?.html ?? "ko";
   }, [lang]);
+  const titleRef = useRef(pageTitle);
+  titleRef.current = pageTitle;
   // 화면이 바뀌면 화면 낭독기에 새 화면 이름을 알리고, 누른 버튼이 사라져
   // 초점을 잃었으면 본문으로 옮긴다.
   useEffect(() => {
@@ -656,7 +736,7 @@ export default function App() {
       firstRoute.current = false;
       return;
     }
-    setAnnounce(pageTitle);
+    setAnnounce(titleRef.current);
     // 새 화면 파일을 불러오는 동안에는 이전 화면이 숨겨진 채 남았다가 나중에 사라지므로,
     // 한 번만 보지 않고 잠시 동안 매 프레임 초점이 사라졌거나 숨겨진 요소에 있는지 확인한다.
     const until = performance.now() + 10000;
@@ -679,7 +759,7 @@ export default function App() {
     };
     frame = requestAnimationFrame(check);
     return () => cancelAnimationFrame(frame);
-    // 화면 경로가 바뀔 때만 알린다.
+    // 화면 경로가 바뀔 때만 알린다(제목은 그때의 최신 값을 읽는다).
   }, [route]);
   return (
     <LangContext.Provider value={lang}>
@@ -728,16 +808,8 @@ export default function App() {
           </nav>
           <div className="sidebar-tip">
             <span className="tip-spark">✦</span>
-            <b>
-              잘 고치는 것도
-              <br />
-              멋진 만들기예요.
-            </b>
-            <p>
-              한 번에 완벽하지 않아도
-              <br />
-              괜찮아요. 다시 해 봐요!
-            </p>
+            <b>{t("잘 고치는 것도 멋진 만들기예요.")}</b>
+            <p>{t("한 번에 완벽하지 않아도 괜찮아요. 다시 해 봐요!")}</p>
             <button
               className="text-button"
               onClick={() => go("mission/quiz-3")}
@@ -822,7 +894,12 @@ export default function App() {
             ) : null}
             {storageError ? (
               <div role="alert" className="storage-error no-print">
-                <p>{storageError}</p>
+                <p>
+                  {storageError
+                    .split("\n")
+                    .map((x, i) => (i ? x : t(x)))
+                    .join(" ")}
+                </p>
                 <div className="button-row">
                   <button onClick={() => void flush()}>
                     {t("저장 다시 시도")}
@@ -836,9 +913,10 @@ export default function App() {
             {unreadable.length && !loading ? (
               <div role="alert" className="warning no-print">
                 <p>
-                  이 기기에 읽지 못한 기록이 {unreadable.length}개 있어요. 더
-                  새로운 앱에서 만들었거나 손상된 기록일 수 있어요. 나머지
-                  작품은 그대로 쓸 수 있고, 읽지 못한 기록은 지우지 않았어요.
+                  {t(
+                    "이 기기에 읽지 못한 기록이 {n}개 있어요. 더 새로운 앱에서 만들었거나 손상된 기록일 수 있어요. 나머지 작품은 그대로 쓸 수 있고, 읽지 못한 기록은 지우지 않았어요.",
+                    { n: unreadable.length },
+                  )}
                 </p>
                 <button
                   onClick={() =>
@@ -849,7 +927,7 @@ export default function App() {
                     )
                   }
                 >
-                  읽지 못한 기록 원본 내려받기
+                  {t("읽지 못한 기록 원본 내려받기")}
                 </button>
               </div>
             ) : null}
@@ -908,6 +986,24 @@ export default function App() {
                         : undefined
                     }
                     go={go}
+                  />
+                ) : parts[0] === "peer-apply" ? (
+                  <PeerApply
+                    response={peerResponse}
+                    works={visible}
+                    apply={(w) => {
+                      try {
+                        applyPeer(w, peerResponse!);
+                      } catch (e) {
+                        message(
+                          `${t("합치지 못했어요.")} ${e instanceof Error ? e.message : ""}`,
+                        );
+                      }
+                    }}
+                    cancel={() => {
+                      setPeerResponse(null);
+                      go("library");
+                    }}
                   />
                 ) : parts[0] === "peer" ? (
                   <PeerCheck
@@ -973,8 +1069,9 @@ export default function App() {
                 ) : (
                   <Empty title={t("이 작품이나 미션을 찾을 수 없어요")}>
                     <p>
-                      현재 브라우저에 저장된 작품 목록을 확인하거나 작품 파일을
-                      가져와 주세요.
+                      {t(
+                        "현재 브라우저에 저장된 작품 목록을 확인하거나 작품 파일을 가져와 주세요.",
+                      )}
                     </p>
                     <button onClick={() => go("library")}>
                       {t("작품 선반으로")}
@@ -994,7 +1091,7 @@ export default function App() {
                 target="_blank"
                 rel="noopener"
               >
-                엽쌤의 다른 앱 보기 →
+                {t("엽쌤의 다른 앱 보기 →")}
               </a>
             </p>
           </footer>
@@ -1005,12 +1102,12 @@ export default function App() {
           ref={importInput}
           type="file"
           accept=".json,application/json"
-          aria-label="작품 JSON 파일"
+          aria-label={t("작품 JSON 파일")}
           onChange={(e) => void importFile(e.target.files?.[0])}
         />
         {toast ? (
           <div className="toast no-print" role="status">
-            <span>{toast}</span>
+            <span>{t(toast)}</span>
             <button aria-label={t("알림 닫기")} onClick={() => setToast("")}>
               ×
             </button>
@@ -1027,14 +1124,15 @@ export default function App() {
         >
           {copyFallback !== null ? (
             <>
-              <h2 id="app-dialog-title">직접 선택해서 복사해 주세요</h2>
+              <h2 id="app-dialog-title">{t("직접 선택해서 복사해 주세요")}</h2>
               <p>
-                브라우저가 클립보드 쓰기를 허용하지 않았어요. 아래 내용을 선택한
-                뒤 Ctrl+C 또는 기기의 복사 메뉴를 사용해 주세요.
+                {t(
+                  "브라우저가 클립보드 쓰기를 허용하지 않았어요. 아래 내용을 선택한 뒤 Ctrl+C 또는 기기의 복사 메뉴를 사용해 주세요.",
+                )}
               </p>
               <Field
                 area
-                label="복사할 내용"
+                label={t("복사할 내용")}
                 value={copyFallback}
                 onChange={setCopyFallback}
               />
@@ -1044,25 +1142,25 @@ export default function App() {
                     dialogRef.current?.querySelector("textarea")?.select()
                   }
                 >
-                  내용 전체 선택
+                  {t("내용 전체 선택")}
                 </button>
                 <button
                   className="primary"
                   onClick={() => setCopyFallback(null)}
                 >
-                  닫기
+                  {t("닫기")}
                 </button>
               </div>
             </>
           ) : dialog ? (
             <>
-              <h2 id="app-dialog-title">{dialog.title}</h2>
-              <p>{dialog.body}</p>
+              <h2 id="app-dialog-title">{t(dialog.title)}</h2>
+              <p>{t(dialog.body)}</p>
               <div className="button-row">
                 {dialog.backup.length ? (
                   <button onClick={() => backup(dialog.backup)}>
                     <Icon name="download" />
-                    삭제 전 파일 백업
+                    {t("삭제 전 파일 백업")}
                   </button>
                 ) : null}
                 <button disabled={dialogBusy} onClick={() => setDialog(null)}>
@@ -1078,14 +1176,14 @@ export default function App() {
                       setDialog(null);
                     } catch (e) {
                       message(
-                        `처리하지 못했어요. 다시 시도해 주세요. ${e instanceof Error ? e.message : ""}`,
+                        `${t("처리하지 못했어요. 다시 시도해 주세요.")} ${e instanceof Error ? e.message : ""}`,
                       );
                     } finally {
                       setDialogBusy(false);
                     }
                   }}
                 >
-                  {dialogBusy ? t("처리 중…") : (dialog.label ?? "대상 삭제")}
+                  {dialogBusy ? t("처리 중…") : t(dialog.label ?? "대상 삭제")}
                 </button>
               </div>
             </>

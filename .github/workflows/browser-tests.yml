@@ -10,28 +10,49 @@ concurrency:
   group: browser-tests-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  quality:
+    # 파일 이름 대소문자 충돌, ESLint, Prettier 서식, 타입 검사
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run check
   e2e:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
-        # Chromium은 Edge와 같은 엔진, WebKit은 아이폰·아이패드 Safari와 같은 엔진이다.
-        browser: [chromium, webkit]
+        # msedge는 학교 PC에서 많이 쓰는 실제 Edge(러너에 설치된 정식판),
+        # Chromium은 크롬·웨일과 같은 엔진, WebKit은 아이폰·아이패드 Safari와 같은 엔진이다.
+        browser: [msedge, chromium, webkit]
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: npm
       - run: npm ci
       - run: npm test
       - run: npm run build
-      - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - if: matrix.browser != 'msedge'
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+      # Edge는 러너 이미지에 이미 있으므로 버전만 기록하고, 없을 때만 설치한다.
+      - if: matrix.browser == 'msedge'
+        run: |
+          if [ -x /opt/microsoft/msedge/msedge ]; then
+            /opt/microsoft/msedge/msedge --version
+          else
+            npx playwright install --with-deps msedge
+          fi
       - run: npx playwright test
         env:
           PW_BROWSER: ${{ matrix.browser }}
       - if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: playwright-report-${{ matrix.browser }}
           path: |

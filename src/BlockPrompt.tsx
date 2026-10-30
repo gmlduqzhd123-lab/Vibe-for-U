@@ -3,8 +3,15 @@ import type { Kind } from "./model";
 import { kindNames } from "./model";
 import { Icon } from "./ui";
 import { SpeakButton } from "./Speak";
+import { translate, useT } from "./i18n";
 // 3~4학년이 글자를 많이 쓰지 않고 낱말 블록을 골라 요청문의 원문을 만든다.
-export function blockGroups(kind: Kind): { title: string; blocks: string[] }[] {
+type Tr = (text: string, vars?: Record<string, string | number>) => string;
+const ko: Tr = (text, vars) => translate("ko", text, vars);
+// t를 넘기면 화면 언어로 블록을 만든다(문장을 이을 때도 같은 t를 써야 한다).
+export function blockGroups(
+  kind: Kind,
+  t: Tr = ko,
+): { title: string; blocks: string[] }[] {
   const what: Record<Kind, [string[], string[]]> = {
     quiz: [
       [
@@ -43,20 +50,23 @@ export function blockGroups(kind: Kind): { title: string; blocks: string[] }[] {
   };
   return [
     {
-      title: "누가 쓰나요?",
-      blocks: ["우리 반 친구가 쓸", "동생이 쓸", "선생님이 쓸"],
+      title: t("누가 쓰나요?"),
+      blocks: [t("우리 반 친구가 쓸"), t("동생이 쓸"), t("선생님이 쓸")],
     },
     {
-      title: "무엇을 만들까요?",
-      blocks: [`${kindNames[kind]}를 만들고 싶어요.`],
+      title: t("무엇을 만들까요?"),
+      blocks: [t("{kind}를 만들고 싶어요.", { kind: t(kindNames[kind]) })],
     },
-    { title: "누르면 어떻게 되나요?", blocks: what[kind][0] },
-    { title: "꼭 지킬 약속", blocks: what[kind][1] },
+    {
+      title: t("누르면 어떻게 되나요?"),
+      blocks: what[kind][0].map((b) => t(b)),
+    },
+    { title: t("꼭 지킬 약속"), blocks: what[kind][1].map((b) => t(b)) },
   ];
 }
 // 고른 블록을 묶음 순서대로 이어 한 문장으로 만든다.
-export function blockSentence(kind: Kind, picked: string[]) {
-  return blockGroups(kind)
+export function blockSentence(kind: Kind, picked: string[], t: Tr = ko) {
+  return blockGroups(kind, t)
     .flatMap((g) => g.blocks.filter((b) => picked.includes(b)))
     .join(" ");
 }
@@ -69,16 +79,18 @@ export function BlockPrompt({
   current: string;
   onInsert: (text: string) => void;
 }) {
+  const t = useT();
   const [picked, setPicked] = useState<string[]>([]);
-  const sentence = blockSentence(kind, picked);
+  const sentence = blockSentence(kind, picked, t);
   return (
     <section className="block-prompt" aria-labelledby="block-prompt-title">
-      <h3 id="block-prompt-title">낱말 블록으로 요청 만들기</h3>
+      <h3 id="block-prompt-title">{t("낱말 블록으로 요청 만들기")}</h3>
       <p className="small">
-        블록을 눌러 고르고, 다시 누르면 빠져요. 다 고르면 아래 버튼으로 원문에
-        넣어요.
+        {t(
+          "블록을 눌러 고르고, 다시 누르면 빠져요. 다 고르면 아래 버튼으로 원문에 넣어요.",
+        )}
       </p>
-      {blockGroups(kind).map((g) => (
+      {blockGroups(kind, t).map((g) => (
         <div
           className="block-group"
           role="group"
@@ -106,7 +118,7 @@ export function BlockPrompt({
         </div>
       ))}
       <p className="block-sentence" aria-live="polite">
-        {sentence || "아직 고른 블록이 없어요."}
+        {sentence || t("아직 고른 블록이 없어요.")}
       </p>
       <div className="button-row">
         <button
@@ -118,10 +130,10 @@ export function BlockPrompt({
           }}
         >
           <Icon name="plus" />
-          {current.trim() ? "원문에 이어 붙이기" : "이 문장을 원문으로 쓰기"}
+          {t(current.trim() ? "원문에 이어 붙이기" : "이 문장을 원문으로 쓰기")}
         </button>
         {sentence ? (
-          <SpeakButton text={sentence} label="만든 문장 듣기" />
+          <SpeakButton text={sentence} label={t("만든 문장 듣기")} />
         ) : null}
       </div>
     </section>

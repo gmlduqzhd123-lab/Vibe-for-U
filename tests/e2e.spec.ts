@@ -689,7 +689,7 @@ test("직접 검사 작성·선택 기록 삭제·작품 삭제 범위와 대화
   await page
     .getByRole("button", { name: "선택한 학습 기록 1개 삭제", exact: true })
     .click();
-  let audit = await new AxeBuilder({ page })
+  const audit = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
     .analyze();
   expect(audit.violations).toEqual([]);

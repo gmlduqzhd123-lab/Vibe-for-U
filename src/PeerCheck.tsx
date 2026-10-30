@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { LIMITS, kindNames, now } from "./model";
-import type { PeerRequest, PeerResult } from "./peer";
+import type { PeerRequest, PeerResponse, PeerResult } from "./peer";
+import type { Work } from "./model";
 import { peerFileKind, validatePeerRequest } from "./peer";
 import { downloadText } from "./storage";
 import { Preview } from "./Preview";
@@ -51,6 +52,8 @@ export function PeerCheck({
       results,
       comment,
       at: now(),
+      missionId: request!.missionId,
+      title: request!.title,
     });
   const filled = results.some((r) => r.actual.trim()) || comment.trim();
   return (
@@ -184,6 +187,84 @@ export function PeerCheck({
             <Preview config={request.config} onRun={() => {}} />
           </aside>
         </div>
+      )}
+    </>
+  );
+}
+// 친구 검사 결과의 원래 작품을 이 기기에서 찾지 못했을 때(작품을 파일로 옮겨 이름표가 바뀐 경우)
+// 학생이 붙일 작품을 직접 고른다. 같은 미션의 작품을 먼저 보여 준다.
+export function PeerApply({
+  response,
+  works,
+  apply,
+  cancel,
+}: {
+  response: PeerResponse | null;
+  works: Work[];
+  apply: (w: Work) => void;
+  cancel: () => void;
+}) {
+  if (!response)
+    return (
+      <Empty title="붙일 친구 검사 결과가 없어요">
+        <p>내 작품 선반의 파일 가져오기로 친구 검사 결과 파일을 열어 주세요.</p>
+        <button onClick={cancel}>작품 선반으로</button>
+      </Empty>
+    );
+  const sorted = [...works].sort(
+    (a, b) =>
+      Number(b.missionId === response.missionId) -
+        Number(a.missionId === response.missionId) ||
+      b.updatedAt.localeCompare(a.updatedAt),
+  );
+  return (
+    <>
+      <div className="page-heading">
+        <div>
+          <span className="eyebrow">
+            친구 검사 결과 · {response.reviewer || "친구"}
+          </span>
+          <h1>검사 결과를 붙일 작품 고르기</h1>
+          <p>
+            요청을 보낸 작품을 이 기기에서 찾지 못했어요. 작품을 파일로 옮기면
+            작품 이름표가 새로 바뀌어요.
+            {response.title ? ` 요청한 작품: 「${response.title}」.` : ""} 같은
+            작품을 골라 주세요.
+          </p>
+        </div>
+        <button onClick={cancel}>취소</button>
+      </div>
+      {sorted.length ? (
+        <ul className="peer-apply-list">
+          {sorted.map((w) => {
+            const m = missions.find((x) => x.id === w.missionId);
+            const same = w.missionId === response.missionId;
+            return (
+              <li key={w.id} className="panel">
+                <div>
+                  <b>{w.draft.title || "제목 없는 작품"}</b>
+                  <small>
+                    {m?.title} · 최근 수정{" "}
+                    {new Date(w.updatedAt).toLocaleString("ko-KR")}
+                  </small>
+                  {same ? <Pill tone="green">같은 미션</Pill> : null}
+                </div>
+                <button
+                  className={same ? "primary" : ""}
+                  aria-label={`「${w.draft.title || "제목 없는 작품"}」에 검사 결과 합치기`}
+                  onClick={() => apply(w)}
+                >
+                  이 작품에 합치기
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <Empty title="이 기기에 작품이 없어요">
+          <p>먼저 작품 파일을 가져온 뒤 검사 결과 파일을 다시 열어 주세요.</p>
+          <button onClick={cancel}>작품 선반으로</button>
+        </Empty>
       )}
     </>
   );

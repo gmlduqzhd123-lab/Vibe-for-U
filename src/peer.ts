@@ -28,6 +28,9 @@ export type PeerResponse = {
   results: PeerResult[];
   comment: string;
   at: string;
+  // 요청한 작품을 찾지 못했을 때 비슷한 작품을 먼저 보여 주려고 담는다(이전 파일에는 없을 수 있음).
+  missionId?: string;
+  title?: string;
 };
 export function makePeerRequest(w: Work): PeerRequest {
   const m = missions.find((x) => x.id === w.missionId);
@@ -114,6 +117,12 @@ export function validatePeerResponse(data: unknown): PeerResponse {
     }),
     comment: str(r.comment, "친구 의견", LIMITS.checkText),
     at,
+    ...(r.missionId === undefined
+      ? {}
+      : { missionId: str(r.missionId, "미션", 80) }),
+    ...(r.title === undefined
+      ? {}
+      : { title: str(r.title, "작품 제목", LIMITS.short) }),
   };
 }
 // 결과를 작품의 친구 의견 검사 기록으로 더한다. 검사한 설정 버전을 그대로 남긴다.

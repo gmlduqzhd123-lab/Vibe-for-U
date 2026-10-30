@@ -4,6 +4,7 @@ import { missions } from "./data";
 import type { Mission, Mode, Work } from "./model";
 import { Icon } from "./ui";
 import "./RoleHome.css";
+import { useT } from "./i18n";
 
 export function RoleHome({
   mode,
@@ -18,6 +19,7 @@ export function RoleHome({
   go: (path: string) => void;
   create: (mission: Mission) => void;
 }) {
+  const t = useT();
   const menu = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
     const outside = (event: PointerEvent) => {
@@ -66,7 +68,7 @@ export function RoleHome({
           className="role-home-brand"
           href="#/home"
           onClick={(event) => navigate(event, "home")}
-          aria-label="뚝딱 바이브 공작소 홈"
+          aria-label={t("뚝딱 바이브 공작소 홈")}
         >
           <img
             src={`${import.meta.env.BASE_URL}favicon.svg`}
@@ -74,25 +76,26 @@ export function RoleHome({
             height="40"
             alt=""
           />
-          <span>뚝딱 바이브 공작소</span>
+          <span>{t("뚝딱 바이브 공작소")}</span>
         </a>
         <div className="ys-key">
           <button type="button" className="ys-chip" data-ys-install>
-            📲 <span className="ys-wide">앱 </span>설치
+            📲 <span className="ys-wide">{t("앱")} </span>
+            {t("설치")}
           </button>
           <button
             type="button"
             className="ys-chip"
             data-qr
-            aria-label="QR 코드로 접속"
+            aria-label={t("QR 코드로 접속")}
           >
             📱 QR
           </button>
         </div>
-        <nav aria-label="전체 메뉴">
+        <nav aria-label={t("전체 메뉴")}>
           <details className="role-home-menu" ref={menu}>
-            <summary aria-label="전체 메뉴">
-              <span className="role-home-menu-label">전체 메뉴</span>
+            <summary aria-label={t("전체 메뉴")}>
+              <span className="role-home-menu-label">{t("전체 메뉴")}</span>
               <svg
                 width="20"
                 height="20"
@@ -119,7 +122,7 @@ export function RoleHome({
                   key={path}
                   onClick={(event) => navigate(event, path)}
                 >
-                  {label}
+                  {t(label)}
                 </a>
               ))}
               <button
@@ -128,18 +131,18 @@ export function RoleHome({
                   create(missions[0]);
                 }}
               >
-                첫 작품 만들기
+                {t("첫 작품 만들기")}
               </button>
               <label className="role-home-mode">
-                <span>안내 모드</span>
+                <span>{t("안내 모드")}</span>
                 <select
-                  aria-label="안내 모드"
+                  aria-label={t("안내 모드")}
                   value={mode}
                   onChange={(event) => setMode(event.target.value as Mode)}
                 >
-                  <option value="child">어린이 모드</option>
-                  <option value="easy">쉬운 모드 (3~4학년)</option>
-                  <option value="adult">일반 입문자 모드</option>
+                  <option value="child">{t("어린이 모드")}</option>
+                  <option value="easy">{t("쉬운 모드 (3~4학년)")}</option>
+                  <option value="adult">{t("일반 입문자 모드")}</option>
                 </select>
               </label>
             </div>
@@ -149,10 +152,10 @@ export function RoleHome({
       <section className="role-home-content" aria-labelledby="role-home-title">
         <div className="role-home-intro">
           <span className="role-home-eyebrow">
-            작은 앱으로 배우는 코딩의 원리
+            {t("작은 앱으로 배우는 코딩의 원리")}
           </span>
-          <h1 id="role-home-title">누가 사용하나요</h1>
-          <p>퀴즈·이야기·타이머를 만들고 고치며 배워요</p>
+          <h1 id="role-home-title">{t("누가 사용하나요")}</h1>
+          <p>{t("퀴즈·이야기·타이머를 만들고 고치며 배워요")}</p>
         </div>
         <div className="role-home-cards">
           <a
@@ -167,14 +170,16 @@ export function RoleHome({
               <Icon name="play" size={28} />
             </div>
             <div className="role-home-copy">
-              <span className="role-home-overline">직접 해 보고 싶어요</span>
-              <h2 id="student-entry-title">학생으로 시작</h2>
+              <span className="role-home-overline">
+                {t("직접 해 보고 싶어요")}
+              </span>
+              <h2 id="student-entry-title">{t("학생으로 시작")}</h2>
               <p id="student-entry-description">
-                3분 체험에서 작은 퀴즈를 고쳐봐요
+                {t("3분 체험에서 작은 퀴즈를 고쳐봐요")}
               </p>
             </div>
             <span className="role-home-card-action">
-              체험 시작 <Icon name="arrow" size={22} />
+              {t("체험 시작")} <Icon name="arrow" size={22} />
             </span>
           </a>
           <a
@@ -189,31 +194,33 @@ export function RoleHome({
               <Icon name="book" size={28} />
             </div>
             <div className="role-home-copy">
-              <span className="role-home-overline">수업에 활용하고 싶어요</span>
-              <h2 id="teacher-entry-title">교사로 시작</h2>
+              <span className="role-home-overline">
+                {t("수업에 활용하고 싶어요")}
+              </span>
+              <h2 id="teacher-entry-title">{t("교사로 시작")}</h2>
               <p id="teacher-entry-description">
-                40분 수업과 활동지를 준비해요
+                {t("40분 수업과 활동지를 준비해요")}
               </p>
             </div>
             <span className="role-home-card-action">
-              수업 준비 <Icon name="arrow" size={22} />
+              {t("수업 준비")} <Icon name="arrow" size={22} />
             </span>
           </a>
         </div>
         <div className="role-home-returning">
-          <span>전에 만든 작품이 있나요?</span>
+          <span>{t("전에 만든 작품이 있나요?")}</span>
           <a
             href={`#/${continuePath}`}
             onClick={(event) => navigate(event, continuePath)}
           >
-            이어서 만들기 <Icon name="arrow" size={17} />
+            {t("이어서 만들기")} <Icon name="arrow" size={17} />
           </a>
         </div>
       </section>
       <footer className="role-home-footer">
-        <span>가입 없이 시작해요</span>
+        <span>{t("가입 없이 시작해요")}</span>
         <span aria-hidden="true">·</span>
-        <span>학습 기록은 내 기기에 남아요</span>
+        <span>{t("학습 기록은 내 기기에 남아요")}</span>
         <p className="ys-credit">
           © 2026 엽쌤. All rights reserved. ·{" "}
           <a
@@ -221,7 +228,7 @@ export function RoleHome({
             target="_blank"
             rel="noopener"
           >
-            엽쌤의 다른 앱 보기 →
+            {t("엽쌤의 다른 앱 보기 →")}
           </a>
         </p>
       </footer>

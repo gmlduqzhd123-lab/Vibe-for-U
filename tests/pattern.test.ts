@@ -52,7 +52,10 @@ describe("패턴 그리기", () => {
     expect(autoChecks(c, "r")[0].status).toBe("pass");
   });
   it("정상 규칙 새 작품은 멈추기 규칙이고 파일로 오가도 유지된다", () => {
-    const w = makeWork(missions.find((m) => m.id === "pattern-3")!, true);
+    const w = makeWork(
+      missions.find((m) => m.id === "pattern-3")!,
+      true,
+    );
     expect((w.draft.config as PatternConfig).edge).toBe("stop");
     expect(parseImport(exportJSON([w]))[0].draft.config).toEqual(
       w.draft.config,

@@ -3,6 +3,7 @@ import { LIMITS, uid } from "./model";
 import { Field, Icon } from "./ui";
 import { PatternSettings } from "./PatternSettings";
 import { StoryMap } from "./StoryMap";
+import { useT } from "./i18n";
 export function Settings({
   config,
   onChange,
@@ -10,6 +11,7 @@ export function Settings({
   config: Config;
   onChange: (c: Config) => void;
 }) {
+  const t = useT();
   if (config.kind === "quiz") {
     const edit = (patch: Partial<QuizConfig>) =>
       onChange({ ...config, ...patch });
@@ -17,19 +19,19 @@ export function Settings({
       <div className="settings">
         <div className="form-grid">
           <label className="field">
-            <span>채점 규칙</span>
+            <span>{t("채점 규칙")}</span>
             <select
               value={config.scoring}
               onChange={(e) =>
                 edit({ scoring: e.target.value as "once" | "attempt" })
               }
             >
-              <option value="once">문제당 한 번 (정상 규칙)</option>
-              <option value="attempt">누를 때마다 (학습용 규칙)</option>
+              <option value="once">{t("문제당 한 번 (정상 규칙)")}</option>
+              <option value="attempt">{t("누를 때마다 (학습용 규칙)")}</option>
             </select>
           </label>
           <label className="field">
-            <span>문제당 점수 (1~10)</span>
+            <span>{t("문제당 점수 (1~10)")}</span>
             <input
               type="number"
               min={1}
@@ -52,25 +54,25 @@ export function Settings({
             checked={config.resetScore}
             onChange={(e) => edit({ resetScore: e.target.checked })}
           />
-          다시 시작할 때 점수 초기화
+          {t("다시 시작할 때 점수 초기화")}
         </label>
         <Field
-          label="정답 안내"
+          label={t("정답 안내")}
           value={config.correctFeedback}
           onChange={(v) => edit({ correctFeedback: v })}
         />
         <Field
-          label="오답 안내"
+          label={t("오답 안내")}
           value={config.wrongFeedback}
           onChange={(v) => edit({ wrongFeedback: v })}
         />
         {config.questions.map((q, i) => (
           <details className="editor-item" key={q.id}>
             <summary>
-              문항 {i + 1} · {q.text.slice(0, 25)}
+              {t("문항 {n}", { n: i + 1 })} · {q.text.slice(0, 25)}
             </summary>
             <Field
-              label={`문항 ${i + 1} 내용`}
+              label={t("문항 {n} 내용", { n: i + 1 })}
               value={q.text}
               onChange={(v) =>
                 edit({
@@ -84,7 +86,7 @@ export function Settings({
               <Field
                 key={k}
                 max={LIMITS.short}
-                label={`문항 ${i + 1} 선택지 ${k + 1}`}
+                label={t("문항 {n} 선택지 {k}", { n: i + 1, k: k + 1 })}
                 value={ch}
                 onChange={(v) =>
                   edit({
@@ -101,7 +103,7 @@ export function Settings({
               />
             ))}
             <label className="field">
-              <span>문항 {i + 1} 정답</span>
+              <span>{t("문항 {n} 정답", { n: i + 1 })}</span>
               <select
                 value={q.correct}
                 onChange={(e) =>
@@ -114,7 +116,7 @@ export function Settings({
               >
                 {q.choices.map((_, k) => (
                   <option key={k} value={k}>
-                    {k + 1}번
+                    {t("{n}번", { n: k + 1 })}
                   </option>
                 ))}
               </select>
@@ -126,13 +128,13 @@ export function Settings({
                   edit({
                     questions: config.questions.map((p, j) =>
                       j === i
-                        ? { ...p, choices: [...p.choices, "새 선택지"] }
+                        ? { ...p, choices: [...p.choices, t("새 선택지")] }
                         : p,
                     ),
                   })
                 }
               >
-                선택지 추가
+                {t("선택지 추가")}
               </button>
               <button
                 disabled={q.choices.length <= 2}
@@ -150,7 +152,7 @@ export function Settings({
                   })
                 }
               >
-                마지막 선택지 삭제
+                {t("마지막 선택지 삭제")}
               </button>
               <button
                 className="danger-text"
@@ -161,7 +163,7 @@ export function Settings({
                   })
                 }
               >
-                문항 삭제
+                {t("문항 삭제")}
               </button>
             </div>
           </details>
@@ -175,8 +177,8 @@ export function Settings({
                 ...config.questions,
                 {
                   id: uid(),
-                  text: "새 문제를 적어 주세요.",
-                  choices: ["선택 1", "선택 2"],
+                  text: t("새 문제를 적어 주세요."),
+                  choices: [t("선택 1"), t("선택 2")],
                   correct: 0,
                 },
               ],
@@ -184,11 +186,12 @@ export function Settings({
           }
         >
           <Icon name="plus" />
-          문항 추가
+          {t("문항 추가")}
         </button>
         <small>
-          최대 문항 20개 · 선택지 6개. 설정을 바꾸면 실행 화면은 처음으로
-          돌아가요.
+          {t(
+            "최대 문항 20개 · 선택지 6개. 설정을 바꾸면 실행 화면은 처음으로 돌아가요.",
+          )}
         </small>
       </div>
     );
@@ -211,7 +214,7 @@ export function Settings({
       <div className="settings">
         <StoryMap config={config} />
         <label className="field">
-          <span>시작 장면</span>
+          <span>{t("시작 장면")}</span>
           <select
             value={config.start}
             onChange={(e) => edit({ start: e.target.value })}
@@ -226,17 +229,17 @@ export function Settings({
         {config.scenes.map((s, i) => (
           <details className="editor-item" key={s.id} open={i === 0}>
             <summary>
-              장면 {i + 1} · {s.title}
+              {t("장면 {n}", { n: i + 1 })} · {s.title}
             </summary>
             <Field
               max={LIMITS.short}
-              label={`장면 ${i + 1} 제목`}
+              label={t("장면 {n} 제목", { n: i + 1 })}
               value={s.title}
               onChange={(v) => update(s.id, { title: v })}
             />
             <Field
               area
-              label={`장면 ${i + 1} 설명`}
+              label={t("장면 {n} 설명", { n: i + 1 })}
               value={s.text}
               onChange={(v) => update(s.id, { text: v })}
             />
@@ -250,11 +253,11 @@ export function Settings({
                     ending: e.target.checked,
                     choices: e.target.checked
                       ? []
-                      : [{ label: "다음으로", to: config.start }],
+                      : [{ label: t("다음으로"), to: config.start }],
                   })
                 }
               />
-              결말 장면
+              {t("결말 장면")}
             </label>
             {s.ending ? (
               <label className="checkbox">
@@ -273,14 +276,14 @@ export function Settings({
                     })
                   }
                 />
-                도달해야 하는 결말에 포함
+                {t("도달해야 하는 결말에 포함")}
               </label>
             ) : (
               s.choices.map((ch, k) => (
                 <div className="connection" key={k}>
                   <Field
                     max={LIMITS.short}
-                    label={`장면 ${i + 1} 선택 ${k + 1}`}
+                    label={t("장면 {n} 선택 {k}", { n: i + 1, k: k + 1 })}
                     value={ch.label}
                     onChange={(v) =>
                       update(s.id, {
@@ -291,7 +294,7 @@ export function Settings({
                     }
                   />
                   <label className="field">
-                    <span>도착 장면 {k + 1}</span>
+                    <span>{t("도착 장면 {n}", { n: k + 1 })}</span>
                     <select
                       value={ch.to}
                       onChange={(e) =>
@@ -317,7 +320,7 @@ export function Settings({
                       })
                     }
                   >
-                    이 선택 삭제
+                    {t("이 선택 삭제")}
                   </button>
                 </div>
               ))
@@ -329,12 +332,12 @@ export function Settings({
                   update(s.id, {
                     choices: [
                       ...s.choices,
-                      { label: "새로운 길", to: config.start },
+                      { label: t("새로운 길"), to: config.start },
                     ],
                   })
                 }
               >
-                선택 추가
+                {t("선택 추가")}
               </button>
             ) : null}
             <button
@@ -362,7 +365,7 @@ export function Settings({
                 })
               }
             >
-              장면 삭제
+              {t("장면 삭제")}
             </button>
           </details>
         ))}
@@ -374,8 +377,8 @@ export function Settings({
                 ...config.scenes,
                 {
                   id: uid(),
-                  title: "새로운 결말",
-                  text: "어떤 일이 생겼나요?",
+                  title: t("새로운 결말"),
+                  text: t("어떤 일이 생겼나요?"),
                   ending: true,
                   choices: [],
                 },
@@ -383,11 +386,13 @@ export function Settings({
             })
           }
         >
-          <Icon name="plus" />새 장면 추가
+          <Icon name="plus" />
+          {t("새 장면 추가")}
         </button>
         <small>
-          최대 장면 24개 · 장면마다 선택 6개. 장면을 삭제하면 해당 장면으로 가던
-          길은 시작 장면으로 연결돼요.
+          {t(
+            "최대 장면 24개 · 장면마다 선택 6개. 장면을 삭제하면 해당 장면으로 가던 길은 시작 장면으로 연결돼요.",
+          )}
         </small>
       </div>
     );
@@ -395,7 +400,7 @@ export function Settings({
   return (
     <div className="settings">
       <label className="field">
-        <span>제한 시간 (1~3,600초)</span>
+        <span>{t("제한 시간 (1~3,600초)")}</span>
         <input
           type="number"
           min={1}
@@ -418,17 +423,18 @@ export function Settings({
           checked={config.showEnd}
           onChange={(e) => onChange({ ...config, showEnd: e.target.checked })}
         />
-        0초가 되면 종료 안내 표시
+        {t("0초가 되면 종료 안내 표시")}
       </label>
       <Field
         area
-        label="종료 안내 문장"
+        label={t("종료 안내 문장")}
         value={config.endMessage}
         onChange={(v) => onChange({ ...config, endMessage: v })}
       />
       <div className="note">
-        시작을 여러 번 눌러도 한 번만 실행해요. 남은 시간은 0보다 작아지지 않고,
-        종료 안내는 한 번만 나와요.
+        {t(
+          "시작을 여러 번 눌러도 한 번만 실행해요. 남은 시간은 0보다 작아지지 않고, 종료 안내는 한 번만 나와요.",
+        )}
       </div>
     </div>
   );

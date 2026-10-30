@@ -217,8 +217,22 @@ export function arrangePrompt(data: PromiseData, mode: Mode) {
     ? `사용할 사람은 ${data.audience}이에요.\n해결할 문제: ${data.problem}\n누르거나 입력할 것: ${data.input}\n필요한 기능: ${data.features}\n다시 누르거나 처음으로 돌아갈 때: ${data.exceptions}\n완성이라고 할 수 있는 조건: ${data.done}`
     : `목적: ${data.problem}\n사용자: ${data.audience}\n입력: ${data.input}\n기능과 결과: ${data.features}\n예외 상황: ${data.exceptions}\n완료 조건: ${data.done}`;
 }
-export function correctionPrompt(c: Snapshot["change"]) {
-  return `발생 상황: ${c.situation}\n기대한 결과: ${c.expected}\n실제 결과: ${c.actual}\n바꾸려는 동작: ${c.behavior}\n유지할 동작: ${c.keep}\n수정 후 검사: ${c.retest}\n수정 이유: ${c.reason}`;
+// t를 넘기면 화면 언어로 항목 이름을 쓴다.
+export function correctionPrompt(
+  c: Snapshot["change"],
+  t: (text: string) => string = (x) => x,
+) {
+  return [
+    [t("발생 상황"), c.situation],
+    [t("기대한 결과"), c.expected],
+    [t("실제 결과"), c.actual],
+    [t("바꾸려는 동작"), c.behavior],
+    [t("유지할 동작"), c.keep],
+    [t("수정 후 검사"), c.retest],
+    [t("수정 이유"), c.reason],
+  ]
+    .map(([k, v]) => `${k}: ${v}`)
+    .join("\n");
 }
 export function stageDone(d: Snapshot) {
   const current = d.checks.filter((c) => c.revision === d.revision);

@@ -55,6 +55,20 @@ describe("친구 검사 파일", () => {
     ]);
     expect(peer.every((c) => c.revision === w.draft.revision)).toBe(true);
   });
+  it("결과 파일의 미션·제목은 있으면 지키고 없어도 읽는다", () => {
+    const w = work();
+    const base = response(w);
+    expect(validatePeerResponse(base).missionId).toBeUndefined();
+    const withMission = validatePeerResponse({
+      ...base,
+      missionId: "quiz-3",
+      title: "제목",
+    });
+    expect([withMission.missionId, withMission.title]).toEqual([
+      "quiz-3",
+      "제목",
+    ]);
+  });
   it("잘못된 파일과 빈 결과는 거절한다", () => {
     const w = work();
     expect(peerFileKind({ format: "ttukttak-vibe-backup" })).toBeNull();

@@ -1,11 +1,10 @@
 import type { Mission } from "./model";
-import type { Lang } from "./i18n";
 // 미션 본문 영어 번역. 설정 화면의 항목 이름은 아직 한국어라 괄호 안에 함께 적는다.
-type Text = Pick<
+export type MissionText = Pick<
   Mission,
   "title" | "goal" | "prediction" | "tests" | "task" | "hints" | "closing"
 >;
-export const missionsEn: Record<string, Text> = {
+export const missionsEn: Record<string, MissionText> = {
   "quiz-1": {
     title: "When a choice meets the answer",
     goal: "Make a quiz that shows the right message for the answer you pick.",
@@ -383,14 +382,3 @@ export const missionsEn: Record<string, Text> = {
       "Without an “if … then …” condition, how many commands would you need to draw the same border?",
   },
 };
-// 화면 언어에 맞춘 미션. 번역이 없으면 원래 미션을 그대로 쓴다.
-export function localizeMission(m: Mission, lang: Lang): Mission {
-  const en = lang === "en" ? missionsEn[m.id] : undefined;
-  if (!en) return m;
-  return {
-    ...m,
-    ...en,
-    guide: `Predict first, then run it. ${en.task}`,
-    completion: `Record a prediction → check ${en.tests.map((t) => t.label).join(", ")} yourself → explain the fix and how it works`,
-  };
-}

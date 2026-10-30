@@ -17,6 +17,8 @@ test("쉬운 모드: 낱말 블록으로 원문을 만들고 안내를 소리로
     // WebKit은 speechSynthesis 객체를 다시 만들 수 있어 프로토타입에 바꿔 둔다.
     SpeechSynthesis.prototype.speak = function (u: SpeechSynthesisUtterance) {
       spoken.push(`${u.lang}|${u.text}`);
+      // 실제 음성처럼 다 읽으면 끝 신호를 보낸다.
+      setTimeout(() => u.onend?.(new Event("end") as SpeechSynthesisEvent));
     };
   });
   await page.goto("#/mission/quiz-3");
@@ -59,6 +61,17 @@ test("쉬운 모드: 낱말 블록으로 원문을 만들고 안내를 소리로
   expect(spoken[1]).toMatch(/^ko-KR\|예상하고 실행/);
   expect(spoken[1]).toContain("같은 정답을 세 번 누르면");
 
+  // 영어 화면에서는 영어 음성으로 읽는다.
+  await page.getByLabel("언어 · Language").selectOption("en");
+  await page.getByRole("button", { name: "Listen to this step" }).click();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => (window as unknown as { spoken: string[] }).spoken.at(-1) ?? "",
+      ),
+    )
+    .toMatch(/^en-US\|Predict and run\. Predict before you press/);
+  await page.getByLabel("언어 · Language").selectOption("ko");
   const audit = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
     .analyze();

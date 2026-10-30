@@ -10,28 +10,29 @@ concurrency:
   cancel-in-progress: true
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       asset: ${{ steps.asset.outputs.asset }}
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: npm
       - run: npm ci
+      - run: npm run check
       - run: npm test
       - run: npm run build
       # 배포 뒤 공개 주소가 이번 빌드로 바뀌었는지 확인할 때 쓴다.
       - id: asset
         run: echo "asset=$(grep -o 'assets/index-[A-Za-z0-9_-]*\.js' dist/index.html | head -1)" >> "$GITHUB_OUTPUT"
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v4
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
   deploy:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       page_url: ${{ steps.deployment.outputs.page_url }}
     permissions:
@@ -43,14 +44,14 @@ jobs:
     steps:
       - name: Deploy
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
   public-check:
     # 실제 공개 주소에서 같은 브라우저 흐름을 검사한다.
     needs: [build, deploy]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: npm
@@ -72,7 +73,7 @@ jobs:
           PW_BROWSER: chromium
           PUBLIC_URL: ${{ needs.deploy.outputs.page_url }}
       - if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: playwright-report-public
           path: |

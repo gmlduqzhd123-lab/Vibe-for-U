@@ -474,3 +474,42 @@ export function parseImport(text: string): Work[] {
     return { ...work, id: uid(), editingLabel: "가져온 복사본 · 현재 편집본" };
   });
 }
+// 학급 작품 모으기에서 평가 중인 목록. 학생 작품 저장소와 섞이지 않게 따로 둔다.
+const CLASS_DB = APP_PREFIX + "class-v1";
+function openClassDb() {
+  return new Promise<IDBDatabase>((resolve, reject) => {
+    const r = indexedDB.open(CLASS_DB, 1);
+    r.onupgradeneeded = () => r.result.createObjectStore("session");
+    r.onsuccess = () => resolve(r.result);
+    r.onerror = () => reject(r.error);
+  });
+}
+async function classTx<T>(
+  mode: IDBTransactionMode,
+  action: (s: IDBObjectStore) => IDBRequest<T>,
+) {
+  const db = await openClassDb();
+  return new Promise<T>((resolve, reject) => {
+    const tx = db.transaction("session", mode);
+    const r = action(tx.objectStore("session"));
+    tx.oncomplete = () => {
+      db.close();
+      resolve(r.result);
+    };
+    tx.onerror = tx.onabort = () => {
+      db.close();
+      reject(tx.error ?? new Error("평가 목록을 저장하지 못했어요."));
+    };
+  });
+}
+export type ClassSession<T> = { entries: T[]; savedAt: string };
+export const loadClassSession = <T>() =>
+  classTx("readonly", (s) => s.get("current")) as Promise<
+    ClassSession<T> | undefined
+  >;
+export const saveClassSession = <T>(entries: T[]) =>
+  classTx("readwrite", (s) =>
+    s.put({ entries, savedAt: new Date().toISOString() }, "current"),
+  );
+export const clearClassSession = () =>
+  classTx("readwrite", (s) => s.delete("current"));

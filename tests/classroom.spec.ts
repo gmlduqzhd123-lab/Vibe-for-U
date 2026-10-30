@@ -104,3 +104,60 @@ test("교사가 학생 파일을 모아 단계 표를 보고 평가를 학생에
   await expect(feedback).toContainText("약속을 고쳐 썼어요.");
   await studentDevice.close();
 });
+
+test("평가하던 학급 목록은 새로고침해도 이어서 열리고, 목록 비우기로 지운다", async ({
+  page,
+}) => {
+  await page.goto("#/mission/quiz-2");
+  await page
+    .getByRole("button", { name: "이 미션 시작하기", exact: true })
+    .click();
+  await expect(page.getByText("기기에 저장됨", { exact: true })).toBeVisible();
+  const exported = page.waitForEvent("download");
+  await page.getByRole("button", { name: "파일 백업", exact: true }).click();
+  const student = await fs.readFile((await (await exported).path())!);
+
+  const openTab = async () => {
+    await page.goto("#/teacher");
+    await page
+      .getByRole("button", { name: "학급 작품 모으기", exact: true })
+      .click();
+  };
+  await openTab();
+  await page.getByLabel("학생 작품 JSON 파일 여러 개").setInputFiles({
+    name: "12-지우.json",
+    mimeType: "application/json",
+    buffer: student,
+  });
+  const card = page.locator(".review-card").first();
+  await card.locator("summary").click();
+  await card
+    .getByRole("group", { name: "검사와 수정" })
+    .getByRole("radio", { name: /^설명·적용/ })
+    .check();
+  await card.getByLabel("확인한 근거와 다음 도움").fill("재검사가 좋아요.");
+  // 자동 보관이 끝날 때까지 잠시 기다린 뒤 새로고침한다.
+  await page.waitForTimeout(600);
+  await page.reload();
+  await openTab();
+  await expect(page.locator(".class-table")).toContainText("12-지우.json");
+  await expect(
+    page.getByRole("status").filter({ hasText: "이어서 열었어요" }),
+  ).toBeVisible();
+  const again = page.locator(".review-card").first();
+  await again.locator("summary").click();
+  await expect(
+    again
+      .getByRole("group", { name: "검사와 수정" })
+      .getByRole("radio", { name: /^설명·적용/ }),
+  ).toBeChecked();
+  await expect(again.getByLabel("확인한 근거와 다음 도움")).toHaveValue(
+    "재검사가 좋아요.",
+  );
+
+  await page.getByRole("button", { name: "목록 비우기" }).click();
+  await page.waitForTimeout(600);
+  await page.reload();
+  await openTab();
+  await expect(page.locator(".class-table")).toHaveCount(0);
+});
