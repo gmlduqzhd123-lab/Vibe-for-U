@@ -19,6 +19,7 @@ import {
 } from "./model";
 import { missions } from "./data";
 import {
+  clearClassSession,
   clearWorks,
   deleteWork,
   downloadWorks,
@@ -414,11 +415,12 @@ export default function App() {
   const clearAll = () =>
     ask({
       title: "이 앱의 데이터 전체를 삭제할까요?",
-      body: `이 브라우저의 뚝딱 작품 ${works.length}개와 모든 버전·학습 기록·모드 설정을 삭제해요. 같은 주소의 다른 앱 데이터는 지우지 않아요.`,
+      body: `이 브라우저의 뚝딱 작품 ${works.length}개와 모든 버전·학습 기록·모드 설정·학급 평가 목록을 삭제해요. 같은 주소의 다른 앱 데이터는 지우지 않아요.`,
       backup: works,
       action: async () => {
         await flush();
         await clearWorks();
+        await clearClassSession().catch(() => {});
         announceChange();
         pending.current.clear();
         setAll([]);

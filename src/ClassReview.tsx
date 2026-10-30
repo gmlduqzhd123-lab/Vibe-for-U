@@ -1,7 +1,14 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LIMITS, now, stageDone } from "./model";
 import type { Feedback } from "./model";
-import { downloadText, exportJSON, parseImport } from "./storage";
+import {
+  clearClassSession,
+  downloadText,
+  exportJSON,
+  loadClassSession,
+  parseImport,
+  saveClassSession,
+} from "./storage";
 import {
   emptyFeedback,
   graded,
@@ -19,6 +26,38 @@ export function ClassReview({ message }: { message: (s: string) => void }) {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
   const input = useRef<HTMLInputElement>(null);
+  // 새로고침해도 평가가 사라지지 않게 이 기기에 임시로 보관하고 다시 연다.
+  const [restored, setRestored] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    loadClassSession<Entry>()
+      .then((saved) => {
+        if (!alive) return;
+        if (saved?.entries.length) {
+          setEntries(saved.entries);
+          message(
+            `${new Date(saved.savedAt).toLocaleString("ko-KR")}까지 평가하던 작품 ${saved.entries.length}개를 이어서 열었어요.`,
+          );
+        }
+      })
+      .catch(() => {})
+      .finally(() => alive && setRestored(true));
+    return () => {
+      alive = false;
+    };
+  }, [message]);
+  useEffect(() => {
+    if (!restored) return;
+    const timer = setTimeout(() => {
+      (entries.length ? saveClassSession(entries) : clearClassSession()).catch(
+        () =>
+          message(
+            "평가 목록을 이 기기에 보관하지 못했어요. CSV나 평가 파일로 내려받아 두세요.",
+          ),
+      );
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [entries, restored, message]);
   const load = async (files: FileList | null) => {
     if (!files?.length) return;
     const added: Entry[] = [];
@@ -80,8 +119,9 @@ export function ClassReview({ message }: { message: (s: string) => void }) {
         </p>
         <div className="note">
           <Icon name="shield" />
-          파일은 이 화면에서만 읽고 이 기기 저장소나 서버에 올리지 않아요.
-          새로고침하면 사라지니 평가를 마치면 CSV나 평가 파일로 내려받으세요.
+          평가 중인 목록은 이 기기에만 임시로 보관해 새로고침해도 이어서 열려요.
+          서버에는 올리지 않고, 학생 작품 선반과도 섞이지 않아요. 평가를 마치면
+          CSV나 평가 파일로 내려받고 <b>목록 비우기</b>로 지워 주세요.
         </div>
         <div className="button-row">
           <button className="primary" onClick={() => input.current?.click()}>
