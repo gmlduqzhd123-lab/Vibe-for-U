@@ -21,6 +21,8 @@ npm run dev
 npm run build   # TypeScript 검사 + dist/ 정적 산출물
 npm run preview # 빌드한 앱 미리보기
 npm test        # 핵심 규칙·저장·가져오기 자동 테스트
+npm run check   # 파일 이름 대소문자 충돌·ESLint·Prettier 서식·타입 검사
+npm run format  # Prettier로 서식 맞추기
 npm run test:e2e # 빌드 후 Windows Edge 브라우저 검사
 npx playwright test -c playwright.public.config.ts # 실제 공개 주소에서 같은 흐름 검사
 ```

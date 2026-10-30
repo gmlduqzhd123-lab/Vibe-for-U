@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { lessons } from "./data";
 import { initialTimer, pauseTimer, startTimer, tickTimer } from "./engines";
 import type { Mission, TimerConfig } from "./model";
@@ -49,12 +49,15 @@ export function Present({
   const slides = slidesFor(m, lesson);
   const [index, setIndex] = useState(0);
   const [minutes, setMinutes] = useState(lesson ? 30 : 10);
-  const config: TimerConfig = {
-    kind: "timer",
-    seconds: minutes * 60,
-    showEnd: true,
-    endMessage: "활동 시간이 끝났어요.",
-  };
+  const config: TimerConfig = useMemo(
+    () => ({
+      kind: "timer",
+      seconds: minutes * 60,
+      showEnd: true,
+      endMessage: "활동 시간이 끝났어요.",
+    }),
+    [minutes],
+  );
   const [timer, setTimer] = useState(() => initialTimer(config));
   const [roles, setRoles] = useState(true);
   const [seenSwaps, setSeenSwaps] = useState(0);
@@ -65,8 +68,7 @@ export function Present({
       250,
     );
     return () => clearInterval(id);
-    // config는 분 단위 설정에서만 바뀐다.
-  }, [timer.running, minutes]);
+  }, [timer.running, config]);
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement).closest("input, select, textarea")) return;

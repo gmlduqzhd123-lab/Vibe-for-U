@@ -7,7 +7,8 @@ export default defineConfig({
     ...local.use,
     // 배포 워크플로는 PUBLIC_URL로 방금 배포한 주소를 넘긴다.
     baseURL:
-      process.env.PUBLIC_URL ?? "https://gmlduqzhd123-lab.github.io/Vibe-for-U/",
+      process.env.PUBLIC_URL ??
+      "https://gmlduqzhd123-lab.github.io/Vibe-for-U/",
   },
   outputDir: "test-results/public",
   reporter: [

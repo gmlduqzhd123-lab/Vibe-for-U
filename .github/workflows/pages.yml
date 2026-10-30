@@ -20,6 +20,7 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - run: npm run check
       - run: npm test
       - run: npm run build
       # 배포 뒤 공개 주소가 이번 빌드로 바뀌었는지 확인할 때 쓴다.

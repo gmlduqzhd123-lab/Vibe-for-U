@@ -316,12 +316,14 @@ export default function App() {
   };
   const found = missions.find((m) => m.id === (active?.missionId ?? parts[1]));
   const mission = found && localizeMission(found, lang);
+  const activeId = active?.id;
+  const view = parts[0];
   useEffect(() => {
-    if (active && parts[0] === "work") {
-      setLastId(active.id);
-      setting("last", active.id);
+    if (activeId && view === "work") {
+      setLastId(activeId);
+      setting("last", activeId);
     }
-  }, [active?.id, parts[0], setting]);
+  }, [activeId, view, setting]);
   const edit = (fn: (d: Snapshot) => Snapshot, track = true) => {
     if (!active || readOnly) return;
     const current = worksRef.current.find((w) => w.id === active.id)!;
@@ -649,6 +651,8 @@ export default function App() {
     document.documentElement.lang =
       langs.find((l) => l.id === lang)?.html ?? "ko";
   }, [lang]);
+  const titleRef = useRef(pageTitle);
+  titleRef.current = pageTitle;
   // 화면이 바뀌면 화면 낭독기에 새 화면 이름을 알리고, 누른 버튼이 사라져
   // 초점을 잃었으면 본문으로 옮긴다.
   useEffect(() => {
@@ -656,7 +660,7 @@ export default function App() {
       firstRoute.current = false;
       return;
     }
-    setAnnounce(pageTitle);
+    setAnnounce(titleRef.current);
     // 새 화면 파일을 불러오는 동안에는 이전 화면이 숨겨진 채 남았다가 나중에 사라지므로,
     // 한 번만 보지 않고 잠시 동안 매 프레임 초점이 사라졌거나 숨겨진 요소에 있는지 확인한다.
     const until = performance.now() + 10000;
@@ -679,7 +683,7 @@ export default function App() {
     };
     frame = requestAnimationFrame(check);
     return () => cancelAnimationFrame(frame);
-    // 화면 경로가 바뀔 때만 알린다.
+    // 화면 경로가 바뀔 때만 알린다(제목은 그때의 최신 값을 읽는다).
   }, [route]);
   return (
     <LangContext.Provider value={lang}>
