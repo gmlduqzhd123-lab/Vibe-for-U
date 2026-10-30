@@ -51,7 +51,7 @@ import {
   validatePeerRequest,
   validatePeerResponse,
 } from "./peer";
-import type { PeerRequest } from "./peer";
+import type { PeerRequest, PeerResponse } from "./peer";
 import "./Welcome.css";
 import { LangContext, langs, translate } from "./i18n";
 import { localizeMission } from "./missionsEn";
@@ -69,6 +69,9 @@ const Teacher = lazy(() =>
 );
 const PeerCheck = lazy(() =>
   import("./PeerCheck").then((m) => ({ default: m.PeerCheck })),
+);
+const PeerApply = lazy(() =>
+  import("./PeerCheck").then((m) => ({ default: m.PeerApply })),
 );
 const Present = lazy(() =>
   import("./Present").then((m) => ({ default: m.Present })),
@@ -115,6 +118,7 @@ export default function App() {
   const [storageError, setStorageError] = useState("");
   const [unreadable, setUnreadable] = useState<unknown[]>([]);
   const [peerRequest, setPeerRequest] = useState<PeerRequest | null>(null);
+  const [peerResponse, setPeerResponse] = useState<PeerResponse | null>(null);
   // 작품별 되돌리기 기록(같은 탭에서는 새로고침해도 남는다)
   const histories = useRef(new Map<string, History>());
   const historyOf = (id: string) => {
@@ -568,6 +572,14 @@ export default function App() {
       },
     });
   };
+  const applyPeer = (target: Work, r: PeerResponse) => {
+    persist(applyPeerResponse(target, r));
+    setPeerResponse(null);
+    go(`work/${target.id}/3`);
+    message(
+      `${r.reviewer.trim() || "친구"}의 검사 결과를 ‘친구·교사 의견’ 기록으로 더했어요.`,
+    );
+  };
   const importFile = async (file?: File) => {
     if (!file) return;
     try {
@@ -593,15 +605,13 @@ export default function App() {
         const r = validatePeerResponse(data);
         await flush();
         const target = worksRef.current.find((w) => w.id === r.workId);
-        if (!target)
-          throw new Error(
-            "이 기기에서 친구 검사를 요청한 작품을 찾을 수 없어요. 요청 파일을 만든 기기에서 가져와 주세요.",
-          );
-        persist(applyPeerResponse(target, r));
-        go(`work/${target.id}/3`);
-        message(
-          `${r.reviewer.trim() || "친구"}의 검사 결과를 ‘친구·교사 의견’ 기록으로 더했어요.`,
-        );
+        // 작품을 파일로 옮겨 이름표가 바뀌었으면 학생이 붙일 작품을 고른다.
+        if (!target) {
+          setPeerResponse(r);
+          go("peer-apply");
+          return;
+        }
+        applyPeer(target, r);
         return;
       }
       const imported = parseImport(text);
@@ -627,7 +637,7 @@ export default function App() {
     ? "home"
     : ["teacher", "prepare", "present"].includes(parts[0])
       ? "teacher"
-      : ["library", "portfolio", "peer"].includes(parts[0])
+      : ["library", "portfolio", "peer", "peer-apply"].includes(parts[0])
         ? "library"
         : "missions";
   const step = Math.max(0, Math.min(4, Number(parts[2]) || 0));
@@ -640,7 +650,7 @@ export default function App() {
           ? "교사 수업 준비"
           : parts[0] === "share"
             ? "QR 소개 카드"
-            : parts[0] === "peer"
+            : parts[0] === "peer" || parts[0] === "peer-apply"
               ? "친구 작품 검사하기"
               : parts[0] === "present"
                 ? "수업 진행 화면"
@@ -926,6 +936,24 @@ export default function App() {
                         : undefined
                     }
                     go={go}
+                  />
+                ) : parts[0] === "peer-apply" ? (
+                  <PeerApply
+                    response={peerResponse}
+                    works={visible}
+                    apply={(w) => {
+                      try {
+                        applyPeer(w, peerResponse!);
+                      } catch (e) {
+                        message(
+                          `합치지 못했어요. ${e instanceof Error ? e.message : ""}`,
+                        );
+                      }
+                    }}
+                    cancel={() => {
+                      setPeerResponse(null);
+                      go("library");
+                    }}
                   />
                 ) : parts[0] === "peer" ? (
                   <PeerCheck
