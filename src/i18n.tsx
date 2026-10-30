@@ -53,10 +53,25 @@ const en: Record<string, string> = {
   "검사하고 수정": "Test and fix",
   "설명하고 저장": "Explain and save",
   "학습 단계": "Learning steps",
+  "누가, 어떤 순간에 쓸 앱인지 약속해요.":
+    "Agree on who will use the app, and when.",
+  "내 말로 적고, 검사할 수 있는 요청으로 정리해요.":
+    "Write it in your own words, then turn it into a request you can test.",
+  "누르기 전에 예상하고, 설정과 결과를 비교해요.":
+    "Predict before you press, then compare the settings with the result.",
+  "기대한 결과와 실제 결과를 나란히 적어요.":
+    "Write what you expected next to what actually happened.",
+  "어떻게 움직이는지, 무엇을 바꿨는지 설명해요.":
+    "Explain how it works and what you changed.",
   "기록 완료": "Recorded",
   "기록할 내용 있음": "Still to record",
   "파일 백업": "Back up file",
   되돌리기: "Undo",
+  "읽어 주기": "Read aloud",
+  "읽기 멈추기": "Stop reading",
+  "이 단계 안내 듣기": "Listen to this step",
+  "미션 안내 듣기": "Listen to the mission",
+  "만든 문장 듣기": "Listen to my sentence",
   "다시 하기": "Redo",
   "과정 포트폴리오": "Process portfolio",
   "다음 단계": "Next step",

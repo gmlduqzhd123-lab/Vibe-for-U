@@ -324,14 +324,16 @@ export function Workspace({
             <div className="step-heading">
               <Pill>STEP {String(step + 1).padStart(2, "0")}</Pill>
               <h2>{t(stageNames[step])}</h2>
-              <p>{stageGuides[step]}</p>
+              <p>{t(stageGuides[step])}</p>
               <SpeakButton
                 text={[
-                  stageNames[step],
-                  stageGuides[step],
+                  t(stageNames[step]),
+                  t(stageGuides[step]),
                   ["", "", m.prediction, m.task, m.closing][step],
                 ]
                   .filter(Boolean)
+                  // 문장 끝 마침표가 겹치지 않게 이어 붙인다.
+                  .map((s) => s.replace(/[.。]$/, ""))
                   .join(". ")}
                 label="이 단계 안내 듣기"
               />
