@@ -35,6 +35,15 @@ import { Icon, Mascot, Empty, Field } from "./ui";
 import { Explore, Prepare, QuickTry, LessonLanding } from "./Welcome";
 import { announceChange, useChanges, useWorkLock } from "./tabLock";
 import { ErrorBoundary } from "./ErrorBoundary";
+import {
+  forgetHistory,
+  loadHistory,
+  move,
+  remember,
+  saveHistory,
+  stepOf,
+} from "./undoHistory";
+import type { History } from "./undoHistory";
 
 import {
   applyPeerResponse,
@@ -106,14 +115,17 @@ export default function App() {
   const [storageError, setStorageError] = useState("");
   const [unreadable, setUnreadable] = useState<unknown[]>([]);
   const [peerRequest, setPeerRequest] = useState<PeerRequest | null>(null);
-  // 작품별 되돌리기 기록(현재 탭에서만 기억)
-  const histories = useRef(
-    new Map<string, { undo: Snapshot[]; redo: Snapshot[]; at: number }>(),
-  );
+  // 작품별 되돌리기 기록(같은 탭에서는 새로고침해도 남는다)
+  const histories = useRef(new Map<string, History>());
   const historyOf = (id: string) => {
     let h = histories.current.get(id);
-    if (!h) histories.current.set(id, (h = { undo: [], redo: [], at: 0 }));
+    if (!h) histories.current.set(id, (h = loadHistory(id)));
     return h;
+  };
+  // 바꾸기 전 모습을 되돌리기에 남긴다. coalesce는 연속 입력을 한 단계로 묶는다.
+  const track = (w: Work, coalesce = false) => {
+    const h = historyOf(w.id);
+    if (remember(h, stepOf(w), coalesce)) saveHistory(w.id, h);
   };
   const [toast, setToast] = useState("");
   const [copyFallback, setCopyFallback] = useState<string | null>(null);
@@ -325,20 +337,10 @@ export default function App() {
       setting("last", activeId);
     }
   }, [activeId, view, setting]);
-  const edit = (fn: (d: Snapshot) => Snapshot, track = true) => {
+  const edit = (fn: (d: Snapshot) => Snapshot, record = true) => {
     if (!active || readOnly) return;
     const current = worksRef.current.find((w) => w.id === active.id)!;
-    if (track) {
-      const h = historyOf(active.id);
-      // 잇달아 입력하는 글자는 한 번의 되돌리기로 묶는다.
-      const stamp = Date.now();
-      if (stamp - h.at > 800 || !h.undo.length) {
-        h.undo.push(current.draft);
-        if (h.undo.length > 50) h.undo.shift();
-      }
-      h.at = stamp;
-      h.redo = [];
-    }
+    if (record) track(current, true);
     persist({
       ...current,
       draft: fn(current.draft),
@@ -350,12 +352,13 @@ export default function App() {
   const moveInHistory = (from: "undo" | "redo") => {
     if (!active || blocked()) return;
     const h = historyOf(active.id);
-    const target = h[from].pop();
-    if (!target) return;
     const current = worksRef.current.find((w) => w.id === active.id)!;
-    h[from === "undo" ? "redo" : "undo"].push(current.draft);
-    h.at = 0;
-    persist({ ...current, draft: target });
+    const target = move(h, from, stepOf(current));
+    if (!target) return;
+    saveHistory(active.id, h);
+    // 버전 복원을 되돌릴 때처럼 설정이 통째로 바뀌면 실행 화면을 처음 상태로 연다.
+    if (target.versions !== current.versions) setRuntimeEpoch((n) => n + 1);
+    persist({ ...current, ...target });
     message(
       from === "undo" ? "한 단계 되돌렸어요." : "되돌린 것을 다시 했어요.",
     );
@@ -402,6 +405,8 @@ export default function App() {
       action: async () => {
         await flush();
         await deleteWork(w.id);
+        histories.current.delete(w.id);
+        forgetHistory(w.id);
         announceChange();
         pending.current.delete(w.id);
         setAll(worksRef.current.filter((t) => t.id !== w.id));
@@ -421,6 +426,8 @@ export default function App() {
         await flush();
         await clearWorks();
         await clearClassSession().catch(() => {});
+        histories.current.clear();
+        forgetHistory();
         announceChange();
         pending.current.clear();
         setAll([]);
@@ -477,6 +484,7 @@ export default function App() {
       );
       return;
     }
+    track(active);
     persist({ ...active, versions });
     message(
       `「${version.label}」을 버전으로 저장 중이에요. 저장 상태를 확인해 주세요.`,
@@ -505,6 +513,7 @@ export default function App() {
       return;
     }
     setRuntimeEpoch((n) => n + 1);
+    track(active);
     persist({
       ...active,
       draft: clone(v.data),
@@ -526,6 +535,7 @@ export default function App() {
           ...d,
           checks: d.checks.filter((c) => !ids.includes(c.id)),
         });
+        track(active);
         persist({
           ...active,
           draft: filter(active.draft),
@@ -549,11 +559,13 @@ export default function App() {
       title: "이 수정 버전을 삭제할까요?",
       body: `「${v.label}」의 저장된 설정과 검사 묶음을 삭제해요. 현재 편집본과 다른 버전은 유지돼요. 처음 시작 버전은 보존해요.`,
       backup: [active],
-      action: () =>
+      action: () => {
+        track(active);
         persist({
           ...active,
           versions: active.versions.filter((t) => t.id !== v.id),
-        }),
+        });
+      },
     });
   };
   const importFile = async (file?: File) => {

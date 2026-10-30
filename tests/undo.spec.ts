@@ -49,3 +49,32 @@ test("되돌리기·다시 하기: 버튼과 단축키로 편집을 되돌리고
   await page.reload();
   await expect(title).toHaveValue("첫 제목");
 });
+
+test("버전 복원도 되돌릴 수 있고, 같은 탭에서는 새로고침해도 되돌리기가 남는다", async ({
+  page,
+}) => {
+  await page.goto("#/mission/quiz-1");
+  await page
+    .getByRole("button", { name: "이 미션 시작하기", exact: true })
+    .click();
+  const title = page.getByLabel("작품 제목", { exact: true });
+  await title.fill("복원 전 제목");
+  await expect(page.getByText("기기에 저장됨", { exact: true })).toBeVisible();
+  await page.getByText("수정 버전 · 비교와 복원", { exact: true }).click();
+  const versions = page.locator(".version-list > div");
+  await expect(versions).toHaveCount(1);
+  await page.getByRole("button", { name: "이 버전 복원" }).first().click();
+  await expect(title).toHaveValue("선택이 정답을 만났을 때");
+  await expect(versions).toHaveCount(2);
+
+  await page.reload();
+  const undo = page.getByRole("button", { name: "↶ 되돌리기" });
+  await expect(undo).toBeEnabled();
+  await undo.click();
+  await expect(title).toHaveValue("복원 전 제목");
+  await page.getByText("수정 버전 · 비교와 복원", { exact: true }).click();
+  await expect(versions).toHaveCount(1);
+  await page.getByRole("button", { name: "↷ 다시 하기" }).click();
+  await expect(title).toHaveValue("선택이 정답을 만났을 때");
+  await expect(versions).toHaveCount(2);
+});
