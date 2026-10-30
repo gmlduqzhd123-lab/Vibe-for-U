@@ -10,6 +10,7 @@ import {
 } from "./engines";
 import type { PatternConfig } from "./model";
 import { Icon, Pill } from "./ui";
+import { useT } from "./i18n";
 export function PatternBoard({
   size,
   painted = [],
@@ -53,6 +54,7 @@ export function PatternPreview({
   config: PatternConfig;
   onRun: () => void;
 }) {
+  const t = useT();
   const [s, setS] = useState(initialPattern);
   const [showTarget, setShowTarget] = useState(true);
   const total = patternMoves(config).length;
@@ -61,15 +63,15 @@ export function PatternPreview({
   return (
     <div className="preview-inner">
       <div className="preview-caption">
-        <Pill tone="green">실행 화면</Pill>
-        <span>준비된 패턴 그리기 템플릿</span>
+        <Pill tone="green">{t("실행 화면")}</Pill>
+        <span>{t("준비된 패턴 그리기 템플릿")}</span>
       </div>
       <PatternBoard
         size={config.size}
         painted={s.painted}
         target={showTarget ? config.target : []}
         current={cell(s.x, s.y)}
-        label={`${config.size}×${config.size} 판 · 칠한 칸 ${s.painted.length}개 · 현재 위치 ${cell(s.x, s.y)}${showTarget ? ` · 점선은 목표 칸 ${config.target.length}개` : ""}`}
+        label={`${t("{n}×{n} 판 · 칠한 칸 {p}개 · 현재 위치 {at}", { n: config.size, p: s.painted.length, at: cell(s.x, s.y) })}${showTarget ? ` · ${t("점선은 목표 칸 {n}개", { n: config.target.length })}` : ""}`}
       />
       <label className="checkbox">
         <input
@@ -77,7 +79,7 @@ export function PatternPreview({
           checked={showTarget}
           onChange={(e) => setShowTarget(e.target.checked)}
         />
-        목표 모양을 점선으로 보기
+        {t("목표 모양을 점선으로 보기")}
       </label>
       <div className="button-row">
         <button
@@ -89,7 +91,7 @@ export function PatternPreview({
           }}
         >
           <Icon name="play" />
-          모두 그리기
+          {t("모두 그리기")}
         </button>
         <button
           disabled={finished}
@@ -98,7 +100,7 @@ export function PatternPreview({
             setS((p) => stepPattern(config, p));
           }}
         >
-          한 칸씩 그리기
+          {t("한 칸씩 그리기")}
         </button>
         <button
           onClick={() => {
@@ -106,58 +108,67 @@ export function PatternPreview({
             setS(initialPattern());
           }}
         >
-          ↺ 처음으로
+          {t("↺ 처음으로")}
         </button>
       </div>
       <p className="timer-end" role="status">
         {finished
           ? missing.length || extra.length
-            ? `다 그렸어요. 목표와 달라요: 빠진 칸 ${missing.length}개, 더 칠한 칸 ${extra.length}개`
-            : "다 그렸어요. 목표 모양과 같아요!"
-          : "그리기 전에 어떤 모양이 나올지 예상해 보세요."}
+            ? t("다 그렸어요. 목표와 달라요: 빠진 칸 {m}개, 더 칠한 칸 {e}개", {
+                m: missing.length,
+                e: extra.length,
+              })
+            : t("다 그렸어요. 목표 모양과 같아요!")
+          : t("그리기 전에 어떤 모양이 나올지 예상해 보세요.")}
       </p>
       <details className="trace" open>
-        <summary>동작 설명 · 지금 앱이 기억하는 값</summary>
+        <summary>{t("동작 설명 · 지금 앱이 기억하는 값")}</summary>
         <p>
-          명령 묶음을 {config.repeat}번 반복 → 한 칸씩 이동 →{" "}
+          {t("명령 묶음을 {n}번 반복 → 한 칸씩 이동 →", { n: config.repeat })}{" "}
           {config.turn === "right"
-            ? "만약 다음 칸이 막혀 있으면 오른쪽으로 돌기"
-            : `판 밖이면 ${config.edge === "stop" ? "멈추기" : "반대편으로 넘어가기"}`}{" "}
-          → 도착한 칸 칠하기
+            ? t("만약 다음 칸이 막혀 있으면 오른쪽으로 돌기")
+            : t(
+                config.edge === "stop"
+                  ? "판 밖이면 멈추기"
+                  : "판 밖이면 반대편으로 넘어가기",
+              )}{" "}
+          {t("→ 도착한 칸 칠하기")}
         </p>
         <dl>
           <div>
-            <dt>현재 위치</dt>
+            <dt>{t("현재 위치")}</dt>
             <dd>{cell(s.x, s.y)}</dd>
           </div>
           <div>
-            <dt>칠한 칸</dt>
+            <dt>{t("칠한 칸")}</dt>
             <dd data-testid="painted">{s.painted.length}</dd>
           </div>
           <div>
-            <dt>이동</dt>
+            <dt>{t("이동")}</dt>
             <dd>
               {s.step} / {total}
             </dd>
           </div>
           <div>
-            <dt>넘어감 · 멈춤</dt>
+            <dt>{t("넘어감 · 멈춤")}</dt>
             <dd>
               {s.wrapped} · {s.blocked}
             </dd>
           </div>
           {config.turn === "right" ? (
             <div>
-              <dt>조건으로 돈 횟수</dt>
+              <dt>{t("조건으로 돈 횟수")}</dt>
               <dd>{s.turns}</dd>
             </div>
           ) : null}
         </dl>
         <p>{s.event}</p>
         <small>
-          명령:{" "}
+          {t("명령:")}{" "}
           {config.commands
-            .map((m) => `${dirNames[m.dir]} ${m.count}칸`)
+            .map((m) =>
+              t("{dir} {n}칸", { dir: t(dirNames[m.dir]), n: m.count }),
+            )
             .join(" → ")}
         </small>
       </details>

@@ -18,13 +18,13 @@ import { Preview } from "./Preview";
 import { LearningWords } from "./Welcome";
 import { BlockPrompt, predictionStarters } from "./BlockPrompt";
 import { SpeakButton } from "./Speak";
-import { useT } from "./i18n";
+import { dateLocale, useLang, useT } from "./i18n";
 import { rubric } from "./data";
 import { RubricChoices } from "./Rubric";
 import { makePeerRequest } from "./peer";
 import { backupFiles, downloadText } from "./storage";
 import { ShareButton } from "./Share";
-const stageGuides = [
+export const stageGuides = [
   "누가, 어떤 순간에 쓸 앱인지 약속해요.",
   "내 말로 적고, 검사할 수 있는 요청으로 정리해요.",
   "누르기 전에 예상하고, 설정과 결과를 비교해요.",
@@ -73,6 +73,7 @@ export function Workspace({
   updateWork = () => {},
 }: Props) {
   const t = useT();
+  const lang = useLang();
   const d = w.draft;
   const done = stageDone(d);
   const predictionRef = useRef<HTMLDivElement>(null);
@@ -124,7 +125,7 @@ export function Workspace({
     patch({ change: { ...d.change, [key]: v } });
   const a = w.versions.find((v) => v.id === compareA)?.data ?? d;
   const b = w.versions.find((v) => v.id === compareB)?.data ?? d;
-  const diff = compareSnapshots(a, b);
+  const diff = compareSnapshots(a, b, t);
   const [sideBySide, setSideBySide] = useState(false);
   return (
     <>
@@ -132,9 +133,9 @@ export function Workspace({
         <div>
           <span className="eyebrow">
             {m.title} ·{" "}
-            {d.activity === "practice" ? "기본 연습실" : "실제 AI 제작 활동"}
+            {t(d.activity === "practice" ? "기본 연습실" : "실제 AI 제작 활동")}
           </span>
-          <h1>{d.title || "제목 없는 작품"}</h1>
+          <h1>{d.title || t("제목 없는 작품")}</h1>
         </div>
         <div className="button-row">
           <button
@@ -183,9 +184,10 @@ export function Workspace({
       {readOnly ? (
         <div role="alert" className="warning tab-lock no-print">
           <p>
-            <b>{t("다른 탭에서 이 작품을 편집하고 있어요.")}</b> 이 탭은 읽기
-            전용이에요. 두 탭에서 함께 고치면 나중에 저장한 쪽이 앞의 내용을
-            덮어쓸 수 있어요.
+            <b>{t("다른 탭에서 이 작품을 편집하고 있어요.")}</b>{" "}
+            {t(
+              "이 탭은 읽기 전용이에요. 두 탭에서 함께 고치면 나중에 저장한 쪽이 앞의 내용을 덮어쓸 수 있어요.",
+            )}
           </p>
           <button className="primary" onClick={takeOver}>
             {t("이 탭에서 편집하기")}
@@ -196,7 +198,7 @@ export function Workspace({
       <div className="workspace-meta">
         <span>
           <span className="status-dot" />
-          {w.editingLabel} · 실행 화면도 이 설정을 사용해요
+          {t(w.editingLabel)} · {t("실행 화면도 이 설정을 사용해요")}
         </span>
         {(d.config.kind === "quiz" &&
           (d.config.scoring === "attempt" || !d.config.resetScore)) ||
@@ -205,9 +207,9 @@ export function Workspace({
         (m.learningError &&
           d.config.kind === "story" &&
           d.config.scenes[0]?.choices[1]?.to === "tree") ? (
-          <Pill tone="orange">학습용 오류 규칙 포함</Pill>
+          <Pill tone="orange">{t("학습용 오류 규칙 포함")}</Pill>
         ) : (
-          <Pill tone="green">현재 설정으로 검사해 보세요</Pill>
+          <Pill tone="green">{t("현재 설정으로 검사해 보세요")}</Pill>
         )}
       </div>
       <fieldset className="plain-fieldset" disabled={readOnly}>
@@ -216,29 +218,35 @@ export function Workspace({
             className={d.activity === "practice" ? "active" : ""}
             onClick={() => patch({ activity: "practice" })}
           >
-            기본 연습실
+            {t("기본 연습실")}
           </button>
           <button
             className={d.activity === "ai" ? "active" : ""}
             onClick={() => patch({ activity: "ai" })}
           >
-            실제 AI 제작 기록
+            {t("실제 AI 제작 기록")}
           </button>
           <span>
             {d.activity === "practice"
-              ? "준비된 코드와 규칙을 바꾸며 연습해요."
-              : "외부 도구는 교사·성인이 조작해요."}
+              ? t("준비된 코드와 규칙을 바꾸며 연습해요.")
+              : t("외부 도구는 교사·성인이 조작해요.")}
           </span>
         </div>
         {d.activity === "ai" ? (
           <section className="panel ai-panel">
-            <Pill>실제 AI 활동 · {aiStatus(d.ai)}</Pill>
-            <h2>요청은 여기서, 실제 제작은 외부 도구에서</h2>
+            <Pill>
+              {t("실제 AI 활동")} · {t(aiStatus(d.ai))}
+            </Pill>
+            <h2>{t("요청은 여기서, 실제 제작은 외부 도구에서")}</h2>
             <p>
               {mode !== "adult"
-                ? "내가 쓴 요청문과 검사 조건을 교사·성인에게 전달해요. 교사·성인이 외부 AI 도구로 만들고 실행하면, 그 결과를 함께 관찰해요."
-                : "외부 AI 개발 도구에 요청문을 붙여 넣어 생성·실행한 뒤 직접 관찰한 결과를 기록하세요."}{" "}
-              복사만으로 실제 제작이 완료되지는 않아요.
+                ? t(
+                    "내가 쓴 요청문과 검사 조건을 교사·성인에게 전달해요. 교사·성인이 외부 AI 도구로 만들고 실행하면, 그 결과를 함께 관찰해요.",
+                  )
+                : t(
+                    "외부 AI 개발 도구에 요청문을 붙여 넣어 생성·실행한 뒤 직접 관찰한 결과를 기록하세요.",
+                  )}{" "}
+              {t("복사만으로 실제 제작이 완료되지는 않아요.")}
             </p>
             <div className="button-row">
               <button
@@ -247,45 +255,45 @@ export function Workspace({
                 }
               >
                 <Icon name="copy" />
-                제작 요청문 복사
+                {t("제작 요청문 복사")}
               </button>
-              <button onClick={() => copy(correctionPrompt(d.change))}>
-                수정 요청문 복사
+              <button onClick={() => copy(correctionPrompt(d.change, t))}>
+                {t("수정 요청문 복사")}
               </button>
             </div>
             <div className="form-grid">
               <Field
                 max={LIMITS.short}
-                label="실제로 사용한 외부 AI 도구명"
+                label={t("실제로 사용한 외부 AI 도구명")}
                 value={d.ai.tool}
                 onChange={(v) => patch({ ai: { ...d.ai, tool: v } })}
               />
               <Field
-                label="도구에서 도움받은 내용"
+                label={t("도구에서 도움받은 내용")}
                 value={d.ai.help}
                 onChange={(v) => patch({ ai: { ...d.ai, help: v } })}
               />
             </div>
             <Field
               area
-              label="외부 실행 전 예상"
+              label={t("외부 실행 전 예상")}
               value={d.ai.expected}
               onChange={(v) => patch({ ai: { ...d.ai, expected: v } })}
             />
             <Field
               area
-              label="외부 결과의 검사 기준"
+              label={t("외부 결과의 검사 기준")}
               value={d.ai.criteria}
               onChange={(v) => patch({ ai: { ...d.ai, criteria: v } })}
             />
             <Field
               area
-              label="실제로 실행하여 관찰한 결과"
+              label={t("실제로 실행하여 관찰한 결과")}
               value={d.ai.observation}
               onChange={(v) => patch({ ai: { ...d.ai, observation: v } })}
             />
             <label className="field">
-              <span>내가 확인한 외부 결과</span>
+              <span>{t("내가 확인한 외부 결과")}</span>
               <select
                 value={d.ai.result}
                 onChange={(e) =>
@@ -297,23 +305,26 @@ export function Workspace({
                   })
                 }
               >
-                <option value="unobserved">아직 확인하지 않음</option>
-                <option value="pass">직접 검사 기준 충족을 관찰함</option>
-                <option value="revise">수정할 동작을 관찰함</option>
+                <option value="unobserved">{t("아직 확인하지 않음")}</option>
+                <option value="pass">
+                  {t("직접 검사 기준 충족을 관찰함")}
+                </option>
+                <option value="revise">{t("수정할 동작을 관찰함")}</option>
               </select>
             </label>
             <Field
               area
-              label="외부 AI에 보낼 수정 요청문"
+              label={t("외부 AI에 보낼 수정 요청문")}
               value={d.ai.revisionPrompt}
               onChange={(v) => patch({ ai: { ...d.ai, revisionPrompt: v } })}
             />
             <button onClick={() => copy(d.ai.revisionPrompt)}>
-              이 수정 요청문 복사
+              {t("이 수정 요청문 복사")}
             </button>
             <p className="small muted">
-              아래 실행 화면과 자동 검사는 기본 연습 템플릿만 확인해요. 외부 AI
-              코드의 동작을 자동 검증하지 않아요.
+              {t(
+                "아래 실행 화면과 자동 검사는 기본 연습 템플릿만 확인해요. 외부 AI 코드의 동작을 자동 검증하지 않아요.",
+              )}
             </p>
           </section>
         ) : null}
@@ -335,18 +346,19 @@ export function Workspace({
                   // 문장 끝 마침표가 겹치지 않게 이어 붙인다.
                   .map((s) => s.replace(/[.。]$/, ""))
                   .join(". ")}
-                label="이 단계 안내 듣기"
+                label={t("이 단계 안내 듣기")}
               />
             </div>
             {step === 0 ? (
               <>
                 <div className="note">
-                  아래 내용은 시작 예시예요. 내 생각에 맞게 고치고, 아래의 ‘이
-                  약속으로 만들기’를 눌러 확인해요.
+                  {t(
+                    "아래 내용은 시작 예시예요. 내 생각에 맞게 고치고, 아래의 ‘이 약속으로 만들기’를 눌러 확인해요.",
+                  )}
                 </div>
                 <Field
                   max={LIMITS.short}
-                  label="작품 제목"
+                  label={t("작품 제목")}
                   value={d.title}
                   onChange={(v) => patch({ title: v })}
                 />
@@ -387,10 +399,10 @@ export function Workspace({
                   <Field
                     key={key}
                     area={key === "done"}
-                    label={label}
+                    label={t(label)}
                     value={d.promise[key]}
                     max={LIMITS.promise}
-                    placeholder={hint}
+                    placeholder={t(hint)}
                     onChange={(v) =>
                       patch({
                         promise: { ...d.promise, [key]: v },
@@ -400,11 +412,11 @@ export function Workspace({
                   />
                 ))}
                 <details className="hint" open={mode !== "adult"}>
-                  <summary>입력 · 조건 · 앱이 기억하는 값</summary>
+                  <summary>{t("입력 · 조건 · 앱이 기억하는 값")}</summary>
                   <p>
-                    입력은 내가 누른 답이에요. 조건은 “정답인가? 이미 답했나?”를
-                    확인하는 약속이에요. 앱은 점수와 문제 번호처럼 다음 행동에도
-                    필요한 값을 기억해요.
+                    {t(
+                      "입력은 내가 누른 답이에요. 조건은 “정답인가? 이미 답했나?”를 확인하는 약속이에요. 앱은 점수와 문제 번호처럼 다음 행동에도 필요한 값을 기억해요.",
+                    )}
                   </p>
                 </details>
               </>
@@ -419,7 +431,9 @@ export function Workspace({
                   />
                 ) : mode === "child" ? (
                   <details className="hint">
-                    <summary>글쓰기가 어렵다면 · 낱말 블록으로 만들기</summary>
+                    <summary>
+                      {t("글쓰기가 어렵다면 · 낱말 블록으로 만들기")}
+                    </summary>
                     <BlockPrompt
                       kind={w.kind}
                       current={d.originalPrompt}
@@ -429,12 +443,14 @@ export function Workspace({
                 ) : null}
                 <Field
                   area
-                  label="내가 처음 쓴 요청문 (원문)"
+                  label={t("내가 처음 쓴 요청문 (원문)")}
                   value={d.originalPrompt}
                   placeholder={
                     mode !== "adult"
-                      ? "우리 반 친구가 쓸 퀴즈를 만들고 싶어요. 답을 고르면…"
-                      : "목적과 원하는 기능을 자유롭게 적으세요."
+                      ? t(
+                          "우리 반 친구가 쓸 퀴즈를 만들고 싶어요. 답을 고르면…",
+                        )
+                      : t("목적과 원하는 기능을 자유롭게 적으세요.")
                   }
                   onChange={(v) => patch({ originalPrompt: v })}
                 />
@@ -445,11 +461,11 @@ export function Workspace({
                   }
                 >
                   <Icon name="spark" />
-                  만들기 약속으로 요청문 정리
+                  {t("만들기 약속으로 요청문 정리")}
                 </button>
                 <Field
                   area
-                  label="정리한 제작 요청문"
+                  label={t("정리한 제작 요청문")}
                   value={d.arrangedPrompt}
                   onChange={(v) => patch({ arrangedPrompt: v })}
                 />
@@ -458,12 +474,12 @@ export function Workspace({
                   onClick={() => copy(d.arrangedPrompt)}
                 >
                   <Icon name="copy" />
-                  제작 요청문 복사
+                  {t("제작 요청문 복사")}
                 </button>
                 <div className="note">
-                  원문은 따로 보존해요. 자유롭게 적은 문장을 실행 코드로 바꾸지
-                  않아요. 실행 결과는 다음 단계에서 확인한 설정과 규칙에 따라
-                  결정돼요.
+                  {t(
+                    "원문은 따로 보존해요. 자유롭게 적은 문장을 실행 코드로 바꾸지 않아요. 실행 결과는 다음 단계에서 확인한 설정과 규칙에 따라 결정돼요.",
+                  )}
                 </div>
               </>
             ) : null}
@@ -473,41 +489,46 @@ export function Workspace({
                 <div ref={predictionRef}>
                   <Field
                     area
-                    label="실행 전 나의 예상"
+                    label={t("실행 전 나의 예상")}
                     value={d.prediction}
-                    placeholder="이렇게 누르면… 이렇게 될 것 같아요. 왜냐하면…"
+                    placeholder={t(
+                      "이렇게 누르면… 이렇게 될 것 같아요. 왜냐하면…",
+                    )}
                     onChange={(v) => edit((s) => updatePrediction(s, v))}
                   />
                   {mode === "easy" ? (
                     <div
                       className="block-row"
                       role="group"
-                      aria-label="예상 문장 시작 블록"
+                      aria-label={t("예상 문장 시작 블록")}
                     >
-                      {predictionStarters.map((b) => (
-                        <button
-                          key={b}
-                          type="button"
-                          className="block-chip"
-                          onClick={() =>
-                            edit((s) =>
-                              updatePrediction(
-                                s,
-                                s.prediction ? `${s.prediction} ${b}` : b,
-                              ),
-                            )
-                          }
-                        >
-                          + {b}
-                        </button>
-                      ))}
+                      {predictionStarters
+                        .map((k) => t(k))
+                        .map((b) => (
+                          <button
+                            key={b}
+                            type="button"
+                            className="block-chip"
+                            onClick={() =>
+                              edit((s) =>
+                                updatePrediction(
+                                  s,
+                                  s.prediction ? `${s.prediction} ${b}` : b,
+                                ),
+                              )
+                            }
+                          >
+                            + {b}
+                          </button>
+                        ))}
                     </div>
                   ) : null}
                 </div>
-                <h3>설정과 규칙</h3>
+                <h3>{t("설정과 규칙")}</h3>
                 <p className="muted small">
-                  설정을 바꾸면 새 설정 버전이 생겨요. 이전 검사 기록은 보존되며
-                  재검사가 필요해요.
+                  {t(
+                    "설정을 바꾸면 새 설정 버전이 생겨요. 이전 검사 기록은 보존되며 재검사가 필요해요.",
+                  )}
                 </p>
                 <Settings
                   config={d.config}
@@ -521,7 +542,7 @@ export function Workspace({
             {step === 3 ? (
               <>
                 <div className="prompt-question">
-                  <b>이번 수정 과제</b>
+                  <b>{t("이번 수정 과제")}</b>
                   <p>{m.task}</p>
                 </div>
                 <Inspection
@@ -531,22 +552,26 @@ export function Workspace({
                   message={message}
                   deleteChecks={deleteChecks}
                 />
-                <h3>바꾼 내용과 이유를 남겨요</h3>
+                <h3>{t("바꾼 내용과 이유를 남겨요")}</h3>
                 <Field
-                  label="바꾸려는 동작"
+                  label={t("바꾸려는 동작")}
                   value={d.change.behavior}
-                  placeholder="예: 한 번 답한 문제는 다시 채점하지 않게 바꿨어요."
+                  placeholder={t(
+                    "예: 한 번 답한 문제는 다시 채점하지 않게 바꿨어요.",
+                  )}
                   onChange={(v) => change("behavior", v)}
                 />
                 <Field
                   area
-                  label="왜 이렇게 수정했나요?"
+                  label={t("왜 이렇게 수정했나요?")}
                   value={d.change.reason}
-                  placeholder="문제가 없었다면, 무엇을 더 좋게 바꾸었거나 그대로 둔 이유를 적어도 좋아요."
+                  placeholder={t(
+                    "문제가 없었다면, 무엇을 더 좋게 바꾸었거나 그대로 둔 이유를 적어도 좋아요.",
+                  )}
                   onChange={(v) => change("reason", v)}
                 />
                 <details className="correction-extra">
-                  <summary>수정 요청문을 보낼 때 · 자세한 기록</summary>
+                  <summary>{t("수정 요청문을 보낼 때 · 자세한 기록")}</summary>
                   {(
                     [
                       ["situation", "어떤 상황에서 생긴 문제인가요?"],
@@ -558,23 +583,22 @@ export function Workspace({
                   ).map(([key, label]) => (
                     <Field
                       key={key}
-                      label={label}
+                      label={t(label)}
                       value={d.change[key]}
                       onChange={(v) => change(key, v)}
                     />
                   ))}
-                  <button onClick={() => copy(correctionPrompt(d.change))}>
+                  <button onClick={() => copy(correctionPrompt(d.change, t))}>
                     <Icon name="copy" />
-                    수정 요청문 복사
+                    {t("수정 요청문 복사")}
                   </button>
                 </details>
                 <div className="note peer-request">
-                  <b>친구에게 검사 부탁하기</b>
+                  <b>{t("친구에게 검사 부탁하기")}</b>
                   <p>
-                    요청 파일에는 앱 설정과 검사 항목만 들어가요. 친구가 자기
-                    기기의 <b>친구 작품 검사하기</b>에서 열어 결과 파일을
-                    돌려주면, <b>파일 가져오기</b>로 열어 친구 의견 기록으로
-                    더해요.
+                    {t(
+                      "요청 파일에는 앱 설정과 검사 항목만 들어가요. 친구가 자기 기기의 ‘친구 작품 검사하기’에서 열어 결과 파일을 돌려주면, ‘파일 가져오기’로 열어 친구 의견 기록으로 더해요.",
+                    )}
                   </p>
                   <button
                     onClick={() =>
@@ -586,18 +610,18 @@ export function Workspace({
                     }
                   >
                     <Icon name="download" />
-                    친구 검사 요청 파일 만들기
+                    {t("친구 검사 요청 파일 만들기")}
                   </button>
                   <ShareButton
                     name={`친구검사요청-${d.title || "작품"}.json`}
                     text={() => JSON.stringify(makePeerRequest(w))}
-                    title="친구 검사 요청"
+                    title={t("친구 검사 요청")}
                     message={message}
-                    label="요청 파일 공유로 보내기"
+                    label={t("요청 파일 공유로 보내기")}
                   />
                 </div>
                 <button className="subtle" onClick={() => go(`work/${w.id}/2`)}>
-                  설정으로 돌아가 수정하기 <Icon name="arrow" />
+                  {t("설정으로 돌아가 수정하기")} <Icon name="arrow" />
                 </button>
                 <Hint hints={m.hints} onOpen={hintOpened} />
               </>
@@ -607,42 +631,50 @@ export function Workspace({
                 <div className="prompt-question">{m.closing}</div>
                 <Field
                   area
-                  label="작동 원리와 배운 점"
+                  label={t("작동 원리와 배운 점")}
                   value={d.reflection}
-                  placeholder="내가 누른 것 → 적용한 규칙 → 기억하는 값 → 화면에 나온 결과"
+                  placeholder={t(
+                    "내가 누른 것 → 적용한 규칙 → 기억하는 값 → 화면에 나온 결과",
+                  )}
                   onChange={(v) => patch({ reflection: v })}
                 />
                 <Field
                   area
-                  label="친구·교사·도구에게 도움받은 내용"
+                  label={t("친구·교사·도구에게 도움받은 내용")}
                   value={d.help}
-                  placeholder="어떤 도움을 받았나요? 혼자 했다면 그렇게 적어도 좋아요."
+                  placeholder={t(
+                    "어떤 도움을 받았나요? 혼자 했다면 그렇게 적어도 좋아요.",
+                  )}
                   onChange={(v) => patch({ help: v })}
                 />
                 <div className="badges">
                   {checks.some((c) => c.status === "pass") ? (
-                    <Pill tone="green">✓ 검사 확인 기록</Pill>
+                    <Pill tone="green">{t("✓ 검사 확인 기록")}</Pill>
                   ) : null}
                   {d.checks.some((c) => c.revision !== d.revision) &&
                   checks.some((c) => c.status === "pass") ? (
-                    <Pill>✓ 설정 변경 후 재검사 기록</Pill>
+                    <Pill>{t("✓ 설정 변경 후 재검사 기록")}</Pill>
                   ) : null}
                   {d.change.reason.trim() ? (
-                    <Pill tone="orange">✓ 수정 이유 작성</Pill>
+                    <Pill tone="orange">{t("✓ 수정 이유 작성")}</Pill>
                   ) : null}
                 </div>
                 <p>
-                  배지는 확인 가능한 기록에 연결돼요. 이해도나 창의성 점수는
-                  자동으로 매기지 않아요.
+                  {t(
+                    "배지는 확인 가능한 기록에 연결돼요. 이해도나 창의성 점수는 자동으로 매기지 않아요.",
+                  )}
                 </p>
                 <section
                   className="self-assessment"
                   aria-labelledby="self-assessment-title"
                 >
-                  <h3 id="self-assessment-title">나의 과정 스스로 평가하기</h3>
+                  <h3 id="self-assessment-title">
+                    {t("나의 과정 스스로 평가하기")}
+                  </h3>
                   <p className="small muted">
-                    내 기록을 보고 네 가지 항목에서 어디까지 했는지 골라요.
-                    선생님 평가와 함께 포트폴리오에 나와요.
+                    {t(
+                      "내 기록을 보고 네 가지 항목에서 어디까지 했는지 골라요. 선생님 평가와 함께 포트폴리오에 나와요.",
+                    )}
                   </p>
                   <RubricChoices
                     name={`self-${w.id}`}
@@ -660,7 +692,7 @@ export function Workspace({
                   />
                   <Field
                     area
-                    label="스스로 돌아보며 다음에 해 볼 것"
+                    label={t("스스로 돌아보며 다음에 해 볼 것")}
                     value={self.note}
                     onChange={(note) =>
                       updateWork({
@@ -677,21 +709,23 @@ export function Workspace({
                   className="primary"
                   onClick={() => go(`portfolio/${w.id}`)}
                 >
-                  포트폴리오 모아 보기 <Icon name="arrow" />
+                  {t("포트폴리오 모아 보기")} <Icon name="arrow" />
                 </button>
               </>
             ) : null}
             <div className="step-bottom">
               <span className="small muted">
                 {done[step]
-                  ? "이 단계의 기록이 채워졌어요."
-                  : [
-                      "예시를 읽고, 내 약속을 정한 뒤 아래 버튼으로 확인해 주세요.",
-                      "원문과 정리한 요청문을 모두 적어 주세요.",
-                      "예상을 적고 현재 설정의 앱을 눌러 보세요.",
-                      "직접 관찰·수정 이유를 적고, 미확인·수정 필요 항목을 다시 검사해요.",
-                      "작동 원리와 도움받은 내용을 적어 주세요.",
-                    ][step]}
+                  ? t("이 단계의 기록이 채워졌어요.")
+                  : t(
+                      [
+                        "예시를 읽고, 내 약속을 정한 뒤 아래 버튼으로 확인해 주세요.",
+                        "원문과 정리한 요청문을 모두 적어 주세요.",
+                        "예상을 적고 현재 설정의 앱을 눌러 보세요.",
+                        "직접 관찰·수정 이유를 적고, 미확인·수정 필요 항목을 다시 검사해요.",
+                        "작동 원리와 도움받은 내용을 적어 주세요.",
+                      ][step],
+                    )}
               </span>
               <button
                 className="primary"
@@ -699,10 +733,10 @@ export function Workspace({
                   step === 0
                     ? Object.values(d.promise).every((v) => v.trim())
                       ? (patch({ goalReviewed: true }), go(`work/${w.id}/1`))
-                      : message("빈 만들기 약속을 먼저 채워 주세요.")
+                      : message(t("빈 만들기 약속을 먼저 채워 주세요."))
                     : step < 4
                       ? go(`work/${w.id}/${step + 1}`)
-                      : saveVersion(versionLabel || "설명과 성찰 기록")
+                      : saveVersion(versionLabel || t("설명과 성찰 기록"))
                 }
               >
                 {t(
@@ -720,15 +754,15 @@ export function Workspace({
         <aside className="preview-panel panel">
           <div className="preview-heading">
             <Icon name="play" size={18} />
-            <h2>직접 해 보는 작은 앱</h2>
-            <Pill tone="paper">기본 연습</Pill>
+            <h2>{t("직접 해 보는 작은 앱")}</h2>
+            <Pill tone="paper">{t("기본 연습")}</Pill>
           </div>
           {!d.prediction.trim() ? (
             <div className="prediction-nudge">
-              <b>누르기 전에, 어떻게 될지 예상해 볼까요?</b>
-              <p>예상을 적은 다음 직접 실행하면 과정 기록으로 남아요.</p>
+              <b>{t("누르기 전에, 어떻게 될지 예상해 볼까요?")}</b>
+              <p>{t("예상을 적은 다음 직접 실행하면 과정 기록으로 남아요.")}</p>
               <button onClick={focusPrediction}>
-                먼저 예상 적기 <Icon name="arrow" size={16} />
+                {t("먼저 예상 적기")} <Icon name="arrow" size={16} />
               </button>
             </div>
           ) : null}
@@ -743,9 +777,9 @@ export function Workspace({
           <div className="preview-advice">
             <Icon name="help" size={18} />
             <p>
-              예상과 달라도 괜찮아요.
+              {t("예상과 달라도 괜찮아요.")}
               <br />
-              어떤 규칙 때문인지 찾아보는 게 배움이에요.
+              {t("어떤 규칙 때문인지 찾아보는 게 배움이에요.")}
             </p>
           </div>
         </aside>
@@ -754,19 +788,20 @@ export function Workspace({
         <summary>
           <Icon name="folder" />
           <b>{t("수정 버전 · 비교와 복원")}</b>
-          <span>{w.versions.length} / 30개</span>
+          <span>{t("{n} / 30개", { n: w.versions.length })}</span>
         </summary>
         <fieldset className="plain-fieldset" disabled={readOnly}>
           <p>
-            버전은 고치기 전후의 모습을 이름 붙여 남긴 것이에요. 저장한 모습을
-            비교하거나 다시 열 수 있어요.
+            {t(
+              "버전은 고치기 전후의 모습을 이름 붙여 남긴 것이에요. 저장한 모습을 비교하거나 다시 열 수 있어요.",
+            )}
           </p>
           <div className="version-save">
             <Field
               max={LIMITS.short}
-              label="이번 버전 이름"
+              label={t("이번 버전 이름")}
               value={versionLabel}
-              placeholder="예: 중복 점수 수정 후 재검사"
+              placeholder={t("예: 중복 점수 수정 후 재검사")}
               onChange={setVersionLabel}
             />
             <button
@@ -777,14 +812,13 @@ export function Workspace({
                 setVersionLabel("");
               }}
             >
-              현재 편집본을 버전으로 저장
+              {t("현재 편집본을 버전으로 저장")}
             </button>
           </div>
           <p className="small muted">
-            자동 저장은 현재 편집 내용을 보관해요. 버전 저장은 설정·검사·수정
-            이유를 한 묶음으로 남겨요. 복원 전 편집본도 버전으로 보존해요.
-            버전은 30개·묶음 600KB까지, 직접 검사 글은 항목당 500자까지
-            보관해요.
+            {t(
+              "자동 저장은 현재 편집 내용을 보관해요. 버전 저장은 설정·검사·수정 이유를 한 묶음으로 남겨요. 복원 전 편집본도 버전으로 보존해요. 버전은 30개·묶음 600KB까지, 직접 검사 글은 항목당 500자까지 보관해요.",
+            )}
           </p>
           <div className="version-list">
             {w.versions.map((v, i) => (
@@ -794,21 +828,22 @@ export function Workspace({
                     V{i + 1} · {v.label}
                   </b>
                   <small>
-                    {v.reason} · {new Date(v.at).toLocaleString("ko-KR")}
+                    {v.reason} ·{" "}
+                    {new Date(v.at).toLocaleString(dateLocale(lang))}
                   </small>
                 </span>
                 <button
                   disabled={w.versions.length >= LIMITS.versions}
                   onClick={() => restore(v)}
                 >
-                  이 버전 복원
+                  {t("이 버전 복원")}
                 </button>
                 {i > 0 ? (
                   <button
                     className="danger-text"
                     onClick={() => deleteVersion(v)}
                   >
-                    이 버전 삭제
+                    {t("이 버전 삭제")}
                   </button>
                 ) : null}
               </div>
@@ -816,36 +851,40 @@ export function Workspace({
           </div>
         </fieldset>
         <section className="compare-diff" aria-labelledby="compare-diff-title">
-          <h3 id="compare-diff-title">두 버전에서 바뀐 점</h3>
+          <h3 id="compare-diff-title">{t("두 버전에서 바뀐 점")}</h3>
           {diff.sameConfig && !diff.fields.length ? (
-            <p>설정과 기록이 같아요.</p>
+            <p>{t("설정과 기록이 같아요.")}</p>
           ) : (
             <>
               {diff.sameConfig ? (
-                <p>설정과 규칙은 같아요.</p>
+                <p>{t("설정과 규칙은 같아요.")}</p>
               ) : (
                 <ul className="diff-list">
                   {diff.removed.map((line) => (
                     <li key={"-" + line} className="diff-removed">
-                      <span className="sr-only">이전에만 있음: </span>
+                      <span className="sr-only">{t("이전에만 있음:")} </span>
                       {line}
                     </li>
                   ))}
                   {diff.added.map((line) => (
                     <li key={"+" + line} className="diff-added">
-                      <span className="sr-only">다음에 새로 생김: </span>
+                      <span className="sr-only">{t("다음에 새로 생김:")} </span>
                       {line}
                     </li>
                   ))}
                   {!diff.removed.length && !diff.added.length ? (
                     <li>
-                      요약에 드러나지 않는 설정(문항·장면 내용 등)이 바뀌었어요.
+                      {t(
+                        "요약에 드러나지 않는 설정(문항·장면 내용 등)이 바뀌었어요.",
+                      )}
                     </li>
                   ) : null}
                 </ul>
               )}
               {diff.fields.length ? (
-                <p>바뀐 기록: {diff.fields.join(" · ")}</p>
+                <p>
+                  {t("바뀐 기록:")} {diff.fields.map((f) => t(f)).join(" · ")}
+                </p>
               ) : null}
             </>
           )}
@@ -854,13 +893,13 @@ export function Workspace({
             onClick={() => setSideBySide((v) => !v)}
           >
             <Icon name="play" />
-            {sideBySide ? "나란히 실행 닫기" : "두 버전 나란히 실행해 보기"}
+            {t(sideBySide ? "나란히 실행 닫기" : "두 버전 나란히 실행해 보기")}
           </button>
           {sideBySide ? (
             <div className="side-by-side">
               {[
-                { name: "이전 버전 실행", data: a },
-                { name: "다음 버전 실행", data: b },
+                { name: t("이전 버전 실행"), data: a },
+                { name: t("다음 버전 실행"), data: b },
               ].map((v) => (
                 <section key={v.name} className="side-run" aria-label={v.name}>
                   <h4>
@@ -876,8 +915,9 @@ export function Workspace({
             </div>
           ) : null}
           <p className="small muted">
-            나란히 실행은 비교용이에요. 여기서 누른 결과는 실행 기록으로 남지
-            않아요.
+            {t(
+              "나란히 실행은 비교용이에요. 여기서 누른 결과는 실행 기록으로 남지 않아요.",
+            )}
           </p>
         </section>
         <div className="compare-grid">
@@ -887,30 +927,31 @@ export function Workspace({
           ].map((v, i) => (
             <div key={i}>
               <label className="field">
-                <span>{i === 0 ? "비교할 이전 버전" : "비교할 다음 버전"}</span>
+                <span>
+                  {t(i === 0 ? "비교할 이전 버전" : "비교할 다음 버전")}
+                </span>
                 <select
                   value={v.selected}
                   onChange={(e) => v.set(e.target.value)}
                 >
-                  <option value="current">현재 편집본</option>
-                  {w.versions.map((t, k) => (
-                    <option key={t.id} value={t.id}>
-                      V{k + 1} · {t.label}
+                  <option value="current">{t("현재 편집본")}</option>
+                  {w.versions.map((ver, k) => (
+                    <option key={ver.id} value={ver.id}>
+                      V{k + 1} · {ver.label}
                     </option>
                   ))}
                 </select>
               </label>
               <h3>{v.data.title}</h3>
               <p>
-                설정 {v.data.revision.slice(0, 6)} · 검사{" "}
-                {
-                  v.data.checks.filter((c) => c.revision === v.data.revision)
-                    .length
-                }
-                개
+                {t("설정 {rev} · 검사 {n}개", {
+                  rev: v.data.revision.slice(0, 6),
+                  n: v.data.checks.filter((c) => c.revision === v.data.revision)
+                    .length,
+                })}
               </p>
               <ul className="config-summary">
-                {configSummary(v.data.config).map((line, k) => (
+                {configSummary(v.data.config, t).map((line, k) => (
                   <li
                     key={k}
                     className={
@@ -925,16 +966,20 @@ export function Workspace({
                   </li>
                 ))}
               </ul>
-              <p>예상: {v.data.prediction || "미기록"}</p>
-              <p className="preserve">
-                원문: {v.data.originalPrompt || "미기록"}
+              <p>
+                {t("예상:")} {v.data.prediction || t("미기록")}
               </p>
               <p className="preserve">
-                정리한 요청: {v.data.arrangedPrompt || "미기록"}
+                {t("원문:")} {v.data.originalPrompt || t("미기록")}
               </p>
-              <p>수정 이유: {v.data.change.reason || "미기록"}</p>
+              <p className="preserve">
+                {t("정리한 요청:")} {v.data.arrangedPrompt || t("미기록")}
+              </p>
+              <p>
+                {t("수정 이유:")} {v.data.change.reason || t("미기록")}
+              </p>
               <details>
-                <summary>설정과 해당 검사 기록 자세히 보기</summary>
+                <summary>{t("설정과 해당 검사 기록 자세히 보기")}</summary>
                 <pre>
                   {JSON.stringify(
                     {

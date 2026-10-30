@@ -1,10 +1,18 @@
 import type { Mission } from "./model";
+import { addTranslations } from "./i18n";
 import type { Lang } from "./i18n";
 import type { MissionText } from "./missionsEn";
 // 영어 미션 글은 영어 화면을 고를 때만 불러온다(한국어 사용자의 첫 화면을 가볍게).
 let english: Record<string, MissionText> | null = null;
 export async function loadEnglishMissions() {
-  english ??= (await import("./missionsEn")).missionsEn;
+  if (!english) {
+    const [m, more] = await Promise.all([
+      import("./missionsEn"),
+      import("./i18nEn"),
+    ]);
+    addTranslations("en", more.en);
+    english = m.missionsEn;
+  }
   return english;
 }
 export const englishReady = () => english !== null;

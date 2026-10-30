@@ -1,7 +1,8 @@
 import { createContext, useContext } from "react";
 // 화면 틀(메뉴·단계·저장 상태·주요 버튼)을 여러 언어로 보여 준다.
 // 한국어 문장을 그대로 열쇠로 쓰고, 번역이 없는 문장은 한국어로 보여 준다.
-// 미션 본문·힌트·수업 자료는 아직 한국어만 있다.
+// 첫 화면 틀은 여기 두고, 학생 화면 전체 번역(src/i18nEn.ts)은 영어를 고를 때 불러온다.
+// 교사 화면·수업 자료·앱이 만든 동작 설명(엔진 기록)은 한국어로 둔다.
 export type Lang = "ko" | "en";
 export const langs: { id: Lang; name: string; html: string }[] = [
   { id: "ko", name: "한국어", html: "ko" },
@@ -112,11 +113,29 @@ const en: Record<string, string> = {
   "뚝딱 바이브 공작소": "Ttukttak Vibe Workshop",
 };
 const tables: Record<Lang, Record<string, string>> = { ko: {}, en };
-export const translate = (lang: Lang, text: string) =>
-  tables[lang][text] ?? text;
+// 학생 화면 전체 번역은 영어를 고를 때 따로 불러와 더한다(한국어 첫 화면을 가볍게).
+export function addTranslations(lang: Lang, table: Record<string, string>) {
+  Object.assign(tables[lang], table);
+}
+// {이름} 자리에 값을 넣는다. 예: t("문항 {n} 내용", { n: 2 })
+export function translate(
+  lang: Lang,
+  text: string,
+  vars?: Record<string, string | number>,
+) {
+  const out = tables[lang][text] ?? text;
+  return vars
+    ? out.replace(/\{(\w+)\}/g, (all, k: string) =>
+        k in vars ? String(vars[k]) : all,
+      )
+    : out;
+}
+// 화면 언어에 맞춘 날짜·시각 표시
+export const dateLocale = (lang: Lang) => (lang === "en" ? "en-US" : "ko-KR");
 export const LangContext = createContext<Lang>("ko");
 export const useLang = () => useContext(LangContext);
 export function useT() {
   const lang = useContext(LangContext);
-  return (text: string) => translate(lang, text);
+  return (text: string, vars?: Record<string, string | number>) =>
+    translate(lang, text, vars);
 }

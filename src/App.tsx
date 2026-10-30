@@ -119,7 +119,8 @@ export default function App() {
     const saved = getSetting<string>("lang", "ko");
     return langs.some((l) => l.id === saved) ? (saved as Lang) : "ko";
   });
-  const t = (s: string) => translate(lang, s);
+  const t = (s: string, vars?: Record<string, string | number>) =>
+    translate(lang, s, vars);
   // 영어를 고르면 영어 미션 글을 불러오고, 다 오면 다시 그린다.
   const [, setEnglishLoaded] = useState(englishReady());
   useEffect(() => {
@@ -205,7 +206,8 @@ export default function App() {
       } catch (error) {
         setStorageStatus("저장 실패 · 편집 내용 유지 중");
         setStorageError(
-          `기기에 저장하지 못했어요. 브라우저의 저장 공간과 권한을 확인하고 다시 시도하거나 파일로 내보내세요. ${error instanceof Error ? error.message : ""}`,
+          // 첫 줄은 화면 언어로 바꿔 보여 주고, 둘째 줄의 브라우저 오류는 그대로 둔다.
+          `기기에 저장하지 못했어요. 브라우저의 저장 공간과 권한을 확인하고 다시 시도하거나 파일로 내보내세요.\n${error instanceof Error ? error.message : ""}`,
         );
       }
     });
@@ -409,7 +411,10 @@ export default function App() {
       const count = downloadWorks(items);
       message(
         count > 1
-          ? `${count}개로 나눈 파일의 다운로드를 요청했어요. 브라우저의 여러 파일 다운로드를 허용하고 모두 보관해 주세요.`
+          ? t(
+              "{n}개로 나눈 파일의 다운로드를 요청했어요. 브라우저의 여러 파일 다운로드를 허용하고 모두 보관해 주세요.",
+              { n: count },
+            )
           : "작품 JSON 파일의 다운로드를 요청했어요.",
       );
     } catch (e) {
@@ -428,7 +433,10 @@ export default function App() {
   const remove = (w: Work) =>
     ask({
       title: "이 작품을 삭제할까요?",
-      body: `「${w.draft.title}」의 현재 편집본, 버전 ${w.versions.length}개와 모든 검사 기록을 이 기기에서 삭제해요. 먼저 파일로 백업할 수 있어요.`,
+      body: t(
+        "「{title}」의 현재 편집본, 버전 {n}개와 모든 검사 기록을 이 기기에서 삭제해요. 먼저 파일로 백업할 수 있어요.",
+        { title: w.draft.title, n: w.versions.length },
+      ),
       backup: [w],
       action: async () => {
         await flush();
@@ -448,7 +456,10 @@ export default function App() {
   const clearAll = () =>
     ask({
       title: "이 앱의 데이터 전체를 삭제할까요?",
-      body: `이 브라우저의 뚝딱 작품 ${works.length}개와 모든 버전·학습 기록·모드 설정·학급 평가 목록을 삭제해요. 같은 주소의 다른 앱 데이터는 지우지 않아요.`,
+      body: t(
+        "이 브라우저의 뚝딱 작품 {n}개와 모든 버전·학습 기록·모드 설정·학급 평가 목록을 삭제해요. 같은 주소의 다른 앱 데이터는 지우지 않아요.",
+        { n: works.length },
+      ),
       backup: works,
       action: async () => {
         await flush();
@@ -515,7 +526,9 @@ export default function App() {
     track(active);
     persist({ ...active, versions });
     message(
-      `「${version.label}」을 버전으로 저장 중이에요. 저장 상태를 확인해 주세요.`,
+      t("「{label}」을 버전으로 저장 중이에요. 저장 상태를 확인해 주세요.", {
+        label: version.label,
+      }),
     );
   };
   const restore = (v: Version) => {
@@ -556,7 +569,10 @@ export default function App() {
     if (!active || blocked()) return;
     ask({
       title: "선택한 학습 기록을 삭제할까요?",
-      body: `「${active.draft.title}」에서 선택한 검사 기록 ${ids.length}개를 현재 편집본과 저장 버전에서 삭제해요. 작품 설정과 나머지 기록은 유지돼요.`,
+      body: t(
+        "「{title}」에서 선택한 검사 기록 {n}개를 현재 편집본과 저장 버전에서 삭제해요. 작품 설정과 나머지 기록은 유지돼요.",
+        { title: active.draft.title, n: ids.length },
+      ),
       backup: [active],
       action: () => {
         const filter = (d: Snapshot) => ({
@@ -585,7 +601,10 @@ export default function App() {
     if (!active || active.versions[0].id === v.id || blocked()) return;
     ask({
       title: "이 수정 버전을 삭제할까요?",
-      body: `「${v.label}」의 저장된 설정과 검사 묶음을 삭제해요. 현재 편집본과 다른 버전은 유지돼요. 처음 시작 버전은 보존해요.`,
+      body: t(
+        "「{label}」의 저장된 설정과 검사 묶음을 삭제해요. 현재 편집본과 다른 버전은 유지돼요. 처음 시작 버전은 보존해요.",
+        { label: v.label },
+      ),
       backup: [active],
       action: () => {
         track(active);
@@ -601,7 +620,9 @@ export default function App() {
     setPeerResponse(null);
     go(`work/${target.id}/3`);
     message(
-      `${r.reviewer.trim() || "친구"}의 검사 결과를 ‘친구·교사 의견’ 기록으로 더했어요.`,
+      t("{who}의 검사 결과를 ‘친구·교사 의견’ 기록으로 더했어요.", {
+        who: r.reviewer.trim() || t("친구"),
+      }),
     );
   };
   const importFile = async (file?: File) => {
@@ -643,11 +664,15 @@ export default function App() {
       await importWorks(imported);
       announceChange();
       setAll([...worksRef.current, ...imported]);
-      message(`작품 ${imported.length}개를 새 ID의 복사본으로 가져왔어요.`);
+      message(
+        t("작품 {n}개를 새 ID의 복사본으로 가져왔어요.", {
+          n: imported.length,
+        }),
+      );
       go("library");
     } catch (e) {
       message(
-        `가져오지 못했어요. ${e instanceof Error ? e.message : "내보낸 JSON 파일을 다시 선택해 주세요."} 기존 작품은 그대로예요.`,
+        `${t("가져오지 못했어요.")} ${e instanceof Error ? e.message : t("내보낸 JSON 파일을 다시 선택해 주세요.")} ${t("기존 작품은 그대로예요.")}`,
       );
     } finally {
       if (importInput.current) importInput.current.value = "";
@@ -688,7 +713,7 @@ export default function App() {
   );
   const pageTitle =
     parts[0] === "work" && active
-      ? `${active.draft.title || "제목 없는 작품"} · ${t(stageNames[step])}`
+      ? `${active.draft.title || t("제목 없는 작품")} · ${t(stageNames[step])}`
       : parts[0] === "mission" && mission
         ? mission.title
         : pageName;
@@ -780,16 +805,8 @@ export default function App() {
           </nav>
           <div className="sidebar-tip">
             <span className="tip-spark">✦</span>
-            <b>
-              잘 고치는 것도
-              <br />
-              멋진 만들기예요.
-            </b>
-            <p>
-              한 번에 완벽하지 않아도
-              <br />
-              괜찮아요. 다시 해 봐요!
-            </p>
+            <b>{t("잘 고치는 것도 멋진 만들기예요.")}</b>
+            <p>{t("한 번에 완벽하지 않아도 괜찮아요. 다시 해 봐요!")}</p>
             <button
               className="text-button"
               onClick={() => go("mission/quiz-3")}
@@ -874,7 +891,12 @@ export default function App() {
             ) : null}
             {storageError ? (
               <div role="alert" className="storage-error no-print">
-                <p>{storageError}</p>
+                <p>
+                  {storageError
+                    .split("\n")
+                    .map((x, i) => (i ? x : t(x)))
+                    .join(" ")}
+                </p>
                 <div className="button-row">
                   <button onClick={() => void flush()}>
                     {t("저장 다시 시도")}
@@ -888,9 +910,10 @@ export default function App() {
             {unreadable.length && !loading ? (
               <div role="alert" className="warning no-print">
                 <p>
-                  이 기기에 읽지 못한 기록이 {unreadable.length}개 있어요. 더
-                  새로운 앱에서 만들었거나 손상된 기록일 수 있어요. 나머지
-                  작품은 그대로 쓸 수 있고, 읽지 못한 기록은 지우지 않았어요.
+                  {t(
+                    "이 기기에 읽지 못한 기록이 {n}개 있어요. 더 새로운 앱에서 만들었거나 손상된 기록일 수 있어요. 나머지 작품은 그대로 쓸 수 있고, 읽지 못한 기록은 지우지 않았어요.",
+                    { n: unreadable.length },
+                  )}
                 </p>
                 <button
                   onClick={() =>
@@ -901,7 +924,7 @@ export default function App() {
                     )
                   }
                 >
-                  읽지 못한 기록 원본 내려받기
+                  {t("읽지 못한 기록 원본 내려받기")}
                 </button>
               </div>
             ) : null}
@@ -970,7 +993,7 @@ export default function App() {
                         applyPeer(w, peerResponse!);
                       } catch (e) {
                         message(
-                          `합치지 못했어요. ${e instanceof Error ? e.message : ""}`,
+                          `${t("합치지 못했어요.")} ${e instanceof Error ? e.message : ""}`,
                         );
                       }
                     }}
@@ -1043,8 +1066,9 @@ export default function App() {
                 ) : (
                   <Empty title={t("이 작품이나 미션을 찾을 수 없어요")}>
                     <p>
-                      현재 브라우저에 저장된 작품 목록을 확인하거나 작품 파일을
-                      가져와 주세요.
+                      {t(
+                        "현재 브라우저에 저장된 작품 목록을 확인하거나 작품 파일을 가져와 주세요.",
+                      )}
                     </p>
                     <button onClick={() => go("library")}>
                       {t("작품 선반으로")}
@@ -1064,7 +1088,7 @@ export default function App() {
                 target="_blank"
                 rel="noopener"
               >
-                엽쌤의 다른 앱 보기 →
+                {t("엽쌤의 다른 앱 보기 →")}
               </a>
             </p>
           </footer>
@@ -1075,12 +1099,12 @@ export default function App() {
           ref={importInput}
           type="file"
           accept=".json,application/json"
-          aria-label="작품 JSON 파일"
+          aria-label={t("작품 JSON 파일")}
           onChange={(e) => void importFile(e.target.files?.[0])}
         />
         {toast ? (
           <div className="toast no-print" role="status">
-            <span>{toast}</span>
+            <span>{t(toast)}</span>
             <button aria-label={t("알림 닫기")} onClick={() => setToast("")}>
               ×
             </button>
@@ -1097,14 +1121,15 @@ export default function App() {
         >
           {copyFallback !== null ? (
             <>
-              <h2 id="app-dialog-title">직접 선택해서 복사해 주세요</h2>
+              <h2 id="app-dialog-title">{t("직접 선택해서 복사해 주세요")}</h2>
               <p>
-                브라우저가 클립보드 쓰기를 허용하지 않았어요. 아래 내용을 선택한
-                뒤 Ctrl+C 또는 기기의 복사 메뉴를 사용해 주세요.
+                {t(
+                  "브라우저가 클립보드 쓰기를 허용하지 않았어요. 아래 내용을 선택한 뒤 Ctrl+C 또는 기기의 복사 메뉴를 사용해 주세요.",
+                )}
               </p>
               <Field
                 area
-                label="복사할 내용"
+                label={t("복사할 내용")}
                 value={copyFallback}
                 onChange={setCopyFallback}
               />
@@ -1114,25 +1139,25 @@ export default function App() {
                     dialogRef.current?.querySelector("textarea")?.select()
                   }
                 >
-                  내용 전체 선택
+                  {t("내용 전체 선택")}
                 </button>
                 <button
                   className="primary"
                   onClick={() => setCopyFallback(null)}
                 >
-                  닫기
+                  {t("닫기")}
                 </button>
               </div>
             </>
           ) : dialog ? (
             <>
-              <h2 id="app-dialog-title">{dialog.title}</h2>
-              <p>{dialog.body}</p>
+              <h2 id="app-dialog-title">{t(dialog.title)}</h2>
+              <p>{t(dialog.body)}</p>
               <div className="button-row">
                 {dialog.backup.length ? (
                   <button onClick={() => backup(dialog.backup)}>
                     <Icon name="download" />
-                    삭제 전 파일 백업
+                    {t("삭제 전 파일 백업")}
                   </button>
                 ) : null}
                 <button disabled={dialogBusy} onClick={() => setDialog(null)}>
@@ -1148,14 +1173,14 @@ export default function App() {
                       setDialog(null);
                     } catch (e) {
                       message(
-                        `처리하지 못했어요. 다시 시도해 주세요. ${e instanceof Error ? e.message : ""}`,
+                        `${t("처리하지 못했어요. 다시 시도해 주세요.")} ${e instanceof Error ? e.message : ""}`,
                       );
                     } finally {
                       setDialogBusy(false);
                     }
                   }}
                 >
-                  {dialogBusy ? t("처리 중…") : (dialog.label ?? "대상 삭제")}
+                  {dialogBusy ? t("처리 중…") : t(dialog.label ?? "대상 삭제")}
                 </button>
               </div>
             </>

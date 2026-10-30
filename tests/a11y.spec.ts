@@ -25,7 +25,8 @@ test("영어로 바꾸면 화면 틀·문서 언어·제목이 바뀌고 기록�
   await expect(stages.getByRole("button").first()).toContainText(
     "Set the goal",
   );
-  await expect(page.getByLabel("작품 제목", { exact: true })).toHaveValue(
+  // 학생 화면의 입력 이름도 영어로 바뀌고, 쓴 내용은 그대로다.
+  await expect(page.getByLabel("Work title", { exact: true })).toHaveValue(
     "언어 검사",
   );
   const audit = await new AxeBuilder({ page })
@@ -43,6 +44,17 @@ test("영어로 바꾸면 화면 틀·문서 언어·제목이 바뀌고 기록�
     .click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Huh? The score keeps going up!",
+  );
+  // 작품 선반과 포트폴리오도 영어로 보인다.
+  await page.goto("#/library");
+  await expect(page.getByRole("heading", { name: "언어 검사" })).toBeVisible();
+  await expect(page.getByText("Last edited")).toBeVisible();
+  await page.getByRole("button", { name: "Portfolio" }).first().click();
+  await expect(
+    page.getByRole("heading", { level: 1, name: "My process portfolio" }),
+  ).toBeVisible();
+  await expect(page.locator("main")).not.toContainText(
+    "아직 기록하지 않았어요",
   );
   await page.goto("#/teacher");
   await expect(

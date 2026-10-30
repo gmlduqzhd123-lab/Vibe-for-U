@@ -1,5 +1,6 @@
 import { reachable } from "./engines";
 import type { StoryConfig } from "./model";
+import { useT } from "./i18n";
 // 장면을 상자로, 선택을 화살표로 그린다. 시작에서 몇 번 골라야 닿는지(깊이)로 열을 나누고,
 // 시작에서 갈 수 없는 장면은 맨 오른쪽 열에 따로 모은다.
 export type MapNode = {
@@ -75,6 +76,7 @@ const BOX_W = 132;
 const BOX_H = 50;
 const short = (t: string) => (t.length > 9 ? t.slice(0, 8) + "…" : t);
 export function StoryMap({ config }: { config: StoryConfig }) {
+  const t = useT();
   const map = storyLayout(config);
   const pos = (id: string) => {
     const n = map.nodes.find((x) => x.id === id)!;
@@ -85,20 +87,23 @@ export function StoryMap({ config }: { config: StoryConfig }) {
   return (
     <figure className="story-map">
       <figcaption>
-        <b>장면 연결 지도</b>
+        <b>{t("장면 연결 지도")}</b>
         <span>
           {map.unreachable.length
-            ? ` · 시작에서 갈 수 없는 장면 ${map.unreachable.length}개`
-            : " · 모든 장면에 갈 수 있어요"}
+            ? ` · ${t("시작에서 갈 수 없는 장면 {n}개", { n: map.unreachable.length })}`
+            : ` · ${t("모든 장면에 갈 수 있어요")}`}
           {map.missing.length
-            ? ` · 닿을 수 없는 목표 결말 ${map.missing.length}개`
+            ? ` · ${t("닿을 수 없는 목표 결말 {n}개", { n: map.missing.length })}`
             : ""}
         </span>
       </figcaption>
       <div className="story-map-scroll">
         <svg
           role="img"
-          aria-label={`장면 ${config.scenes.length}개의 연결 지도. 아래 목록에 같은 연결이 있어요.`}
+          aria-label={t(
+            "장면 {n}개의 연결 지도. 아래 목록에 같은 연결이 있어요.",
+            { n: config.scenes.length },
+          )}
           width={32 + map.cols * W - (W - BOX_W)}
           height={32 + map.rows * H - (H - BOX_H)}
         >
@@ -155,15 +160,17 @@ export function StoryMap({ config }: { config: StoryConfig }) {
                   {short(n.title)}
                 </text>
                 <text x={p.x + 10} y={p.y + 38} className="story-node-tag">
-                  {n.start
-                    ? "시작"
-                    : !n.reachable
-                      ? "갈 수 없음"
-                      : n.ending
-                        ? n.intended
-                          ? "목표 결말"
-                          : "결말"
-                        : "장면"}
+                  {t(
+                    n.start
+                      ? "시작"
+                      : !n.reachable
+                        ? "갈 수 없음"
+                        : n.ending
+                          ? n.intended
+                            ? "목표 결말"
+                            : "결말"
+                          : "장면",
+                  )}
                 </text>
               </g>
             );
@@ -178,8 +185,8 @@ export function StoryMap({ config }: { config: StoryConfig }) {
         ))}
         {map.unreachable.map((n) => (
           <li key={n.id} className="story-map-warn">
-            {n.title}: 시작에서 갈 수 없어요
-            {n.intended ? " (목표 결말)" : ""}
+            {n.title}: {t("시작에서 갈 수 없어요")}
+            {n.intended ? ` (${t("목표 결말")})` : ""}
           </li>
         ))}
       </ul>

@@ -2,6 +2,7 @@ import { cell, dirNames } from "./engines";
 import type { Direction, PatternConfig } from "./model";
 import { LIMITS } from "./model";
 import { Icon } from "./ui";
+import { useT } from "./i18n";
 const clamp = (v: string, min: number, max: number) =>
   Math.max(min, Math.min(max, Math.round(Number(v)) || min));
 export function PatternSettings({
@@ -11,6 +12,7 @@ export function PatternSettings({
   config: PatternConfig;
   onChange: (c: PatternConfig) => void;
 }) {
+  const t = useT();
   const edit = (patch: Partial<PatternConfig>) =>
     onChange({ ...config, ...patch });
   const setCommand = (
@@ -27,7 +29,10 @@ export function PatternSettings({
       <div className="form-grid">
         <label className="field">
           <span>
-            판 크기 ({LIMITS.boardMin}~{LIMITS.boardMax}칸)
+            {t("판 크기 ({a}~{b}칸)", {
+              a: LIMITS.boardMin,
+              b: LIMITS.boardMax,
+            })}
           </span>
           <input
             type="number"
@@ -51,7 +56,7 @@ export function PatternSettings({
           />
         </label>
         <label className="field">
-          <span>명령 묶음 반복 (1~{LIMITS.repeat}번)</span>
+          <span>{t("명령 묶음 반복 (1~{n}번)", { n: LIMITS.repeat })}</span>
           <input
             type="number"
             min={1}
@@ -64,31 +69,33 @@ export function PatternSettings({
         </label>
       </div>
       <label className="field">
-        <span>판 가장자리 규칙</span>
+        <span>{t("판 가장자리 규칙")}</span>
         <select
           value={config.edge}
           onChange={(e) => edit({ edge: e.target.value as "stop" | "wrap" })}
         >
-          <option value="stop">가장자리에서 멈추기 (정상 규칙)</option>
-          <option value="wrap">반대편으로 넘어가기 (학습용 규칙)</option>
+          <option value="stop">{t("가장자리에서 멈추기 (정상 규칙)")}</option>
+          <option value="wrap">{t("반대편으로 넘어가기 (학습용 규칙)")}</option>
         </select>
       </label>
       <label className="field">
-        <span>조건 규칙 · 만약 다음 칸이 막혀 있으면 (판 끝·이미 칠한 칸)</span>
+        <span>
+          {t("조건 규칙 · 만약 다음 칸이 막혀 있으면 (판 끝·이미 칠한 칸)")}
+        </span>
         <select
           value={config.turn ?? "none"}
           onChange={(e) => edit({ turn: e.target.value as "none" | "right" })}
         >
-          <option value="none">조건 없음 (가장자리 규칙을 따름)</option>
-          <option value="right">오른쪽으로 돌아서 계속 가기</option>
+          <option value="none">{t("조건 없음 (가장자리 규칙을 따름)")}</option>
+          <option value="right">{t("오른쪽으로 돌아서 계속 가기")}</option>
         </select>
       </label>
-      <h4>명령 묶음 · 위에서부터 차례대로</h4>
+      <h4>{t("명령 묶음 · 위에서부터 차례대로")}</h4>
       <ol className="command-list">
         {config.commands.map((m, i) => (
           <li key={i}>
             <label className="field">
-              <span>명령 {i + 1} 방향</span>
+              <span>{t("명령 {n} 방향", { n: i + 1 })}</span>
               <select
                 value={m.dir}
                 onChange={(e) =>
@@ -97,13 +104,13 @@ export function PatternSettings({
               >
                 {(Object.keys(dirNames) as Direction[]).map((d) => (
                   <option key={d} value={d}>
-                    {dirNames[d]}
+                    {t(dirNames[d])}
                   </option>
                 ))}
               </select>
             </label>
             <label className="field">
-              <span>명령 {i + 1} 칸 수</span>
+              <span>{t("명령 {n} 칸 수", { n: i + 1 })}</span>
               <input
                 type="number"
                 min={1}
@@ -123,7 +130,7 @@ export function PatternSettings({
                 edit({ commands: config.commands.filter((_, j) => j !== i) })
               }
             >
-              명령 {i + 1} 삭제
+              {t("명령 {n} 삭제", { n: i + 1 })}
             </button>
           </li>
         ))}
@@ -136,13 +143,13 @@ export function PatternSettings({
         }
       >
         <Icon name="plus" />
-        명령 추가
+        {t("명령 추가")}
       </button>
-      <h4>목표 모양 · 칸을 눌러 넣고 빼요</h4>
+      <h4>{t("목표 모양 · 칸을 눌러 넣고 빼요")}</h4>
       <div
         className="pattern-board target-editor"
         role="group"
-        aria-label="목표 칸 고르기"
+        aria-label={t("목표 칸 고르기")}
         style={{ gridTemplateColumns: `repeat(${config.size}, 1fr)` }}
       >
         {Array.from({ length: config.size * config.size }, (_, i) => {
@@ -152,7 +159,7 @@ export function PatternSettings({
             <button
               key={id}
               aria-pressed={on}
-              aria-label={`목표 칸 ${id}`}
+              aria-label={t("목표 칸 {id}", { id })}
               className={on ? "target painted" : ""}
               disabled={on && config.target.length <= 1}
               onClick={() =>
@@ -167,8 +174,10 @@ export function PatternSettings({
         })}
       </div>
       <small>
-        명령은 {LIMITS.commands}개까지, 한 명령은 {LIMITS.stepCount}칸까지예요.
-        칸 이름은 (가로, 세로)이고 왼쪽 위가 (0,0)이에요.
+        {t(
+          "명령은 {n}개까지, 한 명령은 {k}칸까지예요. 칸 이름은 (가로, 세로)이고 왼쪽 위가 (0,0)이에요.",
+          { n: LIMITS.commands, k: LIMITS.stepCount },
+        )}
       </small>
     </div>
   );
