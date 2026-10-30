@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { missions } from "../src/data";
-import { localizeMission, missionsEn } from "../src/missionsEn";
+import { missionsEn } from "../src/missionsEn";
+import { loadEnglishMissions, localizeMission } from "../src/missionText";
 describe("미션 본문 영어 번역", () => {
   it("모든 미션에 같은 개수의 검사·힌트 번역이 있고 한글이 섞이지 않는다", () => {
     for (const m of missions) {
@@ -23,7 +24,12 @@ describe("미션 본문 영어 번역", () => {
       expect(text, m.id).not.toMatch(/[가-힣]/);
     }
   });
-  it("영어일 때만 번역하고 미션 번호·시작 설정은 그대로 둔다", () => {
+  it("영어 번역을 불러오기 전에는 원래 미션을 쓴다", () => {
+    const m = missions.find((x) => x.id === "quiz-3")!;
+    expect(localizeMission(m, "en")).toBe(m);
+  });
+  it("영어일 때만 번역하고 미션 번호·시작 설정은 그대로 둔다", async () => {
+    await loadEnglishMissions();
     const m = missions.find((x) => x.id === "quiz-3")!;
     expect(localizeMission(m, "ko")).toBe(m);
     const en = localizeMission(m, "en");

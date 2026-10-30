@@ -32,7 +32,7 @@ import {
 } from "./storage";
 import { Home, Library, Missions, MissionDetail } from "./Pages";
 import { Icon, Mascot, Empty, Field } from "./ui";
-import { Explore, Prepare, QuickTry, LessonLanding } from "./Welcome";
+
 import { announceChange, useChanges, useWorkLock } from "./tabLock";
 import { ErrorBoundary } from "./ErrorBoundary";
 import {
@@ -54,7 +54,11 @@ import {
 import type { PeerRequest, PeerResponse } from "./peer";
 import "./Welcome.css";
 import { LangContext, langs, translate } from "./i18n";
-import { localizeMission } from "./missionsEn";
+import {
+  englishReady,
+  loadEnglishMissions,
+  localizeMission,
+} from "./missionText";
 import type { Lang } from "./i18n";
 const SharePage = lazy(() => import("./SharePage"));
 // 첫 화면에 필요 없는 화면은 열 때 불러온다(오프라인 캐시에는 미리 들어간다).
@@ -75,6 +79,18 @@ const PeerApply = lazy(() =>
 );
 const Present = lazy(() =>
   import("./Present").then((m) => ({ default: m.Present })),
+);
+const Explore = lazy(() =>
+  import("./Welcome").then((m) => ({ default: m.Explore })),
+);
+const Prepare = lazy(() =>
+  import("./Welcome").then((m) => ({ default: m.Prepare })),
+);
+const QuickTry = lazy(() =>
+  import("./Welcome").then((m) => ({ default: m.QuickTry })),
+);
+const LessonLanding = lazy(() =>
+  import("./Welcome").then((m) => ({ default: m.LessonLanding })),
 );
 function getSetting<T>(key: string, fallback: T): T {
   try {
@@ -104,6 +120,14 @@ export default function App() {
     return langs.some((l) => l.id === saved) ? (saved as Lang) : "ko";
   });
   const t = (s: string) => translate(lang, s);
+  // 영어를 고르면 영어 미션 글을 불러오고, 다 오면 다시 그린다.
+  const [, setEnglishLoaded] = useState(englishReady());
+  useEffect(() => {
+    if (lang === "en" && !englishReady())
+      loadEnglishMissions()
+        .then(() => setEnglishLoaded(true))
+        .catch(() => {});
+  }, [lang]);
   const [works, setWorks] = useState<Work[]>([]);
   const worksRef = useRef<Work[]>([]);
   const [hidden, setHidden] = useState<string[]>(() => {

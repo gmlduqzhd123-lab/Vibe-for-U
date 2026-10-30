@@ -5,9 +5,9 @@ import { Empty, Icon, Pill } from "./ui";
 import { StoragePanel } from "./storageHealth";
 import { SpeakButton } from "./Speak";
 import { useLang, useT } from "./i18n";
-import { localizeMission } from "./missionsEn";
+import { localizeMission } from "./missionText";
 export type Navigate = (path: string) => void;
-export { Home } from "./Welcome";
+export { RoleHome as Home } from "./RoleHome";
 export function Missions({
   filter,
   works,
