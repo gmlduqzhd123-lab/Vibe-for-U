@@ -55,7 +55,7 @@ export function PatternPreview({
   onRun: () => void;
 }) {
   const t = useT();
-  const [s, setS] = useState(initialPattern);
+  const [s, setS] = useState(() => initialPattern(t));
   const [showTarget, setShowTarget] = useState(true);
   const total = patternMoves(config).length;
   const finished = s.step >= total;
@@ -87,7 +87,7 @@ export function PatternPreview({
           disabled={finished}
           onClick={() => {
             onRun();
-            setS((p) => runPattern(config, p));
+            setS((p) => runPattern(config, p, t));
           }}
         >
           <Icon name="play" />
@@ -97,7 +97,7 @@ export function PatternPreview({
           disabled={finished}
           onClick={() => {
             onRun();
-            setS((p) => stepPattern(config, p));
+            setS((p) => stepPattern(config, p, t));
           }}
         >
           {t("한 칸씩 그리기")}
@@ -105,7 +105,7 @@ export function PatternPreview({
         <button
           onClick={() => {
             onRun();
-            setS(initialPattern());
+            setS(initialPattern(t));
           }}
         >
           {t("↺ 처음으로")}

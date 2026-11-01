@@ -739,4 +739,557 @@ export const en: Record<string, string> = {
   "판 가장자리": "Board edge",
   "반복 실행": "Repeat run",
   "처음으로 다시 그리기": "Start over and redraw",
+  "선생님 미션 「{title}」을 미션 공작대에 더했어요.":
+    "Added the teacher's mission “{title}” to Mission Crew.",
+  "수업 끝 정리 도우미": "End-of-class cleanup helper",
+  "QR로 받기": "Get by QR",
+  "화면 보기": "Display",
+  "고대비 화면": "High-contrast screen",
+  "읽기 쉬운 글꼴 · 넓은 줄 간격": "Easy-to-read font · Wider line spacing",
+  "앱이 찾은 문제와 맞춤 힌트": "Problems the app found and hints for you",
+  "힌트 보기": "See hint",
+  "규칙으로 찾은 힌트예요. 고친 뒤에는 ‘현재 설정 자동 검사’를 다시 눌러 확인하고, 직접 눌러 본 결과도 기록해요.":
+    "This hint comes from the rules. After you fix it, press ‘Auto-check current settings’ again, and write down what you saw when you tried it yourself.",
+  "선생님 미션": "Teacher's mission",
+  "방향키로 칸을 옮기고 Enter나 스페이스로 넣고 빼요.":
+    "Use the arrow keys to move between cells. Press Enter or Space to add or remove.",
+  "열지 못했어요.": "Couldn't open it.",
+  "짝 활동 · 관찰자": "Pair activity · Observer",
+  "친구가 보낸 요청 파일을 열어 앱을 직접 써 보고, 본 것을 적어 돌려줘요. 이 기기에는 저장하지 않아요.":
+    "Open the request file your friend sent, try the app yourself, and write what you saw to send back. Nothing is saved on this device.",
+  "친구 검사 요청 파일 열기": "Open a friend's check request file",
+  "친구 검사 요청 파일": "Friend's check request file",
+  "아직 연 요청 파일이 없어요": "No request file opened yet",
+  "친구가 작업실의 검사 단계에서":
+    "Open the file your friend made in the workshop's Check step with",
+  "로 만든 파일을 열어 주세요.": ".",
+  "비난 대신 본 것을 적어요. “~을 눌렀더니 ~이 나왔어요.”처럼요.":
+    "Write what you saw, not blame. Like: “When I pressed ~, ~ showed up.”",
+  "검사한 친구 (이름이나 별명)": "Friend who checked (name or nickname)",
+  "기대:": "Expected:",
+  "실제로 본 결과": "What I actually saw",
+  "기대대로 됨": "Worked as expected",
+  "고칠 점이 있음": "Something to fix",
+  "이해된 점과 헷갈린 점": "What made sense and what was confusing",
+  "검사 결과 파일 내려받기": "Download check result file",
+  "친구 검사 결과": "Friend's check result",
+  "친구가 만든 앱": "App made by a friend",
+  "붙일 친구 검사 결과가 없어요": "No friend's check result to add",
+  "내 작품 선반의 파일 가져오기로 친구 검사 결과 파일을 열어 주세요.":
+    "Open the friend's check result file with ‘Import file’ on My Works shelf.",
+  "검사 결과를 붙일 작품 고르기": "Choose a work to add the check result to",
+  "요청을 보낸 작품을 이 기기에서 찾지 못했어요. 작품을 파일로 옮기면 작품 이름표가 새로 바뀌어요.":
+    "Couldn't find the requested work on this device. Moving a work by file gives it a new ID.",
+  "요청한 작품: 「{title}」.": "Requested work: “{title}”.",
+  "같은 작품을 골라 주세요.": "Please choose the same work.",
+  "같은 미션": "Same mission",
+  "「{title}」에 검사 결과 합치기": "Add check result to “{title}”",
+  "이 작품에 합치기": "Add to this work",
+  "이 기기에 작품이 없어요": "No works on this device",
+  "먼저 작품 파일을 가져온 뒤 검사 결과 파일을 다시 열어 주세요.":
+    "Import the work file first, then open the check result file again.",
+  "앱 파일(HTML)을 내려받았어요. 인터넷 없이 브라우저에서 열려요.":
+    "Downloaded the app file (HTML). It opens in a browser without the internet.",
+  "앱 파일로 내보내기": "Export as app file",
+  "QR에 담기에는 작품이 커요. 파일 내려받기나 공유로 보내 주세요.":
+    "This work is too big for a QR code. Send it by downloading a file or sharing.",
+  "받기 주소가 담긴 QR 코드": "QR code with the receive link",
+  "받을 기기의 카메라 앱으로 QR을 비춰요.":
+    "Point the receiving device's camera app at the QR code.",
+  "열린 주소에서 ‘받기’를 눌러요.": "On the page that opens, press ‘Receive’.",
+  "QR에는 작품 설정만 들어가고 다른 학습 기록은 들어가지 않아요. 주소의 # 뒤쪽은 서버로 보내지지 않아요.":
+    "The QR code holds only the work's settings, not other learning records. The part of the link after # is never sent to a server.",
+  "받기 주소를 복사했어요.": "Copied the receive link.",
+  "주소를 복사하지 못했어요. QR을 비춰 주세요.":
+    "Couldn't copy the link. Please scan the QR code.",
+  "주소 복사": "Copy link",
+  "QR로 받은 내용을 읽고 있어요…": "Reading what came from the QR code…",
+  "작품 「{title}」이 왔어요": "The work “{title}” has arrived",
+  "친구가 「{title}」 검사를 부탁했어요":
+    "A friend asked you to check “{title}”",
+  "받으면 이 기기에 새 작품으로 더해요. 보낸 사람의 작품은 바뀌지 않아요.":
+    "Receiving adds it as a new work on this device. The sender's work won't change.",
+  "친구 작품 검사하기 화면에서 열어요. 이 기기에는 저장하지 않아요.":
+    "Opens in ‘Check a friend's work’. Nothing is saved on this device.",
+  "새 작품으로 받기": "Receive as new work",
+  "친구 작품 검사하기로 열기": "Open in ‘Check a friend's work’",
+  "받지 않기": "Don't receive",
+  "낯선 말은 쉽게 풀어볼까요?": "Want tricky words explained simply?",
+  "5초가 끝났어요! 잠깐 쉬어 가요.": "5 seconds are up! Take a short break.",
+  "완성 예제부터 눌러보세요": "Start by trying a finished example",
+  "어떤 앱을 만드는 곳인가요?": "What kind of apps do you make here?",
+  "답을 고르고, 길을 바꾸고, 시간을 멈춰 보세요. 이 체험은 작품을 저장하지 않아요.":
+    "Pick answers, change paths, and stop the clock. This demo doesn't save any work.",
+  "완성 예제 선택": "Choose a finished example",
+  "이제 내가 고쳐보기 · 3분": "Now fix it yourself · 3 min",
+  "저장하지 않는 완성 예제": "Finished example (not saved)",
+  "다섯 장면으로 보는 앱 만들기": "Making an app in five scenes",
+  "완성 화면보다 예상하고 고친 이유가 중요해요.":
+    "Your predictions and reasons for fixes matter more than the finished screen.",
+  "작업실의 {stage}": "Workshop: {stage}",
+  "{stage} 실제 화면 크게 보기 (새 탭)":
+    "See the real {stage} screen bigger (new tab)",
+  "{stage} 단계의 실제 작업실 화면":
+    "The real workshop screen for the {stage} step",
+  "규칙 비교 예제": "Rule comparison example",
+  "이렇게 고치며 원리를 배워요": "Learn how it works by fixing it",
+  "같은 문제의 같은 정답을 세 번 눌렀을 때, 두 규칙을 비교해 보세요.":
+    "Press the same right answer to the same question three times and compare the two rules.",
+  "고치기 전": "Before fixing",
+  "누를 때마다 점수가 올라가요": "The score goes up every time you press",
+  "버튼을 누를 때마다 1점씩 더하는 규칙":
+    "A rule that adds 1 point every time you press the button",
+  "고친 후": "After fixing",
+  "한 문제는 한 번만 채점해요": "Each question is scored only once",
+  "이미 답한 문제인지 기억하고 확인하는 규칙":
+    "A rule that remembers and checks if a question was already answered",
+  "같은 정답 세 번 비교하기": "Compare the same answer three times",
+  "내 손으로 고쳐보기 →": "Fix it yourself →",
+  "고친 까닭: 누른 횟수보다 맞힌 문제 수를 세려면, 이미 답했는지 기억해야 해요.":
+    "Why we fixed it: To count correct questions instead of presses, the app must remember if you already answered.",
+  "우리 수업에서는 이렇게 써요": "How we use it in class",
+  "수업 아이디어예요. 문항·이야기·시간은 배운 내용에 맞게 바꿔요.":
+    "These are class ideas. Change the questions, stories, and times to fit what you learned.",
+  "{subject} 수업 아이디어": "{subject} class ideas",
+  "{subject} 활동 안내 열기": "Open {subject} activity guide",
+  "선생님의 수업 준비": "Teacher's class prep",
+  "내일 바로 하는 40분 수업": "A 40-minute lesson you can teach tomorrow",
+  "기기 1대당 2명 · 활동지 1인 1부 · 학생 계정 가입 없이 시작해요.":
+    "2 students per device · 1 worksheet each · Start without student accounts.",
+  "준비할 차시": "Lesson to prepare",
+  "{n}차시": "Lesson {n}",
+  "오늘의 목표": "Today's goal",
+  준비물: "Materials",
+  "브라우저에서 미션과 저장 상태를 먼저 확인하세요.":
+    "First, check the mission and save status in the browser.",
+  "도입 5분": "Intro 5 min",
+  "활동 30분": "Activity 30 min",
+  "정리 5분": "Wrap-up 5 min",
+  "이 수업 미션 열기": "Open this lesson's mission",
+  "이 차시 활동지 받기 · 2쪽": "Get this lesson's worksheet · 2 pages",
+  "교사용 안내서 열기 · 새 탭": "Open teacher's guide · New tab",
+  "전체 자료와 8차시 안내": "All materials and the 8-lesson guide",
+  "다른 차시도 준비하기": "Prepare another lesson",
+  "6차시의 외부 AI 도구는 교사·성인이 조작해요. 사전 예제를 준비하고 생성·미실행을 구별해 기록해요.":
+    "In Lesson 6, a teacher or adult runs the outside AI tool. Prepare examples ahead, and record what was made and what wasn't run separately.",
+  "수업에서 살펴볼 것": "What to watch for in class",
+  "기기 문제가 생기면": "If a device has problems",
+  "도움 조절": "Adjusting support",
+  "3~4학년은 교사가 읽어 주고 선택 카드로 말해요. 5~6학년은 짝과 예상·실제·이유를 기록해요. 빠른 학생은 조건을 하나 더 바꾸고 재검사해요.":
+    "For grades 3–4, the teacher reads aloud and students answer with choice cards. Grades 5–6 record prediction, actual result, and reason with a partner. Fast finishers change one more condition and check again.",
+  "먼저 눌러보고, 하나만 고쳐봐요": "Try it first, then fix just one thing",
+  "처음이어도 괜찮아요. 예제에서 시작하고 내 작품으로 이어갈 수 있어요.":
+    "It's OK if you're new. Start from an example and continue with your own work.",
+  홈으로: "Home",
+  "처음이라면 · 예제 눌러보기": "New here? · Try an example",
+  "3~4학년 · 선생님과 말로 설명":
+    "Grades 3–4 · Explain out loud with the teacher",
+  "5~6학년 · 짝과 예상·검사": "Grades 5–6 · Predict and check with a partner",
+  "다음은 3분 첫 체험": "Next: 3-minute first try",
+  "정답을 세 번 누르고 점수 규칙을 직접 고쳐봐요. 시간 제한은 없어요.":
+    "Press the right answer three times and fix the scoring rule yourself. No time limit.",
+  "3분 체험 시작 →": "Start the 3-minute try →",
+  "한 차시를 골라 바로 준비하세요": "Pick a lesson and get ready right away",
+  "설치나 학생 가입 없이, 예제·미션·활동지를 함께 준비합니다.":
+    "Prepare examples, missions, and worksheets together, with no installs or student sign-ups.",
+  "학급에 오늘의 미션 안내하기": "Share today's mission with the class",
+  "차시를 고르면 학생이 바로 들어갈 QR 카드와 소개 문구가 준비돼요.":
+    "Pick a lesson to get a QR card and intro text students can use to jump right in.",
+  "수업 QR 카드 만들기 →": "Make a class QR card →",
+  "오늘의 학생 활동 · 40분": "Today's student activity · 40 min",
+  "오늘 할 일을 확인하고, 활동지를 준비한 뒤 미션을 시작해요.":
+    "Check today's tasks, get your worksheet ready, then start the mission.",
+  "함께 생각하기 5분": "Think together 5 min",
+  "직접 해 보기 30분": "Try it yourself 30 min",
+  "배운 점 말하기 5분": "Share what you learned 5 min",
+  "지난 시간 작품이 있으면 내 작품 선반에서 열어 이어가요. 아직 작품이 없다면 연결된 미션에서 새로 시작할 수 있어요.":
+    "If you have a work from last time, open it from My Works shelf and keep going. If not, start a new one from the linked mission.",
+  "외부 AI 도구는 선생님·성인이 조작해요. 나는 요청과 예상, 실제로 본 결과를 기록해요.":
+    "A teacher or adult runs the outside AI tool. I write down my request, my prediction, and the actual result I saw.",
+  "오늘의 미션 안내 열기 →": "Open today's mission guide →",
+  "지난 작품 이어하기": "Continue a past work",
+  "{n}차시 활동지 열기 · 2쪽 · 새 탭":
+    "Open Lesson {n} worksheet · 2 pages · New tab",
+  "3분 첫 체험 · 시간 제한 없음": "3-minute first try · No time limit",
+  "점수가 또 올라가요": "The score went up again",
+  "한 문제는 1점. 같은 정답을 세 번 눌러도 한 문제의 점수만 받아야 해요.":
+    "1 point per question. Even if you press the same right answer three times, you should only get points for one question.",
+  "첫 체험 순서": "First-try steps",
+  "1 먼저 예상해요": "1 Predict first",
+  "같은 문제의 정답을 세 번 누르면 몇 점이어야 할까요?":
+    "If you press the right answer to the same question three times, how many points should you get?",
+  "예상은 틀려도 괜찮아요. 실제 결과와 비교할 내 생각을 먼저 남겨요.":
+    "It's OK if your prediction is wrong. Write down your idea first to compare with the actual result.",
+  "내 예상으로 실행해 보기 →": "Run it with my prediction →",
+  "2 같은 정답을 세 번 눌러요": "2 Press the same right answer three times",
+  "3 한 가지 규칙을 고치고 다시 검사해요": "3 Fix one rule and check again",
+  "내 예상": "My prediction",
+  "· 같은 정답 세 번 · 문제당 1점":
+    "· Same answer 3 times · 1 point per question",
+  "누를 때마다 1점": "1 point per press",
+  "문제당 한 번만 1점": "1 point only once per question",
+  "규칙을 바꾸면 0점부터 같은 검사를 다시 시작해요.":
+    "When you change the rule, the same check starts again from 0 points.",
+  "식물이 자라는 데 필요한 것은?": "What do plants need to grow?",
+  "정답 햇빛과 물": "Answer: Sunlight and water",
+  "누른 횟수 {n}/3 · 현재 점수": "Presses {n}/3 · Current score",
+  실제로는: "Actually it became",
+  "3점": "3 points",
+  "이 되었어요. 누를 때마다 1점을 더하는 규칙 때문이에요. 우리가 정한 “한 문제는 한 번” 약속과 다르네요.":
+    ". That's because of the rule that adds 1 point every press. It's different from our “one question, once” promise.",
+  "규칙 하나 고치기 →": "Fix one rule →",
+  "같은 행동으로 확인했어요": "Checked with the same actions",
+  "1점": "1 point",
+  "이미 답한 문제인지 기억하면, 또 눌러도 점수를 더하지 않을 수 있어요.":
+    "If the app remembers that a question was already answered, it can skip adding points when you press again.",
+  "내 말로 설명하기 · 왜 이렇게 고쳤나요?":
+    "Explain in my own words · Why did I fix it this way?",
+  "맞힌 문제 수를 세려면…": "To count correct questions…",
+  "체험만 하면 기록은 남지 않아요. 새 작품을 만들면 내 예상과 설명을 옮겨요. 새 작품에서 실행·검사는 다시 해요.":
+    "Just trying it doesn't save a record. If you make a new work, your prediction and explanation move over. You'll run and check again in the new work.",
+  "같은 정답을 세 번 누르면 {n}점일 것 같아요.":
+    "I think pressing the same right answer three times will give {n} points.",
+  "고친 규칙으로 내 작품 만들기 →": "Make my work with the fixed rule →",
+  "체험 처음부터 다시": "Start the demo over",
+  "다른 완성 예제 눌러보기": "Try another finished example",
+  "QR로 보내기": "Send by QR",
+  "요청을 QR로 보내기": "Send request by QR",
+  "{n}단계 완료": "Step {n} done",
+  "세 단계를 차례로 하면 다음 사람이 이 기기의 기록을 이어 쓰지 않아요.":
+    "Do the three steps in order so the next person doesn't continue your records on this device.",
+  "저장이 끝났는지 확인해요": "Check that saving is done",
+  "모든 편집이 이 기기에 저장됐어요.": "All edits are saved on this device.",
+  "아직 저장 중이거나 저장에 실패한 작품이 있어요. 잠시 뒤 다시 확인해 주세요.":
+    "Some works are still saving or failed to save. Please check again in a moment.",
+  "모든 작품을 파일로 받아요": "Download all works as files",
+  "작품 {n}개를 파일로 받아 학교가 정한 곳(학급 드라이브 등)에 보관해요.":
+    "Download {n} works as files and keep them where your school decides (like a class drive).",
+  "모든 작품 파일로 받기": "Download all works as files",
+  "이미 백업했거나 보관하지 않아도 돼요":
+    "Already backed up, or no need to keep them",
+  "이 기기에 보관할 작품이 없어요.": "No works to keep on this device.",
+  "다음에 이 기기를 쓸 상황을 골라요":
+    "Choose how this device will be used next",
+  "2단계에서 파일을 받거나 건너뛰기를 고르면 버튼이 켜져요.":
+    "The button turns on after you download files or choose to skip in step 2.",
+  "다음 반·다음 학생이 바로 써요":
+    "The next class or student will use it right away",
+  "작품을 지우지 않고 목록에서 접어요. 되돌리기 기록과 최근 작품 연결은 비워요.":
+    "Folds works out of the list without deleting them. Clears undo history and recent work links.",
+  "기기를 반납하거나 학기가 끝났어요":
+    "Returning the device or the term is over",
+  "이 앱의 작품·설정·학급 평가 목록·되돌리기 기록을 모두 지워요. 다른 앱 데이터는 지우지 않아요.":
+    "Deletes all of this app's works, settings, class review lists, and undo history. Other apps' data is not deleted.",
+  "아직 답을 고르지 않았어요.": "You haven't chosen an answer yet.",
+  "선택 {n} → {rule} → 점수 {a} → {b} → {fb}":
+    "Choice {n} → {rule} → score {a} → {b} → {fb}",
+  "이미 답했는지 확인": "Check if already answered",
+  "시도할 때마다 채점": "Score every try",
+  "마지막 문제 확인 → 최종 결과 표시":
+    "Check last question → Show final result",
+  "다음 문제 → 문제 번호 1 증가 → 답한 상태 초기화":
+    "Next question → Question number +1 → Reset answered state",
+  "다시 시작 → 문제 번호 1, 답한 상태 비움, 점수 {n}":
+    "Restart → Question number 1, answered state cleared, score {n}",
+  "첫 칸(0,0)에서 시작해요.": "Start at the first cell (0,0).",
+  "{dir} 막힘 → 오른쪽으로 돌아도 막힘 → 멈춤 (위치 {at})":
+    "{dir} blocked → Turning right is blocked too → Stop (position {at})",
+  "{dir} 막힘 → 만약 막히면 오른쪽으로 돌기 → {turn} 한 칸 → 위치 {at} 칠하기":
+    "{dir} blocked → If blocked, turn right → {turn} one cell → Paint position {at}",
+  "{dir} 한 칸 → 판 가장자리 → 멈춤 (위치 {at})":
+    "{dir} one cell → Board edge → Stop (position {at})",
+  "{dir} 한 칸 → 판 밖 → 반대편으로 넘어감 → 위치 {at} 칠하기":
+    "{dir} one cell → Off the board → Wrap to the other side → Paint position {at}",
+  "{dir} 한 칸 → 위치 {at} 칠하기": "{dir} one cell → Paint position {at}",
+  "명령 {n}칸을 모두 실행했어요.": "Ran all {n} cells of commands.",
+  "{n}점만 반영": "Only {n} points counted",
+  "{screen}, {n}점": "{screen}, {n} points",
+  "결과 화면": "Result screen",
+  "문제 화면": "Question screen",
+  "{n}점 · {i}번 문제 · {a}": "{n} points · Question {i} · {a}",
+  "답하지 않음": "Not answered",
+  답함: "Answered",
+  "존재하는 장면으로 연결": "Links to scenes that exist",
+  "모두 유효한 장면": "All scenes are valid",
+  "없는 장면 발견": "Missing scene found",
+  "{n}개 결말에 도달 가능": "{n} endings reachable",
+  "시작 장면이 존재": "Start scene exists",
+  없음: "None",
+  "목표 칸 {n}개와 같은 모양": "Same shape as the {n} target cells",
+  "칠한 칸 {p}개 · 빠진 칸 {m}개, 더 칠한 칸 {e}개":
+    "{p} cells painted · {m} missing, {e} extra",
+  "칠한 칸 {p}개 · 목표와 같음": "{p} cells painted · Matches the target",
+  "판 밖으로 넘어가지 않음": "Doesn't go off the board",
+  "반대편으로 {n}번 넘어감": "Wrapped to the other side {n} times",
+  "가장자리에서 {n}번 멈춤": "Stopped at the edge {n} times",
+  "넘어간 이동 없음": "No moves went past the edge",
+  "명령 묶음 {r}번 · {n}칸 이동": "Command group {r} · moved {n} cells",
+  "{n}칸 이동": "Moved {n} cells",
+  "빈 판의 첫 칸(0,0)에서 시작":
+    "Start at the first cell (0,0) of an empty board",
+  "칠한 칸 {p}개 · 위치 {at}": "{p} cells colored · position {at}",
+  "원래 종료 시각 유지": "Keeps the original end time",
+  "같은 종료 시각": "Same end time",
+  "종료 시각 변경": "End time changed",
+  "남은 시간을 유지하고 재개": "Resume with the time left",
+  "유지 후 재개": "Keep time, then resume",
+  불일치: "Mismatch",
+  "{s}초 · 안내 {n}번": "{s} sec · {n} end messages",
+  "{s}초 · 정지": "{s} sec · paused",
+  결과: "Result",
+  "없는 장면이에요.": "That scene doesn't exist.",
+  "이야기가 끝났어요.": "The story is over.",
+  멈춤: "Pause",
+  "{n}초": "{n} sec",
+  "시간이 끝났어요!": "Time's up!",
+  그리기: "Draw",
+  "{n}×{n} 판 · 칠한 칸 {p}개": "{n}×{n} board · {p} cells colored",
+  "다 그렸어요. 목표 모양과 달라요.":
+    "Drawing done. It doesn't match the target shape.",
+  "뚝딱 바이브 공작소에서 만든 작은 앱":
+    "A tiny app made in Ttukttak Vibe Workshop",
+  "이 파일에는 작품 설정만 들어 있고 학습 기록은 들어 있지 않아요. 인터넷 없이 열려요.":
+    "This file has only the work's settings, not learning records. It opens without the internet.",
+  "QR로 받은 작품을 새 작품으로 더했어요.":
+    "Added the work from the QR code as a new work.",
+  "미션 만들기": "Create a mission",
+  "QR로 받은 작품": "Work from a QR code",
+  "다른 탭을 닫은 뒤 다시 시도해 주세요.": "Close other tabs and try again.",
+  "저장하지 못했어요.": "Couldn't save.",
+  "저장이 취소되었어요.": "Saving was canceled.",
+  "작품 형식을 알 수 없어요.": "Unknown work format.",
+  "가져오기 저장 실패": "Couldn't save the import",
+  "한 작품의 파일이 2MB를 넘어요. 백업할 검사 기록과 버전을 줄여 주세요.":
+    "One work's file is over 2MB. Keep fewer check records and versions in the backup.",
+  "{path}: 객체 형식이 필요해요.": "{path}: Must be an object.",
+  "{path}: {max}자 이내의 글자여야 해요.":
+    "{path}: Must be text of {max} characters or fewer.",
+  "{path}: 참/거짓 값이 필요해요.": "{path}: Must be true or false.",
+  "{path}: {min}~{max}의 정수여야 해요.":
+    "{path}: Must be a whole number from {min} to {max}.",
+  "{path}: 항목 {min}~{max}개가 필요해요.": "{path}: Needs {min}–{max} items.",
+  "{path}: 지원하지 않는 값이에요.": "{path}: This value isn't supported.",
+  "{path}: 올바른 날짜가 아니에요.": "{path}: Not a valid date.",
+  "{path}: 이름표가 비었거나 중복돼요.":
+    "{path}: A label is empty or repeated.",
+  설정: "Settings",
+  "프로젝트 종류": "Project type",
+  "판 크기": "Board size",
+  명령: "Commands",
+  "명령 방향": "Command direction",
+  "명령 칸 수": "Command cells",
+  "목표 칸": "Target cells",
+  "목표 칸: 판 안의 칸이어야 해요.":
+    "Target cells: Must be cells on the board.",
+  "반복 횟수": "Repeat count",
+  "가장자리 규칙": "Edge rule",
+  "조건 규칙": "Condition rule",
+  문항: "Questions",
+  선택지: "Choices",
+  "문항 이름표": "Question label",
+  문제: "Question",
+  "정답 번호": "Correct answer number",
+  "문제당 점수": "Points per question",
+  "점수 초기화": "Score reset",
+  "장면 이름표": "Scene label",
+  "장면 제목": "Scene title",
+  "장면 설명": "Scene description",
+  "결말 여부": "Is it an ending?",
+  "장면 선택지": "Scene choices",
+  "장면 선택": "Scene choice",
+  "선택 문장": "Choice text",
+  "도착 장면": "Destination scene",
+  "의도한 결말": "Intended endings",
+  "결말 이름표": "Ending label",
+  "장면 연결: 존재하는 장면과 결말을 연결해 주세요.":
+    "Scene links: Connect to scenes and endings that exist.",
+  "장면: 결말에는 선택지가 없어야 하고, 진행 장면에는 선택지가 필요해요.":
+    "Scenes: Endings must have no choices, and other scenes need choices.",
+  "제한 시간": "Time limit",
+  "종료 안내": "End message",
+  "종료 표시": "End display",
+  "작품 내용": "Work content",
+  "작품과 버전의 프로젝트 종류가 달라요.":
+    "The work and the version have different project types.",
+  "만들기 약속": "Building promises",
+  "AI 기록": "AI records",
+  도구명: "Tool name",
+  도움: "Help",
+  "AI 실제 결과": "AI actual result",
+  "AI 예상": "AI prediction",
+  "AI 검사 기준": "AI check criteria",
+  "AI 판정": "AI verdict",
+  "AI 수정 요청": "AI fix request",
+  "수정 기록": "Fix records",
+  "검사 기록": "Check records",
+  검사: "Check",
+  "검사 ID": "Check ID",
+  "기대 결과": "Expected result",
+  "검사 종류": "Check type",
+  "검사 상태": "Check status",
+  "검사 버전": "Checked version",
+  "검사 시각": "Check time",
+  "설정 버전": "Settings version",
+  "만들기 약속 확인": "Building promises check",
+  원문: "Original text",
+  "정리 요청문": "Tidied-up request",
+  예상: "Prediction",
+  "실행 설정 버전": "Run settings version",
+  성찰: "Reflection",
+  "도움 기록": "Help records",
+  "활동 종류": "Activity type",
+  "{what}의 스키마 버전을 알 수 없어요. 이 앱은 {supported}를 읽어요.":
+    "Unknown schema version for {what}. This app reads {supported}.",
+  "더 새로운 앱에서 만든 {what}이에요(스키마 버전 {v}). 이 앱은 {supported}를 읽어요. 최신 주소에서 새로고침한 뒤 다시 가져와 주세요.":
+    "This {what} was made in a newer app (schema version {v}). This app reads {supported}. Refresh at the latest address and import again.",
+  작품: "Work",
+  "평가 단계": "Review stage",
+  "평가 의견": "Review comment",
+  "평가 시각": "Review time",
+  미션: "Mission",
+  "지원하지 않는 미션이에요.": "This mission isn't supported.",
+  버전: "Version",
+  "버전 ID": "Version ID",
+  "버전 제목": "Version title",
+  "버전 이유": "Version reason",
+  "버전 시각": "Version time",
+  "수정 버전 묶음은 600KB까지예요. 필요한 버전만 남긴 파일을 선택해 주세요.":
+    "A fix version bundle can be up to 600KB. Choose a file with only the versions you need.",
+  "작품 ID": "Work ID",
+  "만든 시각": "Created",
+  "고친 시각": "Edited",
+  "편집본 이름": "Current draft name",
+  "힌트 사용": "Hints used",
+  "파일은 2MB 이하여야 해요. 작품을 나누어 내보내 주세요.":
+    "Files must be 2MB or smaller. Export your works separately.",
+  "JSON 파일을 읽을 수 없어요. 원래 내보낸 .json 파일을 선택해 주세요.":
+    "Can't read the JSON file. Choose the original exported .json file.",
+  파일: "File",
+  "뚝딱 백업 파일({supported})을 선택해 주세요.":
+    "Choose a Ttukttak backup file ({supported}).",
+  "백업 파일": "Backup file",
+  "작품 목록": "Work list",
+  "평가 목록을 저장하지 못했어요.": "Couldn't save the review list.",
+  "{what}: 객체 형식이 필요해요.": "{what}: Must be an object.",
+  "{what}: {max}자 이내의 글자여야 해요.":
+    "{what}: Must be text of {max} characters or fewer.",
+  "{what}: 항목이 {max}개 이하여야 해요.":
+    "{what}: Must have {max} items or fewer.",
+  "지원하지 않는 친구 검사 요청 파일이에요.":
+    "This friend check request file isn't supported.",
+  "검사 항목": "Check items",
+  "지원하지 않는 친구 검사 결과 파일이에요.":
+    "This friend check result file isn't supported.",
+  "검사 시각이 올바르지 않아요.": "The check time isn't valid.",
+  "검사한 친구": "Friend who checked",
+  "검사 결과": "Check results",
+  "검사 판정: 지원하지 않는 값이에요.":
+    "Check verdict: This value isn't supported.",
+  "친구 의견": "Friend's comment",
+  "친구가 적은 검사 결과가 없어요.":
+    "Your friend didn't write any check results.",
+  "검사 기록은 100개까지예요. 필요 없는 기록을 정리한 뒤 다시 가져와 주세요.":
+    "You can have up to 100 check records. Clean up ones you don't need, then import again.",
+  "검사 기록은 100개까지예요. 파일로 백업한 뒤 필요 없는 기록을 선택해 삭제해 주세요.":
+    "You can have up to 100 check records. Back them up to a file, then select and delete ones you don't need.",
+  "QR 주소를 읽지 못했어요. QR을 다시 비추거나 파일로 주고받아 주세요.":
+    "Couldn't read the QR address. Scan the QR again or share by file.",
+  "{what}: {max}자 이내로 적어 주세요.":
+    "{what}: Write {max} characters or fewer.",
+  "미션 파일 형식을 알 수 없어요.": "Unknown mission file format.",
+  "검사 항목은 1~6개여야 해요.": "Check items must be 1–6.",
+  "힌트는 1~3개여야 해요.": "Hints must be 1–3.",
+  "미션 제목": "Mission title",
+  "이번 과제": "This task",
+  "미션 목표": "Mission goal",
+  "예상 질문": "Prediction question",
+  힌트: "Hint",
+  "선생님 미션은 이 기기에 {n}개까지 둘 수 있어요.":
+    "This device can hold up to {n} teacher's missions.",
+  요청문: "Request",
+  "만들고 싶은 것과 지켜야 할 약속을 설명하는 말이에요.":
+    "Words that explain what you want to make and the promises it must keep.",
+  "내 생각대로 움직이는지 직접 확인하는 일이에요.":
+    "Seeing for yourself if it works the way you think.",
+  버그: "Bug",
+  "기대한 것과 다르게 움직이는 부분이에요.":
+    "A part that works differently from what you expected.",
+  상태: "State",
+  "점수나 남은 시간처럼 앱이 지금 기억하는 값이에요.":
+    "A value the app is remembering right now, like the score or time left.",
+  "고치기 전후의 모습을 이름 붙여 남긴 것이에요.":
+    "A named snapshot of how it looked before and after a fix.",
+  "예상·검사·수정 이유를 모아 내가 배운 것을 소개하는 기록이에요.":
+    "A record of your predictions, checks, and fix reasons that shows what you learned.",
+  "퀴즈 눌러보기": "Try the quiz",
+  "정답을 고르면 안내와 점수가 나와요.":
+    "Pick an answer to see a message and your score.",
+  "이야기 눌러보기": "Try the story",
+  "내 선택에 따라 다른 결말로 가요.": "Your choices lead to different endings.",
+  "타이머 눌러보기": "Try the timer",
+  "5초를 시작하고 멈췄다가 이어 가요.":
+    "Start 5 seconds, pause, then keep going.",
+  생각하기: "Think",
+  "누가 쓸까요?": "Who will use it?",
+  "친구가 쓸 퀴즈를 만들래요.": "I'll make a quiz for my friends.",
+  설명하기: "Explain",
+  "무엇이 나와야 할까요?": "What should happen?",
+  "같은 문제는 한 번만 채점해 줘.": "Score each question only once.",
+  실행하기: "Run",
+  "먼저 예상하고 눌러요.": "Predict first, then press.",
+  "세 번 눌러도 1점일 것 같아요.":
+    "I think it'll be 1 point even if I press three times.",
+  고치기: "Fix",
+  "다르면 규칙을 바꿔요.": "If it's different, change the rule.",
+  "3점이네? 한 번만 채점하도록 고칠래요.":
+    "3 points? I'll fix it to score only once.",
+  소개하기: "Share",
+  "바꾼 까닭을 말해요.": "Tell why you changed it.",
+  "이미 답했는지 기억하면 돼요.":
+    "It just needs to remember if I already answered.",
+  과학: "Science",
+  "배운 내용을 확인하는 퀴즈": "A quiz to check what you learned",
+  "식물에게 필요한 것을 묻고, 정답·오답 안내를 바꿔요.":
+    "Ask what plants need, and change the right/wrong messages.",
+  국어: "Korean language arts",
+  "내 선택으로 이어지는 이야기": "A story shaped by your choices",
+  "갈림길의 선택과 결말을 연결하고 친구가 읽기 쉽게 고쳐요.":
+    "Link choices at the forks to endings, and make it easy for friends to read.",
+  체육: "PE",
+  "운동과 휴식을 알리는 타이머": "A timer for exercise and rest",
+  "운동할 시간을 정하고 멈춤·재개·종료 안내를 검사해요.":
+    "Set the exercise time and check the pause, resume, and end messages.",
+  예상하기: "Predict",
+  "이상한 점수 발견": "Found a strange score",
+  "규칙 수정과 재검사": "Fix the rule and check again",
+  "같은 정답을 여러 번 누르면 점수가 또 올라요.":
+    "Pressing the same right answer again keeps raising the score.",
+  "설정의 ‘채점 규칙’을 ‘문제당 한 번 (정상 규칙)’으로 바꿔 보세요. 앱이 ‘이미 답했는지’를 기억해야 해요.":
+    "In Settings, change ‘Scoring rule’ to ‘Once per question (normal rule)’. The app needs to remember ‘if it was already answered’.",
+  "다시 시작해도 점수가 남아 있어요.": "The score stays even after restarting.",
+  "설정의 ‘다시 시작할 때 점수 초기화’를 켜 보세요. 처음으로 돌아갈 때 앱이 기억하던 점수도 0으로 돌아가야 해요.":
+    "In Settings, turn on ‘Reset score on restart’. When you go back to the start, the score the app remembered should go back to 0 too.",
+  "없는 장면으로 가는 선택이 {n}개 있어요.":
+    "{n} choices go to scenes that don't exist.",
+  "「{scene}」 장면의 ‘도착 장면’을 지금 있는 장면으로 골라 주세요.":
+    "Set the ‘Destination scene’ of the “{scene}” scene to a scene that exists.",
+  "목표 결말 {n}개에 갈 수 없어요.": "{n} target endings can't be reached.",
+  "장면 연결 지도에서 「{scene}」이 ‘갈 수 없음’으로 보여요. 시작에서 갈 수 있는 장면 가운데 하나의 ‘도착 장면’을 「{scene}」으로 바꿔 길을 이어 보세요.":
+    "In the Scene connection map, “{scene}” shows as ‘Unreachable’. Change the ‘Destination scene’ of a scene you can reach from the start to “{scene}” to connect the path.",
+  "0초가 돼도 끝났다는 안내가 나오지 않아요.":
+    "No end message appears at 0 seconds.",
+  "설정의 ‘0초가 되면 종료 안내 표시’를 켜 보세요.":
+    "In Settings, turn on ‘Show end message at 0 seconds’.",
+  "그림이 판 밖으로 나가 반대편에서 다시 나와요.":
+    "The drawing goes off the board and comes back on the other side.",
+  "설정의 ‘판 가장자리 규칙’을 ‘가장자리에서 멈추기 (정상 규칙)’로 바꿔 보세요. 앱은 다음 칸이 판 안인지 먼저 확인해야 해요.":
+    "In Settings, change ‘Board edge rule’ to ‘Stop at the edge (normal rule)’. The app should first check if the next cell is on the board.",
+  "목표인데 칠하지 않은 칸이 {n}개 있어요.": "{n} target cells aren't colored.",
+  "마지막 위치는 {at}이에요. 가장 가까운 빠진 칸 {to}까지 ‘{dir} {k}칸’ 명령을 더해 보세요.":
+    "The last position is {at}. Add a ‘{dir} {k} cells’ command to reach the nearest missing cell {to}.",
+  "목표에 없는 칸을 {n}개 더 칠했어요.":
+    "You colored {n} extra cells that aren't in the target.",
+  "‘한 칸씩 그리기’로 따라가며 처음 목표 밖으로 나가는 명령을 찾고, 그 명령의 칸 수나 반복 횟수를 줄여 보세요.":
+    "Use ‘Draw one step’ to find the first command that goes outside the target, then lower its cell count or repeat count.",
+  "QR로 받은 복사본 · 현재 편집본": "QR copy · current draft",
 };

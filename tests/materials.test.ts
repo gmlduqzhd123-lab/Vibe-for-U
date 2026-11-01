@@ -10,6 +10,7 @@ describe("수업 자료 파일", () => {
   const ids = [...block.matchAll(/id: "([\w-]+)"/g)].map((m) => m[1]);
   it("자료 카드마다 PDF와 Word 파일이 있다", () => {
     expect(ids).toContain("new-features-guide");
+    expect(ids).toContain("student-worksheets-en");
     for (const id of ids)
       for (const ext of ["pdf", "docx"])
         expect(
@@ -23,6 +24,8 @@ describe("수업 자료 파일", () => {
     for (const name of [
       "새_기능_수업_보충_안내.pdf",
       "새_기능_수업_보충_안내.docx",
+      "Student_worksheets_EN.pdf",
+      "Student_worksheets_EN.docx",
       "교사용_사용_안내서.pdf",
     ])
       expect(zip.includes(Buffer.from(name, "utf8")), name).toBe(true);

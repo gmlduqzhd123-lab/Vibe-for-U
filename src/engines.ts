@@ -1,4 +1,6 @@
+import { AppError } from "./appError";
 import { now, uid, LIMITS } from "./model";
+import { translate } from "./i18n";
 import type {
   Check,
   Config,
@@ -10,6 +12,12 @@ import type {
   Mission,
   Snapshot,
 } from "./model";
+// 동작 기록과 자동 검사 문장은 t를 넘기면 화면 언어로 만든다(기본은 한국어).
+export type Tr = (
+  text: string,
+  vars?: Record<string, string | number>,
+) => string;
+const ko: Tr = (text, vars) => translate("ko", text, vars);
 export type QuizState = {
   index: number;
   score: number;
@@ -18,18 +26,19 @@ export type QuizState = {
   finished: boolean;
   event: string;
 };
-export const initialQuiz = (): QuizState => ({
+export const initialQuiz = (t: Tr = ko): QuizState => ({
   index: 0,
   score: 0,
   answered: false,
   selected: null,
   finished: false,
-  event: "아직 답을 고르지 않았어요.",
+  event: t("아직 답을 고르지 않았어요."),
 });
 export function answerQuiz(
   c: QuizConfig,
   s: QuizState,
   choice: number,
+  t: Tr = ko,
 ): QuizState {
   if (s.finished || choice < 0 || choice >= c.questions[s.index].choices.length)
     return s;
@@ -41,26 +50,36 @@ export function answerQuiz(
     answered: true,
     selected: choice,
     score: s.score + add,
-    event: `선택 ${choice + 1} → ${c.scoring === "once" ? "이미 답했는지 확인" : "시도할 때마다 채점"} → 점수 ${s.score} → ${s.score + add} → ${correct ? c.correctFeedback : c.wrongFeedback}`,
+    event: t("선택 {n} → {rule} → 점수 {a} → {b} → {fb}", {
+      n: choice + 1,
+      rule: t(
+        c.scoring === "once" ? "이미 답했는지 확인" : "시도할 때마다 채점",
+      ),
+      a: s.score,
+      b: s.score + add,
+      fb: correct ? c.correctFeedback : c.wrongFeedback,
+    }),
   };
 }
-export function nextQuiz(c: QuizConfig, s: QuizState): QuizState {
+export function nextQuiz(c: QuizConfig, s: QuizState, t: Tr = ko): QuizState {
   if (!s.answered || s.finished) return s;
   return s.index === c.questions.length - 1
-    ? { ...s, finished: true, event: "마지막 문제 확인 → 최종 결과 표시" }
+    ? { ...s, finished: true, event: t("마지막 문제 확인 → 최종 결과 표시") }
     : {
         ...s,
         index: s.index + 1,
         answered: false,
         selected: null,
-        event: "다음 문제 → 문제 번호 1 증가 → 답한 상태 초기화",
+        event: t("다음 문제 → 문제 번호 1 증가 → 답한 상태 초기화"),
       };
 }
-export function resetQuiz(c: QuizConfig, s: QuizState): QuizState {
+export function resetQuiz(c: QuizConfig, s: QuizState, t: Tr = ko): QuizState {
   return {
-    ...initialQuiz(),
+    ...initialQuiz(t),
     score: c.resetScore ? 0 : s.score,
-    event: `다시 시작 → 문제 번호 1, 답한 상태 비움, 점수 ${c.resetScore ? 0 : s.score}`,
+    event: t("다시 시작 → 문제 번호 1, 답한 상태 비움, 점수 {n}", {
+      n: c.resetScore ? 0 : s.score,
+    }),
   };
 }
 export function reachable(c: StoryConfig) {
@@ -141,7 +160,7 @@ const rightOf: Record<Direction, Direction> = {
   up: "right",
 };
 export const cell = (x: number, y: number) => `${x},${y}`;
-export const initialPattern = (): PatternState => ({
+export const initialPattern = (t: Tr = ko): PatternState => ({
   x: 0,
   y: 0,
   painted: [cell(0, 0)],
@@ -150,7 +169,7 @@ export const initialPattern = (): PatternState => ({
   blocked: 0,
   turns: 0,
   heading: null,
-  event: "첫 칸(0,0)에서 시작해요.",
+  event: t("첫 칸(0,0)에서 시작해요."),
 });
 // 반복 × 명령 × 칸 수를 한 칸짜리 이동 목록으로 펼친다. command는 몇 번째로 실행하는 명령인지다.
 export function patternSteps(c: PatternConfig) {
@@ -163,7 +182,12 @@ export function patternSteps(c: PatternConfig) {
 }
 export const patternMoves = (c: PatternConfig): Direction[] =>
   patternSteps(c).map((m) => m.dir);
-export function stepPattern(c: PatternConfig, s: PatternState): PatternState {
+export function stepPattern(
+  c: PatternConfig,
+  s: PatternState,
+  t: Tr = ko,
+): PatternState {
+  const dn = (d: Direction) => t(dirNames[d]);
   const steps = patternSteps(c);
   if (s.step >= steps.length) return s;
   const { command } = steps[s.step];
@@ -184,24 +208,30 @@ export function stepPattern(c: PatternConfig, s: PatternState): PatternState {
   // 조건: 다음 칸이 판 밖이거나 이미 칠한 칸이면 오른쪽으로 돈다.
   if (c.turn === "right" && (next.outside || next.painted)) {
     const turned = rightOf[dir];
-    const t = target(turned);
-    if (t.outside || t.painted)
+    const side = target(turned);
+    if (side.outside || side.painted)
       return {
         ...s,
         step: s.step + 1,
         blocked: s.blocked + 1,
-        event: `${dirNames[dir]} 막힘 → 오른쪽으로 돌아도 막힘 → 멈춤 (위치 ${cell(s.x, s.y)})`,
+        event: t("{dir} 막힘 → 오른쪽으로 돌아도 막힘 → 멈춤 (위치 {at})", {
+          dir: dn(dir),
+          at: cell(s.x, s.y),
+        }),
       };
-    const at = cell(t.x, t.y);
+    const at = cell(side.x, side.y);
     return {
       ...s,
-      x: t.x,
-      y: t.y,
+      x: side.x,
+      y: side.y,
       step: s.step + 1,
       turns: s.turns + 1,
       heading: { dir: turned, command },
       painted: [...s.painted, at],
-      event: `${dirNames[dir]} 막힘 → 만약 막히면 오른쪽으로 돌기 → ${dirNames[turned]} 한 칸 → 위치 ${at} 칠하기`,
+      event: t(
+        "{dir} 막힘 → 만약 막히면 오른쪽으로 돌기 → {turn} 한 칸 → 위치 {at} 칠하기",
+        { dir: dn(dir), turn: dn(turned), at },
+      ),
     };
   }
   if (next.outside && c.edge === "stop")
@@ -209,7 +239,10 @@ export function stepPattern(c: PatternConfig, s: PatternState): PatternState {
       ...s,
       step: s.step + 1,
       blocked: s.blocked + 1,
-      event: `${dirNames[dir]} 한 칸 → 판 가장자리 → 멈춤 (위치 ${cell(s.x, s.y)})`,
+      event: t("{dir} 한 칸 → 판 가장자리 → 멈춤 (위치 {at})", {
+        dir: dn(dir),
+        at: cell(s.x, s.y),
+      }),
     };
   const x = next.outside ? (next.x + c.size) % c.size : next.x;
   const y = next.outside ? (next.y + c.size) % c.size : next.y;
@@ -221,14 +254,19 @@ export function stepPattern(c: PatternConfig, s: PatternState): PatternState {
     step: s.step + 1,
     painted: s.painted.includes(at) ? s.painted : [...s.painted, at],
     wrapped: s.wrapped + (next.outside ? 1 : 0),
-    event: `${dirNames[dir]} 한 칸 → ${next.outside ? "판 밖 → 반대편으로 넘어감 → " : ""}위치 ${at} 칠하기`,
+    event: t(
+      next.outside
+        ? "{dir} 한 칸 → 판 밖 → 반대편으로 넘어감 → 위치 {at} 칠하기"
+        : "{dir} 한 칸 → 위치 {at} 칠하기",
+      { dir: dn(dir), at },
+    ),
   };
 }
-export function runPattern(c: PatternConfig, s = initialPattern()) {
+export function runPattern(c: PatternConfig, s = initialPattern(), t: Tr = ko) {
   const total = patternMoves(c).length;
   let state = s;
-  while (state.step < total) state = stepPattern(c, state);
-  return { ...state, event: `명령 ${total}칸을 모두 실행했어요.` };
+  while (state.step < total) state = stepPattern(c, state, t);
+  return { ...state, event: t("명령 {n}칸을 모두 실행했어요.", { n: total }) };
 }
 export function patternMatch(c: PatternConfig, painted: string[]) {
   return {
@@ -236,7 +274,7 @@ export function patternMatch(c: PatternConfig, painted: string[]) {
     extra: painted.filter((p) => !c.target.includes(p)),
   };
 }
-export function autoChecks(c: Config, revision: string): Check[] {
+export function autoChecks(c: Config, revision: string, t: Tr = ko): Check[] {
   const rows: {
     label: string;
     expected: string;
@@ -244,20 +282,20 @@ export function autoChecks(c: Config, revision: string): Check[] {
     pass: boolean;
   }[] = [];
   if (c.kind === "quiz") {
-    let q = initialQuiz();
-    for (let i = 0; i < 3; i++) q = answerQuiz(c, q, c.questions[0].correct);
+    let q = initialQuiz(t);
+    for (let i = 0; i < 3; i++) q = answerQuiz(c, q, c.questions[0].correct, t);
     rows.push({
       label: "같은 정답 세 번",
-      expected: `${c.points}점만 반영`,
-      actual: `${q.score}점`,
+      expected: t("{n}점만 반영", { n: c.points }),
+      actual: t("{n}점", { n: q.score }),
       pass: q.score === c.points,
     });
     const wrong = (c.questions[0].correct + 1) % c.questions[0].choices.length;
     const w = answerQuiz(c, initialQuiz(), wrong);
     rows.push({
       label: "오답 점수",
-      expected: "0점",
-      actual: `${w.score}점`,
+      expected: t("{n}점", { n: 0 }),
+      actual: t("{n}점", { n: w.score }),
       pass: w.score === 0,
     });
     let all = initialQuiz();
@@ -267,15 +305,29 @@ export function autoChecks(c: Config, revision: string): Check[] {
     }
     rows.push({
       label: "마지막 결과",
-      expected: `결과 화면, ${c.questions.length * c.points}점`,
-      actual: `${all.finished ? "결과 화면" : "문제 화면"}, ${all.score}점`,
+      expected: t("{screen}, {n}점", {
+        screen: t("결과 화면"),
+        n: c.questions.length * c.points,
+      }),
+      actual: t("{screen}, {n}점", {
+        screen: t(all.finished ? "결과 화면" : "문제 화면"),
+        n: all.score,
+      }),
       pass: all.finished && all.score === c.questions.length * c.points,
     });
     const r = resetQuiz(c, q);
     rows.push({
       label: "다시 시작 상태",
-      expected: "0점 · 1번 문제 · 답하지 않음",
-      actual: `${r.score}점 · ${r.index + 1}번 문제 · ${r.answered ? "답함" : "답하지 않음"}`,
+      expected: t("{n}점 · {i}번 문제 · {a}", {
+        n: 0,
+        i: 1,
+        a: t("답하지 않음"),
+      }),
+      actual: t("{n}점 · {i}번 문제 · {a}", {
+        n: r.score,
+        i: r.index + 1,
+        a: t(r.answered ? "답함" : "답하지 않음"),
+      }),
       pass: r.score === 0 && r.index === 0 && !r.answered,
     });
   } else if (c.kind === "story") {
@@ -287,20 +339,22 @@ export function autoChecks(c: Config, revision: string): Check[] {
     rows.push(
       {
         label: "모든 선택의 연결",
-        expected: "존재하는 장면으로 연결",
-        actual: valid ? "모두 유효한 장면" : "없는 장면 발견",
+        expected: t("존재하는 장면으로 연결"),
+        actual: t(valid ? "모두 유효한 장면" : "없는 장면 발견"),
         pass: valid,
       },
       {
         label: "의도한 결말 도달",
-        expected: `${c.intendedEndings.length}개 결말에 도달 가능`,
-        actual: `${c.intendedEndings.filter((id) => reached.has(id)).length}개 결말에 도달 가능`,
+        expected: t("{n}개 결말에 도달 가능", { n: c.intendedEndings.length }),
+        actual: t("{n}개 결말에 도달 가능", {
+          n: c.intendedEndings.filter((id) => reached.has(id)).length,
+        }),
         pass: paths,
       },
       {
         label: "처음 장면",
-        expected: "시작 장면이 존재",
-        actual: c.scenes.find((s) => s.id === c.start)?.title ?? "없음",
+        expected: t("시작 장면이 존재"),
+        actual: c.scenes.find((s) => s.id === c.start)?.title ?? t("없음"),
         pass: c.scenes.some((s) => s.id === c.start),
       },
     );
@@ -311,74 +365,91 @@ export function autoChecks(c: Config, revision: string): Check[] {
     rows.push(
       {
         label: "목표 모양",
-        expected: `목표 칸 ${c.target.length}개와 같은 모양`,
+        expected: t("목표 칸 {n}개와 같은 모양", { n: c.target.length }),
         actual:
           missing.length || extra.length
-            ? `칠한 칸 ${done.painted.length}개 · 빠진 칸 ${missing.length}개, 더 칠한 칸 ${extra.length}개`
-            : `칠한 칸 ${done.painted.length}개 · 목표와 같음`,
+            ? t("칠한 칸 {p}개 · 빠진 칸 {m}개, 더 칠한 칸 {e}개", {
+                p: done.painted.length,
+                m: missing.length,
+                e: extra.length,
+              })
+            : t("칠한 칸 {p}개 · 목표와 같음", { p: done.painted.length }),
         pass: !missing.length && !extra.length,
       },
       {
         label: "판 가장자리",
-        expected: "판 밖으로 넘어가지 않음",
+        expected: t("판 밖으로 넘어가지 않음"),
         actual: done.wrapped
-          ? `반대편으로 ${done.wrapped}번 넘어감`
+          ? t("반대편으로 {n}번 넘어감", { n: done.wrapped })
           : done.blocked
-            ? `가장자리에서 ${done.blocked}번 멈춤`
-            : "넘어간 이동 없음",
+            ? t("가장자리에서 {n}번 멈춤", { n: done.blocked })
+            : t("넘어간 이동 없음"),
         pass: done.wrapped === 0,
       },
       {
         label: "반복 실행",
-        expected: `명령 묶음 ${c.repeat}번 · ${patternMoves(c).length}칸 이동`,
-        actual: `${done.step}칸 이동`,
+        expected: t("명령 묶음 {r}번 · {n}칸 이동", {
+          r: c.repeat,
+          n: patternMoves(c).length,
+        }),
+        actual: t("{n}칸 이동", { n: done.step }),
         pass: done.step === patternMoves(c).length,
       },
       {
         label: "처음으로 다시 그리기",
-        expected: "빈 판의 첫 칸(0,0)에서 시작",
-        actual: `칠한 칸 ${reset.painted.length}개 · 위치 ${cell(reset.x, reset.y)}`,
+        expected: t("빈 판의 첫 칸(0,0)에서 시작"),
+        actual: t("칠한 칸 {p}개 · 위치 {at}", {
+          p: reset.painted.length,
+          at: cell(reset.x, reset.y),
+        }),
         pass: reset.painted.length === 1 && reset.x === 0 && reset.y === 0,
       },
     );
   } else {
-    const t = startTimer(initialTimer(c), 1000);
-    const twice = startTimer(t, 1100);
-    const paused = pauseTimer(t, 1500, c);
+    const first = startTimer(initialTimer(c), 1000);
+    const twice = startTimer(first, 1100);
+    const paused = pauseTimer(first, 1500, c);
     const wait = tickTimer(paused, 2500, c);
     const resumed = startTimer(wait, 3000);
-    const ended = tickTimer(t, 1000 + c.seconds * 1000 + 500, c);
+    const ended = tickTimer(first, 1000 + c.seconds * 1000 + 500, c);
     const again = tickTimer(ended, 100000, c);
     rows.push(
       {
         label: "연속 시작",
-        expected: "원래 종료 시각 유지",
-        actual:
-          twice.deadline === t.deadline ? "같은 종료 시각" : "종료 시각 변경",
-        pass: twice.deadline === t.deadline,
+        expected: t("원래 종료 시각 유지"),
+        actual: t(
+          twice.deadline === first.deadline
+            ? "같은 종료 시각"
+            : "종료 시각 변경",
+        ),
+        pass: twice.deadline === first.deadline,
       },
       {
         label: "멈춤과 재개",
-        expected: "남은 시간을 유지하고 재개",
-        actual:
+        expected: t("남은 시간을 유지하고 재개"),
+        actual: t(
           wait.remaining === paused.remaining &&
-          resumed.deadline === 3000 + wait.remaining
+            resumed.deadline === 3000 + wait.remaining
             ? "유지 후 재개"
             : "불일치",
+        ),
         pass:
           wait.remaining === paused.remaining &&
           resumed.deadline === 3000 + wait.remaining,
       },
       {
         label: "0초와 종료 안내",
-        expected: "0초 · 안내 한 번",
-        actual: `${ended.remaining / 1000}초 · 안내 ${again.announcements}번`,
+        expected: t("{s}초 · 안내 {n}번", { s: 0, n: 1 }),
+        actual: t("{s}초 · 안내 {n}번", {
+          s: ended.remaining / 1000,
+          n: again.announcements,
+        }),
         pass: ended.remaining === 0 && again.announcements === 1,
       },
       {
         label: "초기화",
-        expected: `${c.seconds}초 · 정지`,
-        actual: `${initialTimer(c).remaining / 1000}초 · 정지`,
+        expected: t("{s}초 · 정지", { s: c.seconds }),
+        actual: t("{s}초 · 정지", { s: initialTimer(c).remaining / 1000 }),
         pass:
           initialTimer(c).remaining === c.seconds * 1000 &&
           !initialTimer(c).running,
@@ -408,7 +479,11 @@ export function missionChecks(m: Mission, revision: string): Check[] {
     at: now(),
   }));
 }
-export function prepareInspection(d: Snapshot, m: Mission): Check[] {
+export function prepareInspection(
+  d: Snapshot,
+  m: Mission,
+  t: Tr = ko,
+): Check[] {
   const retained = d.checks.filter(
     (c) => c.revision !== d.revision || c.source !== "auto",
   );
@@ -417,11 +492,11 @@ export function prepareInspection(d: Snapshot, m: Mission): Check[] {
   );
   const result = [
     ...retained,
-    ...autoChecks(d.config, d.revision),
+    ...autoChecks(d.config, d.revision, t),
     ...(currentManual ? [] : missionChecks(m, d.revision)),
   ];
   if (result.length > LIMITS.checks)
-    throw new Error(
+    throw new AppError(
       "검사 기록은 100개까지예요. 파일로 백업한 뒤 필요 없는 기록을 선택해 삭제해 주세요.",
     );
   return result;

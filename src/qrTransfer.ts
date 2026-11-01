@@ -1,0 +1,93 @@
+import qrcode from "qrcode-generator";
+import { missions } from "./data";
+import type { Config, Work } from "./model";
+import { LIMITS } from "./model";
+import { makePeerRequest, validatePeerRequest } from "./peer";
+import type { PeerRequest } from "./peer";
+import { validateConfig } from "./storage";
+import { AppError } from "./appError";
+// QR로 주고받기: 작은 작품 설정이나 친구 검사 요청을 주소 뒤쪽(#)에 줄여 담는다.
+// 받는 기기는 자기 카메라 앱으로 QR을 비춰 주소를 열면 된다. #뒤의 글은 서버로 보내지지 않는다.
+export type SharePayload =
+  | { k: "work"; title: string; missionId: string; config: Config }
+  | { k: "peer"; request: PeerRequest };
+// 휴대전화 카메라가 무리 없이 읽는 QR 크기에 맞춘 주소 길이 상한(글자 수).
+export const QR_MAX = 1800;
+const b64url = (bytes: Uint8Array) => {
+  let s = "";
+  for (const b of bytes) s += String.fromCharCode(b);
+  return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+};
+const fromB64url = (s: string) => {
+  const bin = atob(s.replace(/-/g, "+").replace(/_/g, "/"));
+  return Uint8Array.from(bin, (c) => c.charCodeAt(0));
+};
+async function pipe(bytes: Uint8Array, stream: GenericTransformStream) {
+  const out = new Blob([bytes as BlobPart]).stream().pipeThrough(stream);
+  return new Uint8Array(await new Response(out).arrayBuffer());
+}
+// 압축을 지원하면 z, 아니면 j(그대로)를 앞에 붙인다.
+export async function encodeShare(p: SharePayload) {
+  const raw = new TextEncoder().encode(JSON.stringify(p));
+  if (typeof CompressionStream === "function")
+    return "z" + b64url(await pipe(raw, new CompressionStream("deflate-raw")));
+  return "j" + b64url(raw);
+}
+export async function decodeShare(code: string): Promise<SharePayload> {
+  let data: unknown;
+  try {
+    const bytes = fromB64url(code.slice(1));
+    if (bytes.length > LIMITS.bytes) throw new Error("too large");
+    const raw =
+      code[0] === "z"
+        ? await pipe(bytes, new DecompressionStream("deflate-raw"))
+        : code[0] === "j"
+          ? bytes
+          : null;
+    if (!raw) throw new Error("unknown");
+    data = JSON.parse(new TextDecoder().decode(raw));
+  } catch {
+    throw new AppError(
+      "QR 주소를 읽지 못했어요. QR을 다시 비추거나 파일로 주고받아 주세요.",
+    );
+  }
+  const o = (data ?? {}) as Record<string, unknown>;
+  if (o.k === "peer")
+    return { k: "peer", request: validatePeerRequest(o.request) };
+  if (o.k === "work") {
+    const missionId = String(o.missionId);
+    if (!missions.some((m) => m.id === missionId))
+      throw new AppError("지원하지 않는 미션이에요.");
+    const title =
+      typeof o.title === "string" ? o.title.slice(0, LIMITS.short) : "";
+    return { k: "work", title, missionId, config: validateConfig(o.config) };
+  }
+  throw new AppError(
+    "QR 주소를 읽지 못했어요. QR을 다시 비추거나 파일로 주고받아 주세요.",
+  );
+}
+export const workPayload = (w: Work): SharePayload => ({
+  k: "work",
+  title: w.draft.title,
+  missionId: w.missionId,
+  config: w.draft.config,
+});
+export const peerPayload = (w: Work): SharePayload => ({
+  k: "peer",
+  request: makePeerRequest(w),
+});
+// 앱이 열린 주소를 기준으로 받기 주소를 만든다(GitHub Pages 하위 경로 포함).
+export const receiveUrl = (code: string) =>
+  `${location.origin}${location.pathname}#/receive/${code}`;
+// QR 그림(SVG 경로). 오류 정정은 L(가장 많이 담는 단계)을 쓴다.
+export function qrPath(text: string) {
+  const qr = qrcode(0, "L");
+  qr.addData(text, "Byte");
+  qr.make();
+  const n = qr.getModuleCount();
+  let d = "";
+  for (let y = 0; y < n; y++)
+    for (let x = 0; x < n; x++)
+      if (qr.isDark(y, x)) d += `M${x + 4} ${y + 4}h1v1h-1z`;
+  return { size: n + 8, d };
+}

@@ -4,6 +4,8 @@ import type { Check, Mission, Snapshot } from "./model";
 import { LIMITS, now, uid } from "./model";
 import { Field, Icon, Pill } from "./ui";
 import { useT } from "./i18n";
+import { errorText } from "./appError";
+import { diagnose } from "./diagnose";
 function CheckEditor({
   c,
   update,
@@ -53,6 +55,7 @@ export function Inspection({
   const [selected, setSelected] = useState<string[]>([]);
   const current = d.checks.filter((c) => c.revision === d.revision);
   const automatic = current.filter((c) => c.source === "auto");
+  const findings = diagnose(d.config);
   const manual = current.filter((c) => c.source !== "auto");
   const observed = manual.filter(
     (c) => c.actual.trim() && c.status !== "pending",
@@ -189,14 +192,10 @@ export function Inspection({
         className="primary"
         onClick={() => {
           try {
-            onChange(prepareInspection(d, m));
+            onChange(prepareInspection(d, m, t));
             setSelected([]);
           } catch (e) {
-            message(
-              e instanceof Error
-                ? e.message
-                : t("검사 기록을 준비하지 못했어요."),
-            );
+            message(errorText(e, t, t("검사 기록을 준비하지 못했어요.")));
           }
         }}
       >
@@ -233,6 +232,35 @@ export function Inspection({
           </summary>
           {automatic.map(renderCard)}
         </details>
+      ) : null}
+      {automatic.some((c) => c.status === "fail") && findings.length ? (
+        <section className="smart-hints" aria-labelledby="smart-hints-title">
+          <h3 id="smart-hints-title">{t("앱이 찾은 문제와 맞춤 힌트")}</h3>
+          <ul>
+            {findings.map((f) => (
+              <li key={f.id}>
+                <b>{t(f.problem, f.vars)}</b>
+                <details>
+                  <summary>{t("힌트 보기")}</summary>
+                  <p>
+                    {t(
+                      f.hint,
+                      f.vars && {
+                        ...f.vars,
+                        ...(f.vars.dir ? { dir: t(String(f.vars.dir)) } : {}),
+                      },
+                    )}
+                  </p>
+                </details>
+              </li>
+            ))}
+          </ul>
+          <p className="small muted">
+            {t(
+              "규칙으로 찾은 힌트예요. 고친 뒤에는 ‘현재 설정 자동 검사’를 다시 눌러 확인하고, 직접 눌러 본 결과도 기록해요.",
+            )}
+          </p>
+        </section>
       ) : null}
       <details className="extra-checks">
         <summary>{t("검사 카드·친구 의견 더하기")}</summary>

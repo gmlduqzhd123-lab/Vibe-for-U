@@ -58,7 +58,9 @@ test("영어로 바꾸면 화면 틀·문서 언어·제목이 바뀌고 기록�
   );
   await page.goto("#/teacher");
   await expect(
-    page.getByText("Lesson plans and classroom materials are in Korean."),
+    page.getByText(
+      "Lesson plans and teacher materials are in Korean. Student worksheets also come in English.",
+    ),
   ).toBeVisible();
   await page.goto("#/missions");
   await page.reload();

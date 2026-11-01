@@ -1,3 +1,4 @@
+import { AppError } from "./appError";
 import { APP_PREFIX, LIMITS, SCHEMA_VERSION, kinds, uid } from "./model";
 import { missions } from "./data";
 import type {
@@ -32,7 +33,7 @@ export function openDatabase() {
       };
       r.onblocked = () => {
         database = undefined;
-        reject(new Error("다른 탭을 닫은 뒤 다시 시도해 주세요."));
+        reject(new AppError("다른 탭을 닫은 뒤 다시 시도해 주세요."));
       };
     });
   return database;
@@ -46,8 +47,8 @@ async function transaction<T>(
     const tx = db.transaction(STORE, mode);
     const r = action(tx.objectStore(STORE));
     tx.oncomplete = () => resolve(r.result);
-    tx.onerror = () => reject(tx.error ?? new Error("저장하지 못했어요."));
-    tx.onabort = () => reject(tx.error ?? new Error("저장이 취소되었어요."));
+    tx.onerror = () => reject(tx.error ?? new AppError("저장하지 못했어요."));
+    tx.onabort = () => reject(tx.error ?? new AppError("저장이 취소되었어요."));
   });
 }
 // 기기에 남은 옛 형식 작품은 읽을 때 새 형식으로 바꾸고, 다음 저장 때 새 형식으로 기록한다.
@@ -67,7 +68,7 @@ export async function readAllWorks() {
         d.config.kind !== w.kind ||
         !Array.isArray(w.versions)
       )
-        throw new Error("작품 형식을 알 수 없어요.");
+        throw new AppError("작품 형식을 알 수 없어요.");
       works.push(w);
     } catch {
       unreadable.push(raw);
@@ -87,7 +88,7 @@ export async function importWorks(works: Work[]) {
     for (const w of works) tx.objectStore(STORE).put(w);
     tx.oncomplete = () => resolve();
     tx.onabort = tx.onerror = () =>
-      reject(tx.error ?? new Error("가져오기 저장 실패"));
+      reject(tx.error ?? new AppError("가져오기 저장 실패"));
   });
 }
 export function exportJSON(works: Work[]) {
@@ -104,7 +105,7 @@ export function backupFiles(works: Work[]) {
   let group: Work[] = [];
   for (const work of works) {
     if (new TextEncoder().encode(exportJSON([work])).length > LIMITS.bytes)
-      throw new Error(
+      throw new AppError(
         "한 작품의 파일이 2MB를 넘어요. 백업할 검사 기록과 버전을 줄여 주세요.",
       );
     const candidate = [...group, work];
@@ -125,7 +126,11 @@ export function downloadText(name: string, text: string, type: string) {
   const a = document.createElement("a");
   a.href = url;
   a.download = name;
+  // 문서에 붙인 링크만 내려받는 브라우저가 있어 잠깐 붙였다가 뗀다.
+  a.hidden = true;
+  document.body.append(a);
   a.click();
+  a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 export function downloadWorks(works: Work[]) {
@@ -142,27 +147,35 @@ export function downloadWorks(works: Work[]) {
 type Obj = Record<string, unknown>;
 function obj(v: unknown, path: string): Obj {
   if (!v || typeof v !== "object" || Array.isArray(v))
-    throw new Error(`${path}: 객체 형식이 필요해요.`);
+    throw new AppError("{path}: 객체 형식이 필요해요.", { path });
   return v as Obj;
 }
 function str(v: unknown, path: string, max: number = LIMITS.text) {
   if (typeof v !== "string" || v.length > max)
-    throw new Error(`${path}: ${max}자 이내의 글자여야 해요.`);
+    throw new AppError("{path}: {max}자 이내의 글자여야 해요.", { path, max });
   return v;
 }
 function bool(v: unknown, path: string) {
   if (typeof v !== "boolean")
-    throw new Error(`${path}: 참/거짓 값이 필요해요.`);
+    throw new AppError("{path}: 참/거짓 값이 필요해요.", { path });
   return v;
 }
 function num(v: unknown, path: string, min: number, max: number) {
   if (typeof v !== "number" || !Number.isInteger(v) || v < min || v > max)
-    throw new Error(`${path}: ${min}~${max}의 정수여야 해요.`);
+    throw new AppError("{path}: {min}~{max}의 정수여야 해요.", {
+      path,
+      min,
+      max,
+    });
   return v;
 }
 function arr(v: unknown, path: string, min: number, max: number): unknown[] {
   if (!Array.isArray(v) || v.length < min || v.length > max)
-    throw new Error(`${path}: 항목 ${min}~${max}개가 필요해요.`);
+    throw new AppError("{path}: 항목 {min}~{max}개가 필요해요.", {
+      path,
+      min,
+      max,
+    });
   return v;
 }
 function one<T extends string>(
@@ -171,18 +184,18 @@ function one<T extends string>(
   path: string,
 ): T {
   if (typeof v !== "string" || !options.includes(v as T))
-    throw new Error(`${path}: 지원하지 않는 값이에요.`);
+    throw new AppError("{path}: 지원하지 않는 값이에요.", { path });
   return v as T;
 }
 function stamp(v: unknown, path: string) {
   const s = str(v, path, 40);
   if (!Number.isFinite(Date.parse(s)))
-    throw new Error(`${path}: 올바른 날짜가 아니에요.`);
+    throw new AppError("{path}: 올바른 날짜가 아니에요.", { path });
   return s;
 }
 function unique(ids: string[], path: string) {
   if (ids.some((id) => !id.trim()) || new Set(ids).size !== ids.length)
-    throw new Error(`${path}: 이름표가 비었거나 중복돼요.`);
+    throw new AppError("{path}: 이름표가 비었거나 중복돼요.", { path });
 }
 export function validateConfig(value: unknown): Config {
   const c = obj(value, "설정");
@@ -200,7 +213,7 @@ export function validateConfig(value: unknown): Config {
       const t = str(v, "목표 칸", 5);
       const m = /^(\d+),(\d+)$/.exec(t);
       if (!m || Number(m[1]) >= size || Number(m[2]) >= size)
-        throw new Error("목표 칸: 판 안의 칸이어야 해요.");
+        throw new AppError("목표 칸: 판 안의 칸이어야 해요.");
       return t;
     });
     unique(target, "목표 칸");
@@ -278,7 +291,7 @@ export function validateConfig(value: unknown): Config {
       ) ||
       endings.some((id) => !scenes.some((s) => s.id === id && s.ending))
     )
-      throw new Error("장면 연결: 존재하는 장면과 결말을 연결해 주세요.");
+      throw new AppError("장면 연결: 존재하는 장면과 결말을 연결해 주세요.");
     if (
       scenes.some(
         (s) =>
@@ -286,7 +299,7 @@ export function validateConfig(value: unknown): Config {
           (!s.ending && s.choices.length === 0),
       )
     )
-      throw new Error(
+      throw new AppError(
         "장면: 결말에는 선택지가 없어야 하고, 진행 장면에는 선택지가 필요해요.",
       );
     return { kind, start, scenes, intendedEndings: endings };
@@ -302,7 +315,7 @@ function validateSnapshot(v: unknown, kind: Kind): Snapshot {
   const d = obj(v, "작품 내용");
   const config = validateConfig(d.config);
   if (config.kind !== kind)
-    throw new Error("작품과 버전의 프로젝트 종류가 달라요.");
+    throw new AppError("작품과 버전의 프로젝트 종류가 달라요.");
   const p = obj(d.promise, "만들기 약속");
   const promise = {} as PromiseData;
   for (const key of [
@@ -386,12 +399,14 @@ const migrations: Record<number, (w: Obj) => Obj> = {
 const supported = `스키마 버전 1~${SCHEMA_VERSION}`;
 function checkVersion(v: unknown, what: string) {
   if (typeof v !== "number" || !Number.isInteger(v) || v < 1)
-    throw new Error(
-      `${what}의 스키마 버전을 알 수 없어요. 이 앱은 ${supported}를 읽어요.`,
+    throw new AppError(
+      "{what}의 스키마 버전을 알 수 없어요. 이 앱은 {supported}를 읽어요.",
+      { what, supported },
     );
   if (v > SCHEMA_VERSION)
-    throw new Error(
-      `더 새로운 앱에서 만든 ${what}이에요(스키마 버전 ${v}). 이 앱은 ${supported}를 읽어요. 최신 주소에서 새로고침한 뒤 다시 가져와 주세요.`,
+    throw new AppError(
+      "더 새로운 앱에서 만든 {what}이에요(스키마 버전 {v}). 이 앱은 {supported}를 읽어요. 최신 주소에서 새로고침한 뒤 다시 가져와 주세요.",
+      { what, v, supported },
     );
   return v;
 }
@@ -420,7 +435,7 @@ export function validateWork(v: unknown): Work {
   const kind = one(w.kind, kinds, "프로젝트 종류");
   const missionId = str(w.missionId, "미션", 80);
   if (!missions.some((m) => m.id === missionId && m.kind === kind))
-    throw new Error("지원하지 않는 미션이에요.");
+    throw new AppError("지원하지 않는 미션이에요.");
   const versions = arr(w.versions, "버전", 1, LIMITS.versions).map((v) => {
     const b = obj(v, "버전");
     return {
@@ -436,7 +451,7 @@ export function validateWork(v: unknown): Work {
     "버전",
   );
   if (jsonBytes(versions) > LIMITS.historyBytes)
-    throw new Error(
+    throw new AppError(
       "수정 버전 묶음은 600KB까지예요. 필요한 버전만 남긴 파일을 선택해 주세요.",
     );
   return {
@@ -456,18 +471,22 @@ export function validateWork(v: unknown): Work {
 }
 export function parseImport(text: string): Work[] {
   if (new TextEncoder().encode(text).length > LIMITS.bytes)
-    throw new Error("파일은 2MB 이하여야 해요. 작품을 나누어 내보내 주세요.");
+    throw new AppError(
+      "파일은 2MB 이하여야 해요. 작품을 나누어 내보내 주세요.",
+    );
   let data: unknown;
   try {
     data = JSON.parse(text);
   } catch {
-    throw new Error(
+    throw new AppError(
       "JSON 파일을 읽을 수 없어요. 원래 내보낸 .json 파일을 선택해 주세요.",
     );
   }
   const root = obj(data, "파일");
   if (root.format !== "ttukttak-vibe-backup")
-    throw new Error(`뚝딱 백업 파일(${supported})을 선택해 주세요.`);
+    throw new AppError("뚝딱 백업 파일({supported})을 선택해 주세요.", {
+      supported,
+    });
   checkVersion(root.schemaVersion, "백업 파일");
   return arr(root.works, "작품 목록", 1, 50).map((v) => {
     const work = validateWork(v);
@@ -498,7 +517,7 @@ async function classTx<T>(
     };
     tx.onerror = tx.onabort = () => {
       db.close();
-      reject(tx.error ?? new Error("평가 목록을 저장하지 못했어요."));
+      reject(tx.error ?? new AppError("평가 목록을 저장하지 못했어요."));
     };
   });
 }

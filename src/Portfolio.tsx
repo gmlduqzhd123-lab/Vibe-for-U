@@ -5,7 +5,8 @@ import type { Navigate } from "./Pages";
 import { configSummary, revisionLabel } from "./learning";
 import { rubric } from "./data";
 import { ShareButton } from "./Share";
-import { backupFiles } from "./storage";
+import { backupFiles, downloadText } from "./storage";
+import { standaloneHtml } from "./standalone";
 import { levelNames } from "./classSummary";
 import { dateLocale, useLang, useT } from "./i18n";
 const hasAssessment = (f: Feedback | null) =>
@@ -39,6 +40,23 @@ export function Portfolio({
         <div className="button-row">
           <button onClick={() => go(`work/${w.id}/4`)}>
             {t("이어서 기록하기")}
+          </button>
+          <button
+            onClick={() => {
+              downloadText(
+                `뚝딱-앱-${d.title || "작품"}.html`,
+                standaloneHtml(w, t, lang),
+                "text/html",
+              );
+              message(
+                t(
+                  "앱 파일(HTML)을 내려받았어요. 인터넷 없이 브라우저에서 열려요.",
+                ),
+              );
+            }}
+          >
+            <Icon name="download" />
+            {t("앱 파일로 내보내기")}
           </button>
           <ShareButton
             name={`뚝딱-작품-${d.title || "작품"}.json`}

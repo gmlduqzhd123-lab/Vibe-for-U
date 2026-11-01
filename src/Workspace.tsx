@@ -24,6 +24,9 @@ import { RubricChoices } from "./Rubric";
 import { makePeerRequest } from "./peer";
 import { backupFiles, downloadText } from "./storage";
 import { ShareButton } from "./Share";
+import { standaloneHtml } from "./standalone";
+import { QrSendButton } from "./QrShare";
+import { peerPayload, workPayload } from "./qrTransfer";
 export const stageGuides = [
   "누가, 어떤 순간에 쓸 앱인지 약속해요.",
   "내 말로 적고, 검사할 수 있는 요청으로 정리해요.",
@@ -156,10 +159,32 @@ export function Workspace({
             <Icon name="download" />
             {t("파일 백업")}
           </button>
+          <button
+            onClick={() => {
+              downloadText(
+                `뚝딱-앱-${d.title || "작품"}.html`,
+                standaloneHtml(w, t, lang),
+                "text/html",
+              );
+              message(
+                t(
+                  "앱 파일(HTML)을 내려받았어요. 인터넷 없이 브라우저에서 열려요.",
+                ),
+              );
+            }}
+          >
+            <Icon name="download" />
+            {t("앱 파일로 내보내기")}
+          </button>
           <ShareButton
             name={`뚝딱-작품-${d.title || "작품"}.json`}
             text={() => backupFiles([w])[0]}
             title={d.title || "뚝딱 작품"}
+            message={message}
+          />
+          <QrSendButton
+            payload={() => workPayload(w)}
+            label={t("QR로 보내기")}
             message={message}
           />
           <button onClick={() => go(`portfolio/${w.id}`)}>
@@ -618,6 +643,11 @@ export function Workspace({
                     title={t("친구 검사 요청")}
                     message={message}
                     label={t("요청 파일 공유로 보내기")}
+                  />
+                  <QrSendButton
+                    payload={() => peerPayload(w)}
+                    label={t("요청을 QR로 보내기")}
+                    message={message}
                   />
                 </div>
                 <button className="subtle" onClick={() => go(`work/${w.id}/2`)}>
