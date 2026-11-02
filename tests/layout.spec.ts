@@ -18,6 +18,10 @@ const pages = [
   "library",
   "try",
   "wrapup",
+  "bughunt",
+  "map",
+  "growth",
+  "teacher",
 ];
 // 화면 안에서 문제를 찾아 사람이 읽을 수 있는 설명으로 돌려준다.
 async function problems(page: Page) {

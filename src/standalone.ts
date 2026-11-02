@@ -154,7 +154,31 @@ const PLAYER = String.raw`
     root.appendChild(board); root.appendChild(row); root.appendChild(status);
     paint();
   }
-  ({ quiz: quiz, story: story, timer: timer, pattern: pattern })[c.kind]();
+  function rule() {
+    var value = c.start;
+    var face = el("p", "clock"), msg = el("p", "note");
+    msg.setAttribute("role", "status");
+    function matches(r, v) {
+      return r.when === "gte" ? v >= r.value : r.when === "lte" ? v <= r.value : v === r.value;
+    }
+    function update() {
+      var hit = c.rules.filter(function (r) { return matches(r, value); })[0];
+      face.textContent = c.variable + " " + value;
+      msg.textContent = hit ? hit.message : c.otherwise;
+    }
+    var row = el("div", "choices");
+    c.buttons.forEach(function (b) {
+      row.appendChild(button(b.label, function () {
+        value += b.change;
+        if (c.floor !== null && value < c.floor) value = c.floor;
+        update();
+      }, b.change > 0 ? "primary" : ""));
+    });
+    row.appendChild(button(T.restart, function () { value = c.start; update(); }));
+    root.appendChild(face); root.appendChild(msg); root.appendChild(row);
+    update();
+  }
+  ({ quiz: quiz, story: story, timer: timer, pattern: pattern, rule: rule })[c.kind]();
 })();
 `;
 const STYLE = `

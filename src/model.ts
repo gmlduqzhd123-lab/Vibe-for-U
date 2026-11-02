@@ -1,5 +1,5 @@
-export type Kind = "quiz" | "story" | "timer" | "pattern";
-export const kinds: Kind[] = ["quiz", "story", "timer", "pattern"];
+export type Kind = "quiz" | "story" | "timer" | "pattern" | "rule";
+export const kinds: Kind[] = ["quiz", "story", "timer", "pattern", "rule"];
 // easy: 3~4학년용. 어린이 모드 안내에 낱말 블록·읽어 주기·큰 글씨를 더한다.
 export type Mode = "child" | "adult" | "easy";
 export const modes: Mode[] = ["child", "easy", "adult"];
@@ -49,7 +49,22 @@ export type PatternConfig = {
   turn?: "none" | "right";
   target: string[];
 };
-export type Config = QuizConfig | StoryConfig | TimerConfig | PatternConfig;
+// 만약 규칙 앱: 버튼을 누르면 앱이 기억하는 값이 바뀌고, 위에서부터 처음 맞는 조건의 문구를 보여 준다.
+export type RuleCondition = "gte" | "lte" | "eq";
+export type RuleConfig = {
+  kind: "rule";
+  // 앱이 기억하는 값의 이름(예: 점수, 걸음 수)과 처음 값
+  variable: string;
+  start: number;
+  // 값이 이보다 작아지지 않게 막는다(없으면 null).
+  floor: number | null;
+  buttons: { label: string; change: number }[];
+  rules: { when: RuleCondition; value: number; message: string }[];
+  // 어떤 조건에도 맞지 않을 때 보여 줄 문구
+  otherwise: string;
+};
+export type Config =
+  QuizConfig | StoryConfig | TimerConfig | PatternConfig | RuleConfig;
 export type Check = {
   id: string;
   label: string;
@@ -183,6 +198,7 @@ export const kindNames: Record<Kind, string> = {
   story: "갈림길 이야기",
   timer: "타이머",
   pattern: "패턴 그리기",
+  rule: "만약 규칙",
 };
 const promiseText: Record<
   Kind,
@@ -198,6 +214,12 @@ const promiseText: Record<
     features: "선택에 따라 다른 결말 만나기",
     input: "이야기 속 선택지 누르기",
     exceptions: "모든 선택은 있는 장면으로 이동하고 처음으로 돌아갈 수 있기",
+  },
+  rule: {
+    features: "버튼으로 값을 바꾸고 조건에 맞는 문구 보기",
+    input: "값을 늘리거나 줄이는 버튼 누르기",
+    exceptions:
+      "조건은 위에서부터 처음 맞는 것 하나만 쓰고, 값이 가장 작은 값보다 작아지지 않기",
   },
   timer: {
     features: "시간을 정하고 시작·일시정지·초기화하기",
@@ -270,6 +292,19 @@ export function makeWork(mission: Mission, normal = false): Work {
     }
     if (config.kind === "timer") config.showEnd = true;
     if (config.kind === "pattern") config.edge = "stop";
+    // 정상 규칙: 좁은 조건(같으면 → 큰 값 이상 → 작은 값 이하)을 먼저 확인한다.
+    if (config.kind === "rule") {
+      const rank = (r: RuleConfig["rules"][number]) =>
+        r.when === "eq"
+          ? [0, 0]
+          : r.when === "gte"
+            ? [1, -r.value]
+            : [2, r.value];
+      config.rules = [...config.rules].sort((a, b) => {
+        const [x, y] = [rank(a), rank(b)];
+        return x[0] - y[0] || x[1] - y[1];
+      });
+    }
     if (config.kind === "story") {
       const start = config.scenes.find((s) => s.id === config.start)!;
       if (start.choices[1]) start.choices[1].to = "sun";

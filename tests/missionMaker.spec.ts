@@ -63,5 +63,23 @@ test("선생님이 미션을 만들어 파일로 나눠 주면 학생이 가져�
   await expect(student.getByLabel("작품 제목", { exact: true })).toHaveValue(
     "줄넘기 타이머",
   );
+  // 학생 작품 파일에는 선생님 미션이 함께 담겨, 미션이 없는 새 교사 기기에서도 읽힌다.
+  const backup = student.waitForEvent("download");
+  await student.getByRole("button", { name: "파일 백업", exact: true }).click();
+  const workFile = await (await backup).path();
+  const fresh = await browser.newContext();
+  const teacher = await fresh.newPage();
+  await teacher.goto(page.url().split("#")[0] + "#/teacher");
+  await teacher
+    .getByRole("button", { name: "학급 작품 모으기", exact: true })
+    .click();
+  await teacher.getByLabel("학생 작품 JSON 파일 여러 개").setInputFiles({
+    name: "01.json",
+    mimeType: "application/json",
+    buffer: await (await import("node:fs/promises")).readFile(workFile!),
+  });
+  await expect(teacher.locator(".class-table")).toContainText("줄넘기 타이머");
+  await expect(teacher.locator(".warning")).toHaveCount(0);
+  await fresh.close();
   await other.close();
 });

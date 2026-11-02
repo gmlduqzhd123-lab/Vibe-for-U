@@ -13,7 +13,8 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"tests/**/*.ts\" \"scripts/**/*.mjs\" \"*.{ts,js,json}\" \".github/**/*.yml\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\" \"tests/**/*.ts\" \"scripts/**/*.mjs\" \"*.{ts,js,json}\" \".github/**/*.yml\"",
     "check:names": "node scripts/check-names.mjs",
-    "check": "npm run check:names && npm run lint && npm run format:check && tsc -b"
+    "check": "npm run check:names && npm run lint && npm run format:check && tsc -b",
+    "budget": "node scripts/size-budget.mjs"
   },
   "dependencies": {
     "qrcode-generator": "2.0.4",

@@ -114,3 +114,26 @@ export function removeCustomMission(id: string) {
 export function forgetCustomMissions() {
   register([]);
 }
+// 작품 파일·친구 검사 요청·QR에 함께 온 선생님 미션을 받아들인다.
+// save가 true면 이 기기에 남기고(작품을 더할 때), 아니면 이번에 열어 보는 동안만 쓴다(친구 검사).
+export function adoptMissions(list: unknown, save = true): Mission[] {
+  if (list === undefined) return [];
+  if (!Array.isArray(list) || list.length > CUSTOM_LIMIT)
+    throw new AppError("미션 파일 형식을 알 수 없어요.");
+  const adopted: Mission[] = [];
+  const stored = read();
+  for (const raw of list) {
+    const m = validateMission(raw);
+    if (!isCustom(m.id)) continue;
+    // 남길 때는 기기에 저장된 적이 없는 미션만, 잠깐 쓸 때는 목록에 없는 미션만 더한다.
+    if (save) {
+      if (!stored.some((x) => x.id === m.id))
+        adopted.push(saveCustomMission(m));
+    } else if (!missions.some((x) => x.id === m.id)) {
+      const order = missions.filter((x) => x.kind === m.kind).length + 1;
+      missions.push({ ...m, order });
+      adopted.push(m);
+    }
+  }
+  return adopted;
+}

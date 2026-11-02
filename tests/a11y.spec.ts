@@ -49,7 +49,10 @@ test("영어로 바꾸면 화면 틀·문서 언어·제목이 바뀌고 기록�
   await page.goto("#/library");
   await expect(page.getByRole("heading", { name: "언어 검사" })).toBeVisible();
   await expect(page.getByText("Last edited")).toBeVisible();
-  await page.getByRole("button", { name: "Portfolio" }).first().click();
+  await page
+    .getByRole("button", { name: "Portfolio", exact: true })
+    .first()
+    .click();
   await expect(
     page.getByRole("heading", { level: 1, name: "My process portfolio" }),
   ).toBeVisible();
@@ -59,7 +62,7 @@ test("영어로 바꾸면 화면 틀·문서 언어·제목이 바뀌고 기록�
   await page.goto("#/teacher");
   await expect(
     page.getByText(
-      "Lesson plans and teacher materials are in Korean. Student worksheets also come in English.",
+      "Printable teacher materials (PDF and Word) are in Korean. Student worksheets also come in English.",
     ),
   ).toBeVisible();
   await page.goto("#/missions");
@@ -69,7 +72,7 @@ test("영어로 바꾸면 화면 틀·문서 언어·제목이 바뀌고 기록�
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "미션 공작대",
   );
-  await expect(page.getByRole("button", { name: "전체 17개" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "전체 21개" })).toBeVisible();
 });
 
 test.describe("느린 인터넷", () => {

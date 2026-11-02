@@ -101,6 +101,11 @@ export function Icon({ name, size = 20 }: { name: string; size?: number }) {
         <path d="M3 6h18M8 6V3h8v3M5 6l1 15h12l1-15M9 10v7M15 10v7" />
       </>
     ),
+    rule: (
+      <>
+        <path d="M4 6h7M4 12h5M4 18h7M14 5l6 7-6 7M17 12h-6" />
+      </>
+    ),
     print: (
       <>
         <path d="M6 8V3h12v5M6 17H3V8h18v9h-3M6 14h12v7H6z" />

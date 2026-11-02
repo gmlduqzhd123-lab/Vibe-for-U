@@ -67,3 +67,35 @@ describe("선생님 미션", () => {
     );
   });
 });
+describe("작품 파일에 담긴 선생님 미션", () => {
+  beforeEach(() => {
+    store.clear();
+    loadCustomMissions();
+  });
+  it("미션이 없는 기기에서도 작품 파일과 친구 검사 요청을 연다", async () => {
+    const { makeWork } = await import("../src/model");
+    const { exportJSON, parseImport } = await import("../src/storage");
+    const { makePeerRequest, validatePeerRequest } =
+      await import("../src/peer");
+    const { adoptMissions } = await import("../src/customMissions");
+    const m = saveCustomMission(validateMission(sample()));
+    const w = makeWork(m);
+    const file = exportJSON([w]);
+    const request = JSON.parse(JSON.stringify(makePeerRequest(w)));
+    expect(JSON.parse(file).missions[0].id).toBe(m.id);
+    expect(request.missions[0].id).toBe(m.id);
+    // 다른 기기: 선생님 미션이 없다.
+    store.clear();
+    loadCustomMissions();
+    expect(() => parseImport(file)).toThrow("지원하지 않는 미션");
+    // 친구 검사는 잠깐만 쓰고 기기에 남기지 않는다.
+    expect(validatePeerRequest(request).missionId).toBe(m.id);
+    expect(store.size).toBe(0);
+    loadCustomMissions();
+    // 작품을 가져올 때는 미션을 먼저 더하고 남긴다.
+    adoptMissions(JSON.parse(file).missions);
+    expect(parseImport(file)[0].missionId).toBe(m.id);
+    loadCustomMissions();
+    expect(customMissions().map((x) => x.id)).toEqual([m.id]);
+  });
+});

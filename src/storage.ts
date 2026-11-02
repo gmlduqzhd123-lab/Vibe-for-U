@@ -91,11 +91,19 @@ export async function importWorks(works: Work[]) {
       reject(tx.error ?? new AppError("가져오기 저장 실패"));
   });
 }
+// 선생님 미션으로 만든 작품은 그 미션도 함께 담아, 미션이 없는 기기에서도 열리게 한다.
+export const usedCustomMissions = (works: Work[]) =>
+  missions.filter(
+    (m) =>
+      m.id.startsWith("custom-") && works.some((w) => w.missionId === m.id),
+  );
 export function exportJSON(works: Work[]) {
+  const used = usedCustomMissions(works);
   return JSON.stringify({
     format: "ttukttak-vibe-backup",
     schemaVersion: SCHEMA_VERSION,
     works,
+    ...(used.length ? { missions: used } : {}),
   });
 }
 export const jsonBytes = (data: unknown) =>
@@ -303,6 +311,32 @@ export function validateConfig(value: unknown): Config {
         "장면: 결말에는 선택지가 없어야 하고, 진행 장면에는 선택지가 필요해요.",
       );
     return { kind, start, scenes, intendedEndings: endings };
+  }
+  if (kind === "rule") {
+    const when = ["gte", "lte", "eq"] as const;
+    return {
+      kind,
+      variable: str(c.variable, "기억하는 값 이름", 40),
+      start: num(c.start, "처음 값", -1000, 1000),
+      floor:
+        c.floor === null ? null : num(c.floor, "가장 작은 값", -1000, 1000),
+      buttons: arr(c.buttons, "버튼", 1, 4).map((v) => {
+        const b = obj(v, "버튼");
+        return {
+          label: str(b.label, "버튼 이름", LIMITS.short),
+          change: num(b.change, "버튼이 바꾸는 값", -100, 100),
+        };
+      }),
+      rules: arr(c.rules, "조건", 1, LIMITS.choices).map((v) => {
+        const r = obj(v, "조건");
+        return {
+          when: one(r.when, when, "조건 종류"),
+          value: num(r.value, "조건 값", -1000, 1000),
+          message: str(r.message, "조건 문구", LIMITS.short),
+        };
+      }),
+      otherwise: str(c.otherwise, "그 밖에 문구", LIMITS.short),
+    };
   }
   return {
     kind,

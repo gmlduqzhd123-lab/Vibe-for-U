@@ -1,3 +1,5 @@
+import type { Work } from "./model";
+import { useSendGuard } from "./sendGuard";
 import { Icon } from "./ui";
 import { errorText } from "./appError";
 import { useT } from "./i18n";
@@ -23,7 +25,10 @@ export function ShareButton({
   title,
   message,
   label = "공유로 보내기",
+  works = [],
 }: {
+  // 개인정보 확인에 쓸 작품(보내는 내용의 원래 작품)
+  works?: Work[];
   name: string;
   // 누를 때 파일 내용을 만든다(백업이 너무 크면 오류를 알린다).
   text: () => string;
@@ -32,21 +37,24 @@ export function ShareButton({
   label?: string;
 }) {
   const t = useT();
+  const guard = useSendGuard();
   if (!canShareFiles()) return null;
   return (
     <button
       type="button"
-      onClick={async () => {
-        try {
-          await navigator.share({ files: [jsonFile(name, text())], title });
-          message(t("공유 창으로 파일을 보냈어요."));
-        } catch (e) {
-          if (e instanceof Error && e.name === "AbortError") return;
-          message(
-            `${t("공유하지 못했어요. 내려받기로 저장해 보내 주세요.")} ${errorText(e, t, "")}`,
-          );
-        }
-      }}
+      onClick={() =>
+        guard(works, async () => {
+          try {
+            await navigator.share({ files: [jsonFile(name, text())], title });
+            message(t("공유 창으로 파일을 보냈어요."));
+          } catch (e) {
+            if (e instanceof Error && e.name === "AbortError") return;
+            message(
+              `${t("공유하지 못했어요. 내려받기로 저장해 보내 주세요.")} ${errorText(e, t, "")}`,
+            );
+          }
+        })
+      }
     >
       <Icon name="send" />
       {t(label)}

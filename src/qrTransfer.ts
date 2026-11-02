@@ -1,6 +1,7 @@
 import qrcode from "qrcode-generator";
 import { missions } from "./data";
-import type { Config, Work } from "./model";
+import type { Config, Mission, Work } from "./model";
+import { adoptMissions, isCustom } from "./customMissions";
 import { LIMITS } from "./model";
 import { makePeerRequest, validatePeerRequest } from "./peer";
 import type { PeerRequest } from "./peer";
@@ -9,7 +10,14 @@ import { AppError } from "./appError";
 // QR로 주고받기: 작은 작품 설정이나 친구 검사 요청을 주소 뒤쪽(#)에 줄여 담는다.
 // 받는 기기는 자기 카메라 앱으로 QR을 비춰 주소를 열면 된다. #뒤의 글은 서버로 보내지지 않는다.
 export type SharePayload =
-  | { k: "work"; title: string; missionId: string; config: Config }
+  | {
+      k: "work";
+      title: string;
+      missionId: string;
+      config: Config;
+      // 선생님 미션이면 미션도 함께 담는다(받는 기기에 없을 수 있다).
+      missions?: Mission[];
+    }
   | { k: "peer"; request: PeerRequest };
 // 휴대전화 카메라가 무리 없이 읽는 QR 크기에 맞춘 주소 길이 상한(글자 수).
 export const QR_MAX = 1800;
@@ -56,17 +64,31 @@ export async function decodeShare(code: string): Promise<SharePayload> {
     return { k: "peer", request: validatePeerRequest(o.request) };
   if (o.k === "work") {
     const missionId = String(o.missionId);
+    // 받는다를 누르기 전에는 이 기기에 남기지 않는다.
+    adoptMissions(o.missions, false);
     if (!missions.some((m) => m.id === missionId))
       throw new AppError("지원하지 않는 미션이에요.");
     const title =
       typeof o.title === "string" ? o.title.slice(0, LIMITS.short) : "";
-    return { k: "work", title, missionId, config: validateConfig(o.config) };
+    const embedded = missions.filter(
+      (m) => m.id === missionId && isCustom(m.id),
+    );
+    return {
+      k: "work",
+      title,
+      missionId,
+      config: validateConfig(o.config),
+      ...(embedded.length ? { missions: embedded } : {}),
+    };
   }
   throw new AppError(
     "QR 주소를 읽지 못했어요. QR을 다시 비추거나 파일로 주고받아 주세요.",
   );
 }
 export const workPayload = (w: Work): SharePayload => ({
+  ...(isCustom(w.missionId)
+    ? { missions: missions.filter((m) => m.id === w.missionId) }
+    : {}),
   k: "work",
   title: w.draft.title,
   missionId: w.missionId,

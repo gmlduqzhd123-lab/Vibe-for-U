@@ -1,3 +1,4 @@
+import { useT } from "./i18n";
 import { useRef, useState } from "react";
 import { lessons } from "./data";
 import { qrData } from "./qrData";
@@ -10,6 +11,7 @@ export default function SharePage({
   go: (path: string) => void;
   copy: (text: string) => void;
 }) {
+  const t = useT();
   const [selection, setSelection] = useState("home");
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
@@ -18,22 +20,28 @@ export default function SharePage({
     {
       id: "home",
       title: "앱 전체 소개",
-      detail: "예제부터 눌러보고 내 작품으로 이어가요.",
+      label: t("앱 전체 소개"),
+      detail: t("예제부터 눌러보고 내 작품으로 이어가요."),
     },
     {
       id: "try",
       title: "3분 첫 체험",
-      detail: "같은 정답을 세 번 누르고 점수 규칙을 고쳐요.",
+      label: t("3분 첫 체험"),
+      detail: t("같은 정답을 세 번 누르고 점수 규칙을 고쳐요."),
     },
     ...lessons.map((lesson, index) => ({
       id: `lesson-${index + 1}`,
       title: `${index + 1}차시 ${lesson.title}`,
-      detail: "오늘의 목표와 활동지를 보고, 연결된 미션에서 시작해요.",
+      label: t("{n}차시 {title}", { n: index + 1, title: t(lesson.title) }),
+      detail: t("오늘의 목표와 활동지를 보고, 연결된 미션에서 시작해요."),
     })),
   ];
   const selected = destinations.find((item) => item.id === selection)!;
   const qr = qrData[selection];
-  const message = `뚝딱 바이브 공작소에서 퀴즈·이야기·타이머를 만들고 고치며 코딩의 원리를 배워요.\n오늘의 안내: ${selected.title}\n${selected.detail}\n학생 가입 없이 시작할 수 있어요.\n${qr.url}`;
+  const message = t(
+    "뚝딱 바이브 공작소에서 퀴즈·이야기·타이머를 만들고 고치며 코딩의 원리를 배워요.\n오늘의 안내: {title}\n{detail}\n학생 가입 없이 시작할 수 있어요.\n{url}",
+    { title: selected.label, detail: selected.detail, url: qr.url },
+  );
   const saveImage = async () => {
     if (!poster.current) return;
     setBusy(true);
@@ -49,19 +57,19 @@ export default function SharePage({
       const image = new Image();
       await new Promise<void>((resolve, reject) => {
         image.onload = () => resolve();
-        image.onerror = () => reject(new Error("이미지 변환 실패"));
+        image.onerror = () => reject(new Error(t("이미지 변환 실패")));
         image.src = svgUrl;
       });
       const canvas = document.createElement("canvas");
       canvas.width = 1000;
       canvas.height = 1180;
       const context = canvas.getContext("2d");
-      if (!context) throw new Error("이미지 저장 미지원");
+      if (!context) throw new Error(t("이미지 저장 미지원"));
       context.drawImage(image, 0, 0, 1000, 1180);
       const blob = await new Promise<Blob>((resolve, reject) =>
         canvas.toBlob(
           (value) =>
-            value ? resolve(value) : reject(new Error("이미지 변환 실패")),
+            value ? resolve(value) : reject(new Error(t("이미지 변환 실패"))),
           "image/png",
         ),
       );
@@ -73,11 +81,15 @@ export default function SharePage({
       link.click();
       link.remove();
       setStatus(
-        "PNG 이미지 다운로드를 요청했어요. 브라우저의 다운로드 목록을 확인해 주세요.",
+        t(
+          "PNG 이미지 다운로드를 요청했어요. 브라우저의 다운로드 목록을 확인해 주세요.",
+        ),
       );
     } catch {
       setStatus(
-        "이미지 저장을 완료하지 못했어요. 카드 인쇄를 사용하거나 소개 문구와 주소를 복사해 주세요.",
+        t(
+          "이미지 저장을 완료하지 못했어요. 카드 인쇄를 사용하거나 소개 문구와 주소를 복사해 주세요.",
+        ),
       );
     } finally {
       if (svgUrl) URL.revokeObjectURL(svgUrl);
@@ -92,18 +104,19 @@ export default function SharePage({
     <div className="share-page">
       <div className="page-heading no-print">
         <div>
-          <span className="eyebrow">함께 시작하는 수업</span>
-          <h1>QR 소개 카드 만들기</h1>
+          <span className="eyebrow">{t("함께 시작하는 수업")}</span>
+          <h1>{t("QR 소개 카드 만들기")}</h1>
           <p>
-            전체 앱이나 오늘의 차시를 골라 인쇄하고, PNG 이미지와 소개 문구로
-            나눠요.
+            {t(
+              "전체 앱이나 오늘의 차시를 골라 인쇄하고, PNG 이미지와 소개 문구로 나눠요.",
+            )}
           </p>
         </div>
-        <button onClick={() => go("home")}>홈으로</button>
+        <button onClick={() => go("home")}>{t("홈으로")}</button>
       </div>
       <section className="panel share-controls no-print">
         <label className="field">
-          <span>QR 카드로 안내할 곳</span>
+          <span>{t("QR 카드로 안내할 곳")}</span>
           <select
             value={selection}
             onChange={(event) => {
@@ -113,7 +126,7 @@ export default function SharePage({
           >
             {destinations.map((item) => (
               <option key={item.id} value={item.id}>
-                {item.title}
+                {item.label}
               </option>
             ))}
           </select>
@@ -121,26 +134,27 @@ export default function SharePage({
         <p>{selected.detail}</p>
         <div className="button-row">
           <button className="primary" onClick={() => window.print()}>
-            <Icon name="print" /> 카드 인쇄
+            <Icon name="print" /> {t("카드 인쇄")}
           </button>
           <button onClick={() => void saveImage()} disabled={busy}>
             <Icon name="download" />{" "}
-            {busy ? "이미지 만드는 중…" : "카드 PNG 저장"}
+            {t(busy ? "이미지 만드는 중…" : "카드 PNG 저장")}
           </button>
           <button onClick={() => copy(message)}>
-            <Icon name="copy" /> 소개 문구 복사
+            <Icon name="copy" /> {t("소개 문구 복사")}
           </button>
-          <button onClick={() => copy(qr.url)}>주소 복사</button>
+          <button onClick={() => copy(qr.url)}>{t("주소 복사")}</button>
         </div>
         <p role="status">{status}</p>
         <p className="small muted">
-          QR은 공개 웹앱 주소로 연결돼요. 학생 작품이나 기록은 포함하지 않아요.
-          휴대전화·태블릿에서 QR을 읽거나 아래 주소를 직접 열 수 있어요.
+          {t(
+            "QR은 공개 웹앱 주소로 연결돼요. 학생 작품이나 기록은 포함하지 않아요. 휴대전화·태블릿에서 QR을 읽거나 아래 주소를 직접 열 수 있어요.",
+          )}
         </p>
       </section>
       <article
         className="share-poster"
-        aria-label={`${selected.title} 인쇄용 QR 소개 카드`}
+        aria-label={t("{title} 인쇄용 QR 소개 카드", { title: selected.label })}
       >
         <svg
           ref={poster}
@@ -149,10 +163,10 @@ export default function SharePage({
           width="1000"
           height="1180"
           role="img"
-          aria-label={`${selected.title} QR 카드`}
+          aria-label={t("{title} QR 카드", { title: selected.label })}
           style={{ fontFamily: "Malgun Gothic, Noto Sans KR, sans-serif" }}
         >
-          <title>{selected.title} QR 소개 카드</title>
+          <title>{t("{title} QR 소개 카드", { title: selected.label })}</title>
           <rect width="1000" height="1180" fill="#fcfaf6" />
           <rect
             x="40"
@@ -165,16 +179,16 @@ export default function SharePage({
             strokeWidth="3"
           />
           <text x="85" y="125" fill="#5d478f" fontSize="29" fontWeight="700">
-            뚝딱 바이브 공작소
+            {t("뚝딱 바이브 공작소")}
           </text>
           <text x="85" y="220" fill="#302f38" fontSize="52" fontWeight="700">
-            퀴즈·이야기·타이머를
+            {t("퀴즈·이야기·타이머를")}
           </text>
           <text x="85" y="292" fill="#302f38" fontSize="52" fontWeight="700">
-            만들고 고치며 배워요
+            {t("만들고 고치며 배워요")}
           </text>
           <text x="85" y="363" fill="#625d69" fontSize="27">
-            코드를 몰라도, 규칙 하나부터 직접 바꿔봐요.
+            {t("코드를 몰라도, 규칙 하나부터 직접 바꿔봐요.")}
           </text>
           <rect
             x="85"
@@ -185,10 +199,10 @@ export default function SharePage({
             fill="#f0eaf8"
           />
           <text x="115" y="458" fill="#5d478f" fontSize="25">
-            오늘 함께할 활동
+            {t("오늘 함께할 활동")}
           </text>
           <text x="115" y="500" fill="#302f38" fontSize="29" fontWeight="700">
-            {selected.title}
+            {selected.label}
           </text>
           <text
             x="500"
@@ -197,7 +211,7 @@ export default function SharePage({
             fill="#302f38"
             fontSize="27"
           >
-            예상하기 → 눌러보기 → 고치기 → 설명하기
+            {t("예상하기 → 눌러보기 → 고치기 → 설명하기")}
           </text>
           <svg
             x="310"
@@ -219,7 +233,7 @@ export default function SharePage({
             fontSize="26"
             fontWeight="700"
           >
-            QR을 읽고 바로 시작하세요 · 학생 가입 없이
+            {t("QR을 읽고 바로 시작하세요 · 학생 가입 없이")}
           </text>
           <text
             x="500"
@@ -237,7 +251,7 @@ export default function SharePage({
           target="_blank"
           rel="noopener noreferrer"
         >
-          {selected.title} 직접 열기 · 새 탭
+          {t("{title} 직접 열기 · 새 탭", { title: selected.label })}
         </a>
       </article>
     </div>

@@ -11,6 +11,7 @@ describe("맞춤 힌트", () => {
       "story-3": "story-unreachable",
       "timer-3": "timer-end",
       "pattern-3": "pattern-wrap",
+      "rule-3": "rule-shadowed",
     };
     for (const m of missions.filter((m) => m.learningError))
       expect(

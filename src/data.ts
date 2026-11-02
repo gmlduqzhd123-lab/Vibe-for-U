@@ -1,4 +1,4 @@
-import type { Config, Kind, Mission, PatternConfig } from "./model";
+import type { Config, Kind, Mission, PatternConfig, RuleConfig } from "./model";
 import { kinds } from "./model";
 export const quiz: Config = {
   kind: "quiz",
@@ -144,6 +144,45 @@ patternStarters.push({
   target: ring,
 });
 export const pattern: Config = patternStarters[0];
+// 만약 규칙 앱의 시작 설정: 칭찬 스티커를 모으면 문구가 바뀐다.
+const ruleBase: RuleConfig = {
+  kind: "rule",
+  variable: "스티커",
+  start: 0,
+  floor: 0,
+  buttons: [
+    { label: "+1 스티커 붙이기", change: 1 },
+    { label: "−1 스티커 떼기", change: -1 },
+  ],
+  rules: [{ when: "gte", value: 5, message: "우와, 스티커 5개를 모았어요!" }],
+  otherwise: "스티커를 모아 볼까요?",
+};
+const ruleStarters: RuleConfig[] = [
+  ruleBase,
+  ruleBase,
+  // 학습용 오류: 넓은 조건(3 이상)이 먼저 있어 '6 이상' 문구가 나오지 않는다.
+  {
+    ...ruleBase,
+    rules: [
+      { when: "gte", value: 3, message: "좋아요, 3개 넘게 모았어요!" },
+      { when: "gte", value: 6, message: "최고예요! 6개를 모았어요!" },
+    ],
+  },
+  {
+    ...ruleBase,
+    variable: "걸음",
+    buttons: [
+      { label: "+1 한 걸음", change: 1 },
+      { label: "+2 두 걸음", change: 2 },
+      { label: "−1 뒤로", change: -1 },
+    ],
+    rules: [
+      { when: "eq", value: 10, message: "딱 10걸음, 보물 도착!" },
+      { when: "lte", value: 3, message: "이제 막 출발했어요." },
+    ],
+    otherwise: "보물을 향해 걷는 중이에요.",
+  },
+];
 const specifications: Record<
   Kind,
   {
@@ -497,6 +536,102 @@ const specifications: Record<
         "‘만약 ~이면 ~한다’ 조건이 없다면 같은 테두리를 그리는 데 명령이 몇 개 필요할까요?",
     },
   ],
+  rule: [
+    {
+      title: "만약 5개를 모으면",
+      goal: "버튼으로 스티커 수를 바꾸고, 5개가 되면 축하 문구가 나오게 해요.",
+      prediction:
+        "+1을 몇 번 눌러야 축하 문구가 나올까요? 4번 눌렀을 때는 무엇이 나올까요?",
+      tests: [
+        {
+          label: "5개가 되면",
+          expected: "+1을 다섯 번 누르면 축하 문구가 나온다.",
+        },
+        {
+          label: "처음으로",
+          expected: "처음으로를 누르면 스티커 0개, 처음 문구로 돌아간다.",
+        },
+      ],
+      task: "‘만약 스티커가 5 이상이면’ 조건의 문구를 우리 반에 맞게 바꾸고 다시 확인하세요.",
+      hints: [
+        "앱이 기억하는 값은 ‘스티커’ 수예요.",
+        "조건은 ‘5 이상’이라서 5일 때도 맞아요.",
+        "4일 때는 어떤 조건에도 맞지 않아 ‘그 밖에’ 문구가 나와요.",
+      ],
+      closing:
+        "‘만약 ~이면’ 조건이 없다면 앱은 언제 축하해야 하는지 알 수 있을까요?",
+    },
+    {
+      title: "0 아래로는 안 돼요",
+      goal: "−1 버튼을 여러 번 눌러도 스티커가 0보다 작아지지 않는지 확인해요.",
+      prediction: "0개일 때 −1을 누르면 몇 개가 될까요?",
+      tests: [
+        {
+          label: "0에서 빼기",
+          expected: "0개일 때 −1을 눌러도 0개로 남는다.",
+        },
+        {
+          label: "다시 모으기",
+          expected: "빼다가 다시 +1을 누르면 1개부터 늘어난다.",
+        },
+      ],
+      task: "‘가장 작은 값’ 설정을 지워 보고 무엇이 달라지는지 비교한 뒤 다시 0으로 정하세요.",
+      hints: [
+        "설정에서 ‘가장 작은 값’을 찾아요.",
+        "가장 작은 값이 없으면 −1, −2처럼 내려갈 수 있어요.",
+        "스티커 수는 0보다 작을 수 없으니 0을 가장 작은 값으로 둬요.",
+      ],
+      closing:
+        "앱이 기억하는 값에 ‘여기보다 작아지면 안 돼’ 같은 약속이 필요한 까닭은 무엇일까요?",
+    },
+    {
+      title: "어라? 최고 문구가 안 나와요!",
+      goal: "6개를 모아도 ‘최고예요!’가 나오지 않는 까닭을 찾아 조건의 순서를 고쳐요.",
+      prediction:
+        "스티커 6개가 되면 어떤 문구가 나와야 할까요? 실제로는 무엇이 나올까요?",
+      tests: [
+        {
+          label: "6개가 되면",
+          expected: "6개가 되면 ‘최고예요!’ 문구가 나온다.",
+        },
+        {
+          label: "3개가 되면",
+          expected: "3~5개일 때는 ‘좋아요’ 문구가 나온다.",
+        },
+      ],
+      task: "조건은 위에서부터 차례로 확인해요. 조건의 순서를 바꿔 6 이상을 먼저 확인하게 하세요.",
+      hints: [
+        "6은 ‘3 이상’에도 맞고 ‘6 이상’에도 맞아요.",
+        "앱은 위에서부터 처음 맞는 조건 하나만 써요.",
+        "‘6 이상’ 조건을 위로 올려 보세요.",
+      ],
+      closing:
+        "여러 조건이 함께 맞을 때 앱이 어떤 순서로 확인하는지 설명해 보세요.",
+    },
+    {
+      title: "딱 맞을 때만",
+      goal: "걸음 수가 딱 10일 때만 보물 문구가 나오게 하고, ‘같으면’과 ‘이상’의 차이를 확인해요.",
+      prediction: "+2로 9에서 11이 되면 보물 문구가 나올까요?",
+      tests: [
+        {
+          label: "딱 10걸음",
+          expected: "걸음이 정확히 10일 때만 보물 문구가 나온다.",
+        },
+        {
+          label: "10을 지나치면",
+          expected: "11이 되면 보물 문구 대신 ‘걷는 중’ 문구가 나온다.",
+        },
+      ],
+      task: "조건을 ‘10과 같으면’에서 ‘10 이상’으로 바꿔 보고 결과를 비교한 뒤, 원하는 쪽을 골라 이유를 적으세요.",
+      hints: [
+        "‘같으면’은 그 값일 때만 맞아요.",
+        "9에서 +2를 누르면 10을 건너뛰어요.",
+        "‘이상’으로 바꾸면 11에서도 맞아요.",
+      ],
+      closing:
+        "‘같으면’과 ‘이상’ 가운데 보물 찾기 놀이에 더 알맞은 조건은 무엇이고, 왜 그런가요?",
+    },
+  ],
 };
 export const missions: Mission[] = kinds.flatMap((kind) =>
   specifications[kind].map((s, i) => {
@@ -507,7 +642,9 @@ export const missions: Mission[] = kinds.flatMap((kind) =>
           ? story
           : kind === "timer"
             ? timer
-            : patternStarters[i],
+            : kind === "rule"
+              ? ruleStarters[i]
+              : patternStarters[i],
     );
     if (kind === "quiz" && starter.kind === "quiz") {
       if (i === 2) starter.scoring = "attempt";
@@ -529,6 +666,17 @@ export const missions: Mission[] = kinds.flatMap((kind) =>
     };
   }),
 );
+// 차시마다 연결한 미션(교사 자료실·소개 화면·수업 키트가 함께 쓴다)
+export const lessonMissionIds = [
+  "quiz-1",
+  "quiz-1",
+  "story-1",
+  "quiz-4",
+  "quiz-3",
+  "quiz-1",
+  "story-4",
+  "timer-4",
+];
 export const lessons = [
   {
     title: "작은 문제를 앱으로",

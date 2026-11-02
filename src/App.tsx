@@ -1,5 +1,8 @@
+import { SendGuardContext } from "./sendGuard";
+import { scanWorks } from "./privacy";
 import {
   MISSION_FORMAT,
+  adoptMissions,
   forgetCustomMissions,
   loadCustomMissions,
   parseMissionFile,
@@ -14,7 +17,7 @@ import {
   useRef,
   useState,
 } from "react";
-import type { Mode, Work, Mission, Snapshot, Version } from "./model";
+import type { Kind, Mode, Work, Mission, Snapshot, Version } from "./model";
 import type { SharePayload } from "./qrTransfer";
 import {
   APP_PREFIX,
@@ -72,6 +75,18 @@ import type { Lang } from "./i18n";
 const SharePage = lazy(() => import("./SharePage"));
 const Receive = lazy(() =>
   import("./QrShare").then((m) => ({ default: m.Receive })),
+);
+const Growth = lazy(() =>
+  import("./Growth").then((m) => ({ default: m.Growth })),
+);
+const MissionMap = lazy(() =>
+  import("./MissionMap").then((m) => ({ default: m.MissionMap })),
+);
+const LessonKit = lazy(() =>
+  import("./LessonKit").then((m) => ({ default: m.LessonKit })),
+);
+const BugHunt = lazy(() =>
+  import("./BugHunt").then((m) => ({ default: m.BugHunt })),
 );
 const WrapUp = lazy(() =>
   import("./WrapUp").then((m) => ({ default: m.WrapUp })),
@@ -379,6 +394,8 @@ export default function App() {
   };
   // QR로 받은 작품 설정을 이 기기의 새 작품으로 더한다. 처음 시작 버전도 받은 설정으로 둔다.
   const receiveWork = (p: Extract<SharePayload, { k: "work" }>) => {
+    // 함께 온 선생님 미션은 받기를 누를 때 이 기기에 남긴다.
+    if (p.missions) adoptMissions(p.missions);
     const m = missions.find((x) => x.id === p.missionId);
     if (!m) return;
     const work = makeWork(localizeMission(m, lang));
@@ -396,6 +413,23 @@ export default function App() {
     setting("last", work.id);
     go(`work/${work.id}/0`);
     message("QR로 받은 작품을 새 작품으로 더했어요.");
+  };
+  // 버그 탐정 도전: 정상 작품에 버그 하나를 숨겨 새 작품으로 만든다.
+  const startBugHunt = async (kind?: Kind) => {
+    const { makeBugChallenge, isBugChallenge } = await import("./bugHunt");
+    const n = worksRef.current.filter(isBugChallenge).length + 1;
+    const work = makeBugChallenge(
+      (m) =>
+        t("버그 탐정 {n}번 · {title}", {
+          n,
+          title: localizeMission(m, lang).title,
+        }),
+      kind,
+    );
+    persist(work);
+    setLastId(work.id);
+    setting("last", work.id);
+    go(`work/${work.id}/2`);
   };
   const parts = route.split("/");
   const active = works.find((w) => w.id === parts[1]);
@@ -483,6 +517,27 @@ export default function App() {
       );
       return false;
     }
+  };
+  // 개인정보처럼 보이는 글이 있으면 보내기 전에 한 번 확인받는다.
+  const guardSend = (items: Work[], send: () => void) => {
+    const hits = scanWorks(items);
+    if (!hits.length) return send();
+    ask({
+      title: "보내기 전에 확인해요",
+      body: t(
+        "개인정보처럼 보이는 글이 {n}곳 있어요: {list}. 실제 이름·전화번호·주소는 지우고 보내는 게 안전해요. 그래도 보낼까요?",
+        {
+          n: hits.length,
+          list: hits
+            .slice(0, 4)
+            .map((h) => `${t(h.kind)}(${t(h.where)} · ${h.sample})`)
+            .join(", "),
+        },
+      ),
+      backup: [],
+      action: send,
+      label: "그대로 보내기",
+    });
   };
   const exportAll = () => {
     if (worksRef.current.length) backup(worksRef.current);
@@ -734,6 +789,8 @@ export default function App() {
         applyPeer(target, r);
         return;
       }
+      // 작품 파일에 함께 담긴 선생님 미션을 먼저 이 기기에 더한다.
+      adoptMissions((data as { missions?: unknown } | null)?.missions);
       const imported = parseImport(text);
       await flush();
       await importWorks(imported);
@@ -759,11 +816,17 @@ export default function App() {
     parts[0],
   )
     ? "home"
-    : ["teacher", "prepare", "present"].includes(parts[0])
+    : ["teacher", "prepare", "present", "kit"].includes(parts[0])
       ? "teacher"
-      : ["library", "portfolio", "peer", "peer-apply", "wrapup"].includes(
-            parts[0],
-          )
+      : [
+            "library",
+            "portfolio",
+            "peer",
+            "peer-apply",
+            "wrapup",
+            "bughunt",
+            "growth",
+          ].includes(parts[0])
         ? "library"
         : "missions";
   const step = Math.max(0, Math.min(4, Number(parts[2]) || 0));
@@ -782,15 +845,23 @@ export default function App() {
                 ? "수업 진행 화면"
                 : parts[0] === "wrapup"
                   ? "수업 끝 정리 도우미"
-                  : parts[0] === "receive"
-                    ? "QR로 받기"
-                    : navActive === "home"
-                      ? "공작소 홈"
-                      : navActive === "missions"
-                        ? "미션 공작대"
-                        : navActive === "library"
-                          ? "내 작품 선반"
-                          : "교사 자료실",
+                  : parts[0] === "bughunt"
+                    ? "버그 탐정 무한 연습"
+                    : parts[0] === "kit"
+                      ? "오늘 수업 키트"
+                      : parts[0] === "map"
+                        ? "나의 미션 지도"
+                        : parts[0] === "growth"
+                          ? "학기말 성장 포트폴리오"
+                          : parts[0] === "receive"
+                            ? "QR로 받기"
+                            : navActive === "home"
+                              ? "공작소 홈"
+                              : navActive === "missions"
+                                ? "미션 공작대"
+                                : navActive === "library"
+                                  ? "내 작품 선반"
+                                  : "교사 자료실",
   );
   const pageTitle =
     parts[0] === "work" && active
@@ -841,485 +912,505 @@ export default function App() {
   }, [route]);
   return (
     <LangContext.Provider value={lang}>
-      <div
-        className={`app mode-${mode}${parts[0] === "home" ? " home-screen" : ""}${parts[0] === "present" ? " present-screen" : ""}`}
-      >
-        <a
-          className="skip-link"
-          href="#main-content"
-          onClick={(e) => {
-            e.preventDefault();
-            document.getElementById("main-content")?.focus();
-          }}
+      <SendGuardContext.Provider value={guardSend}>
+        <div
+          className={`app mode-${mode}${parts[0] === "home" ? " home-screen" : ""}${parts[0] === "present" ? " present-screen" : ""}`}
         >
-          {t("본문으로 건너뛰기")}
-        </a>
-        <aside className="sidebar no-print">
-          <button className="brand" onClick={() => go("home")}>
-            <span className="brand-symbol">
-              <Mascot mini />
-            </span>
-            <span>
-              <b>뚝딱 바이브</b>
-              <strong>공작소</strong>
-            </span>
-          </button>
-          <span className="sidebar-label">{t("나의 작은 앱 만들기")}</span>
-          <nav aria-label={t("주 메뉴")}>
-            {[
-              ["home", "home", "공작소 홈"],
-              ["missions", "grid", "미션 공작대"],
-              ["library", "folder", "내 작품 선반"],
-              ["teacher", "book", "교사 자료실"],
-            ].map(([path, icon, label]) => (
-              <button
-                key={path}
-                className={navActive === path ? "active" : ""}
-                aria-current={navActive === path ? "page" : undefined}
-                onClick={() => go(path)}
-              >
-                <Icon name={icon} />
-                {t(label)}
-                {navActive === path ? <span className="nav-dot" /> : null}
-              </button>
-            ))}
-          </nav>
-          <div className="sidebar-tip">
-            <span className="tip-spark">✦</span>
-            <b>{t("잘 고치는 것도 멋진 만들기예요.")}</b>
-            <p>{t("한 번에 완벽하지 않아도 괜찮아요. 다시 해 봐요!")}</p>
-            <button
-              className="text-button"
-              onClick={() => go("mission/quiz-3")}
-            >
-              {t("버그 탐정 도전")} <Icon name="arrow" size={16} />
-            </button>
-          </div>
-          <div className="sidebar-footer">
-            <Icon name="shield" size={17} />
-            <span>
-              {t("가입 없이, 내 기기에 저장")}
-              <br />
-              <small>{t("생각을 키우는 안전한 연습실")}</small>
-            </span>
-          </div>
-        </aside>
-        <div className="main-shell">
-          <header className="topbar no-print">
-            <div className="breadcrumbs">
-              {t("나의 배움 공간")} <Icon name="chevron" size={13} />
-              <b>{pageName}</b>
-            </div>
-            <div className="topbar-actions">
-              <span
-                className={`save-state ${storageError ? "error" : ""}`}
-                role="status"
-              >
-                <span className="status-dot" />
-                {t(storageStatus)}
+          <a
+            className="skip-link"
+            href="#main-content"
+            onClick={(e) => {
+              e.preventDefault();
+              document.getElementById("main-content")?.focus();
+            }}
+          >
+            {t("본문으로 건너뛰기")}
+          </a>
+          <aside className="sidebar no-print">
+            <button className="brand" onClick={() => go("home")}>
+              <span className="brand-symbol">
+                <Mascot mini />
               </span>
-              <label className="mode-select">
-                <span className="sr-only">{t("안내 모드")}</span>
-                <select
-                  aria-label={t("안내 모드")}
-                  value={mode}
-                  onChange={(e) => setMode(e.target.value as Mode)}
+              <span>
+                <b>뚝딱 바이브</b>
+                <strong>공작소</strong>
+              </span>
+            </button>
+            <span className="sidebar-label">{t("나의 작은 앱 만들기")}</span>
+            <nav aria-label={t("주 메뉴")}>
+              {[
+                ["home", "home", "공작소 홈"],
+                ["missions", "grid", "미션 공작대"],
+                ["library", "folder", "내 작품 선반"],
+                ["teacher", "book", "교사 자료실"],
+              ].map(([path, icon, label]) => (
+                <button
+                  key={path}
+                  className={navActive === path ? "active" : ""}
+                  aria-current={navActive === path ? "page" : undefined}
+                  onClick={() => go(path)}
                 >
-                  <option value="child">{t("어린이 모드")}</option>
-                  <option value="easy">{t("쉬운 모드 (3~4학년)")}</option>
-                  <option value="adult">{t("일반 입문자 모드")}</option>
-                </select>
-              </label>
-              <details className="view-menu">
-                <summary>{t("화면 보기")}</summary>
-                <div className="view-menu-panel">
-                  <label className="checkbox">
-                    <input
-                      type="checkbox"
-                      checked={display.contrast}
-                      onChange={(e) =>
-                        setDisplay({ ...display, contrast: e.target.checked })
-                      }
-                    />
-                    {t("고대비 화면")}
-                  </label>
-                  <label className="checkbox">
-                    <input
-                      type="checkbox"
-                      checked={display.readable}
-                      onChange={(e) =>
-                        setDisplay({ ...display, readable: e.target.checked })
-                      }
-                    />
-                    {t("읽기 쉬운 글꼴 · 넓은 줄 간격")}
-                  </label>
-                </div>
-              </details>
-              <label className="mode-select">
-                <span className="sr-only">언어 · Language</span>
-                <select
-                  aria-label="언어 · Language"
-                  value={lang}
-                  onChange={(e) => setLang(e.target.value as Lang)}
-                >
-                  {langs.map((l) => (
-                    <option key={l.id} value={l.id} lang={l.html}>
-                      {l.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                  <Icon name={icon} />
+                  {t(label)}
+                  {navActive === path ? <span className="nav-dot" /> : null}
+                </button>
+              ))}
+            </nav>
+            <div className="sidebar-tip">
+              <span className="tip-spark">✦</span>
+              <b>{t("잘 고치는 것도 멋진 만들기예요.")}</b>
+              <p>{t("한 번에 완벽하지 않아도 괜찮아요. 다시 해 봐요!")}</p>
+              <button className="text-button" onClick={() => go("bughunt")}>
+                {t("버그 탐정 도전")} <Icon name="arrow" size={16} />
+              </button>
             </div>
-          </header>
-          <main id="main-content" tabIndex={-1}>
-            {updateReady ? (
-              <div role="status" className="update-banner no-print">
+            <div className="sidebar-footer">
+              <Icon name="shield" size={17} />
+              <span>
+                {t("가입 없이, 내 기기에 저장")}
+                <br />
+                <small>{t("생각을 키우는 안전한 연습실")}</small>
+              </span>
+            </div>
+          </aside>
+          <div className="main-shell">
+            <header className="topbar no-print">
+              <div className="breadcrumbs">
+                {t("나의 배움 공간")} <Icon name="chevron" size={13} />
+                <b>{pageName}</b>
+              </div>
+              <div className="topbar-actions">
+                <span
+                  className={`save-state ${storageError ? "error" : ""}`}
+                  role="status"
+                >
+                  <span className="status-dot" />
+                  {t(storageStatus)}
+                </span>
+                <label className="mode-select">
+                  <span className="sr-only">{t("안내 모드")}</span>
+                  <select
+                    aria-label={t("안내 모드")}
+                    value={mode}
+                    onChange={(e) => setMode(e.target.value as Mode)}
+                  >
+                    <option value="child">{t("어린이 모드")}</option>
+                    <option value="easy">{t("쉬운 모드 (3~4학년)")}</option>
+                    <option value="adult">{t("일반 입문자 모드")}</option>
+                  </select>
+                </label>
+                <details className="view-menu">
+                  <summary>{t("화면 보기")}</summary>
+                  <div className="view-menu-panel">
+                    <label className="checkbox">
+                      <input
+                        type="checkbox"
+                        checked={display.contrast}
+                        onChange={(e) =>
+                          setDisplay({ ...display, contrast: e.target.checked })
+                        }
+                      />
+                      {t("고대비 화면")}
+                    </label>
+                    <label className="checkbox">
+                      <input
+                        type="checkbox"
+                        checked={display.readable}
+                        onChange={(e) =>
+                          setDisplay({ ...display, readable: e.target.checked })
+                        }
+                      />
+                      {t("읽기 쉬운 글꼴 · 넓은 줄 간격")}
+                    </label>
+                  </div>
+                </details>
+                <label className="mode-select">
+                  <span className="sr-only">언어 · Language</span>
+                  <select
+                    aria-label="언어 · Language"
+                    value={lang}
+                    onChange={(e) => setLang(e.target.value as Lang)}
+                  >
+                    {langs.map((l) => (
+                      <option key={l.id} value={l.id} lang={l.html}>
+                        {l.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            </header>
+            <main id="main-content" tabIndex={-1}>
+              {updateReady ? (
+                <div role="status" className="update-banner no-print">
+                  <p>
+                    {t(
+                      "새 버전이 준비됐어요. 지금 편집 내용을 저장한 뒤 새로고침하면 적용돼요.",
+                    )}
+                  </p>
+                  <div className="button-row">
+                    <button
+                      className="primary"
+                      onClick={async () => {
+                        await flush();
+                        location.reload();
+                      }}
+                    >
+                      {t("저장하고 새로고침")}
+                    </button>
+                    <button onClick={() => setUpdateReady(false)}>
+                      {t("나중에")}
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+              {storageError ? (
+                <div role="alert" className="storage-error no-print">
+                  <p>
+                    {storageError
+                      .split("\n")
+                      .map((x, i) => (i ? x : t(x)))
+                      .join(" ")}
+                  </p>
+                  <div className="button-row">
+                    <button onClick={() => void flush()}>
+                      {t("저장 다시 시도")}
+                    </button>
+                    <button disabled={!works.length} onClick={exportAll}>
+                      {t("편집 내용 파일로 내보내기")}
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+              {unreadable.length && !loading ? (
+                <div role="alert" className="warning no-print">
+                  <p>
+                    {t(
+                      "이 기기에 읽지 못한 기록이 {n}개 있어요. 더 새로운 앱에서 만들었거나 손상된 기록일 수 있어요. 나머지 작품은 그대로 쓸 수 있고, 읽지 못한 기록은 지우지 않았어요.",
+                      { n: unreadable.length },
+                    )}
+                  </p>
+                  <button
+                    onClick={() =>
+                      downloadText(
+                        "뚝딱-읽지-못한-기록.json",
+                        JSON.stringify(unreadable),
+                        "application/json",
+                      )
+                    }
+                  >
+                    {t("읽지 못한 기록 원본 내려받기")}
+                  </button>
+                </div>
+              ) : null}
+              <ErrorBoundary
+                resetKey={`${route}:${runtimeEpoch}`}
+                onLibrary={() => go("library")}
+              >
+                <Suspense
+                  fallback={
+                    <p role="status" className="empty">
+                      {t("화면을 불러오고 있어요…")}
+                    </p>
+                  }
+                >
+                  {loading ? (
+                    <div className="empty">
+                      <p>{t("이 기기의 작품을 불러오고 있어요…")}</p>
+                    </div>
+                  ) : parts[0] === "home" ? (
+                    <Home {...{ mode, setMode, lastWork, go, create }} />
+                  ) : parts[0] === "missions" ? (
+                    <Missions filter={parts[1]} works={visible} go={go} />
+                  ) : parts[0] === "explore" ? (
+                    <Explore go={go} />
+                  ) : parts[0] === "try" ? (
+                    <QuickTry go={go} create={create} />
+                  ) : parts[0] === "prepare" ? (
+                    <Prepare go={go} />
+                  ) : parts[0] === "lesson" &&
+                    /^[1-8]$/.test(parts[1] ?? "") ? (
+                    <LessonLanding number={Number(parts[1])} go={go} />
+                  ) : parts[0] === "share" ? (
+                    <Suspense
+                      fallback={
+                        <p role="status">소개 카드를 준비하고 있어요…</p>
+                      }
+                    >
+                      <SharePage go={go} copy={copy} />
+                    </Suspense>
+                  ) : parts[0] === "mission" && mission ? (
+                    <MissionDetail
+                      mission={mission}
+                      create={create}
+                      share={copy}
+                    />
+                  ) : parts[0] === "teacher" ? (
+                    <Teacher
+                      works={works}
+                      create={create}
+                      go={go}
+                      copy={copy}
+                      message={message}
+                    />
+                  ) : parts[0] === "present" && mission ? (
+                    <Present
+                      mission={mission}
+                      lessonNumber={
+                        /^[1-8]$/.test(parts[2] ?? "")
+                          ? Number(parts[2])
+                          : undefined
+                      }
+                      go={go}
+                    />
+                  ) : parts[0] === "peer-apply" ? (
+                    <PeerApply
+                      response={peerResponse}
+                      works={visible}
+                      apply={(w) => {
+                        try {
+                          applyPeer(w, peerResponse!);
+                        } catch (e) {
+                          message(
+                            `${t("합치지 못했어요.")} ${errorText(e, t, "")}`,
+                          );
+                        }
+                      }}
+                      cancel={() => {
+                        setPeerResponse(null);
+                        go("library");
+                      }}
+                    />
+                  ) : parts[0] === "peer" ? (
+                    <PeerCheck
+                      request={peerRequest}
+                      setRequest={setPeerRequest}
+                      message={message}
+                    />
+                  ) : parts[0] === "receive" && parts[1] ? (
+                    <Receive
+                      key={parts[1]}
+                      code={parts[1]}
+                      receiveWork={receiveWork}
+                      receivePeer={(p) => {
+                        setPeerRequest(p.request);
+                        go("peer");
+                        message(
+                          "친구 작품을 열었어요. 먼저 예상하고 직접 눌러 보세요.",
+                        );
+                      }}
+                      go={go}
+                    />
+                  ) : parts[0] === "growth" ? (
+                    <Growth works={visible} go={go} />
+                  ) : parts[0] === "map" ? (
+                    <MissionMap works={visible} go={go} />
+                  ) : parts[0] === "kit" && /^[1-8]$/.test(parts[1] ?? "") ? (
+                    <LessonKit number={Number(parts[1])} go={go} />
+                  ) : parts[0] === "bughunt" ? (
+                    <BugHunt works={visible} start={startBugHunt} go={go} />
+                  ) : parts[0] === "wrapup" ? (
+                    <WrapUp
+                      works={visible}
+                      saved={storageStatus === "기기에 저장됨"}
+                      backup={() => backup(visible)}
+                      nextUser={nextUser}
+                      clearAll={clearAll}
+                      go={go}
+                    />
+                  ) : parts[0] === "library" ? (
+                    <Library
+                      works={visible}
+                      go={go}
+                      exportAll={() =>
+                        guardSend(visible, () => backup(visible))
+                      }
+                      importFile={() => importInput.current?.click()}
+                      remove={remove}
+                      nextUser={nextUser}
+                      clearAll={clearAll}
+                      hiddenCount={works.length - visible.length}
+                      message={message}
+                      reveal={() => {
+                        setHidden([]);
+                        setting("hidden", []);
+                      }}
+                    />
+                  ) : parts[0] === "work" && active && mission ? (
+                    <Workspace
+                      key={active.id + runtimeEpoch}
+                      work={active}
+                      mission={mission}
+                      {...{
+                        step,
+                        mode,
+                        go,
+                        edit,
+                        copy,
+                        message,
+                        saveVersion,
+                        restore,
+                        deleteChecks,
+                        deleteVersion,
+                        readOnly,
+                      }}
+                      takeOver={lock.takeOver}
+                      updateWork={updateWork}
+                      undo={
+                        undoHistory?.undo.length
+                          ? () => moveInHistory("undo")
+                          : undefined
+                      }
+                      redo={
+                        undoHistory?.redo.length
+                          ? () => moveInHistory("redo")
+                          : undefined
+                      }
+                      exportWork={() =>
+                        guardSend([active], () => backup([active]))
+                      }
+                    />
+                  ) : parts[0] === "portfolio" && active ? (
+                    <Portfolio
+                      work={active}
+                      go={go}
+                      exportWork={() =>
+                        guardSend([active], () => backup([active]))
+                      }
+                      message={message}
+                    />
+                  ) : (
+                    <Empty title={t("이 작품이나 미션을 찾을 수 없어요")}>
+                      <p>
+                        {t(
+                          "현재 브라우저에 저장된 작품 목록을 확인하거나 작품 파일을 가져와 주세요.",
+                        )}
+                      </p>
+                      <button onClick={() => go("library")}>
+                        {t("작품 선반으로")}
+                      </button>
+                    </Empty>
+                  )}
+                </Suspense>
+              </ErrorBoundary>
+            </main>
+            <footer className="page-footer no-print">
+              <span>{t("뚝딱 바이브 공작소")}</span>
+              <span>{t("정답을 만드는 시간보다, 생각을 키우는 시간.")}</span>
+              <p className="ys-credit">
+                © 2026 엽쌤. All rights reserved. ·{" "}
+                <a
+                  href="https://gmlduqzhd123-lab.github.io/YScode/"
+                  target="_blank"
+                  rel="noopener"
+                >
+                  {t("엽쌤의 다른 앱 보기 →")}
+                </a>
+              </p>
+            </footer>
+          </div>
+          <input
+            className="sr-only"
+            tabIndex={-1}
+            ref={importInput}
+            type="file"
+            accept=".json,application/json"
+            aria-label={t("작품 JSON 파일")}
+            onChange={(e) => void importFile(e.target.files?.[0])}
+          />
+          {toast ? (
+            <div className="toast no-print" role="status">
+              <span>{t(toast)}</span>
+              <button aria-label={t("알림 닫기")} onClick={() => setToast("")}>
+                ×
+              </button>
+            </div>
+          ) : null}
+          <dialog
+            ref={dialogRef}
+            aria-labelledby="app-dialog-title"
+            onCancel={() => {
+              setDialog(null);
+              setCopyFallback(null);
+            }}
+            className="app-dialog"
+          >
+            {copyFallback !== null ? (
+              <>
+                <h2 id="app-dialog-title">
+                  {t("직접 선택해서 복사해 주세요")}
+                </h2>
                 <p>
                   {t(
-                    "새 버전이 준비됐어요. 지금 편집 내용을 저장한 뒤 새로고침하면 적용돼요.",
+                    "브라우저가 클립보드 쓰기를 허용하지 않았어요. 아래 내용을 선택한 뒤 Ctrl+C 또는 기기의 복사 메뉴를 사용해 주세요.",
                   )}
                 </p>
+                <Field
+                  area
+                  label={t("복사할 내용")}
+                  value={copyFallback}
+                  onChange={setCopyFallback}
+                />
                 <div className="button-row">
                   <button
-                    className="primary"
-                    onClick={async () => {
-                      await flush();
-                      location.reload();
-                    }}
-                  >
-                    {t("저장하고 새로고침")}
-                  </button>
-                  <button onClick={() => setUpdateReady(false)}>
-                    {t("나중에")}
-                  </button>
-                </div>
-              </div>
-            ) : null}
-            {storageError ? (
-              <div role="alert" className="storage-error no-print">
-                <p>
-                  {storageError
-                    .split("\n")
-                    .map((x, i) => (i ? x : t(x)))
-                    .join(" ")}
-                </p>
-                <div className="button-row">
-                  <button onClick={() => void flush()}>
-                    {t("저장 다시 시도")}
-                  </button>
-                  <button disabled={!works.length} onClick={exportAll}>
-                    {t("편집 내용 파일로 내보내기")}
-                  </button>
-                </div>
-              </div>
-            ) : null}
-            {unreadable.length && !loading ? (
-              <div role="alert" className="warning no-print">
-                <p>
-                  {t(
-                    "이 기기에 읽지 못한 기록이 {n}개 있어요. 더 새로운 앱에서 만들었거나 손상된 기록일 수 있어요. 나머지 작품은 그대로 쓸 수 있고, 읽지 못한 기록은 지우지 않았어요.",
-                    { n: unreadable.length },
-                  )}
-                </p>
-                <button
-                  onClick={() =>
-                    downloadText(
-                      "뚝딱-읽지-못한-기록.json",
-                      JSON.stringify(unreadable),
-                      "application/json",
-                    )
-                  }
-                >
-                  {t("읽지 못한 기록 원본 내려받기")}
-                </button>
-              </div>
-            ) : null}
-            <ErrorBoundary
-              resetKey={`${route}:${runtimeEpoch}`}
-              onLibrary={() => go("library")}
-            >
-              <Suspense
-                fallback={
-                  <p role="status" className="empty">
-                    {t("화면을 불러오고 있어요…")}
-                  </p>
-                }
-              >
-                {loading ? (
-                  <div className="empty">
-                    <p>{t("이 기기의 작품을 불러오고 있어요…")}</p>
-                  </div>
-                ) : parts[0] === "home" ? (
-                  <Home {...{ mode, setMode, lastWork, go, create }} />
-                ) : parts[0] === "missions" ? (
-                  <Missions filter={parts[1]} works={visible} go={go} />
-                ) : parts[0] === "explore" ? (
-                  <Explore go={go} />
-                ) : parts[0] === "try" ? (
-                  <QuickTry go={go} create={create} />
-                ) : parts[0] === "prepare" ? (
-                  <Prepare go={go} />
-                ) : parts[0] === "lesson" && /^[1-8]$/.test(parts[1] ?? "") ? (
-                  <LessonLanding number={Number(parts[1])} go={go} />
-                ) : parts[0] === "share" ? (
-                  <Suspense
-                    fallback={<p role="status">소개 카드를 준비하고 있어요…</p>}
-                  >
-                    <SharePage go={go} copy={copy} />
-                  </Suspense>
-                ) : parts[0] === "mission" && mission ? (
-                  <MissionDetail
-                    mission={mission}
-                    create={create}
-                    share={copy}
-                  />
-                ) : parts[0] === "teacher" ? (
-                  <Teacher
-                    works={works}
-                    create={create}
-                    go={go}
-                    copy={copy}
-                    message={message}
-                  />
-                ) : parts[0] === "present" && mission ? (
-                  <Present
-                    mission={mission}
-                    lessonNumber={
-                      /^[1-8]$/.test(parts[2] ?? "")
-                        ? Number(parts[2])
-                        : undefined
+                    onClick={() =>
+                      dialogRef.current?.querySelector("textarea")?.select()
                     }
-                    go={go}
-                  />
-                ) : parts[0] === "peer-apply" ? (
-                  <PeerApply
-                    response={peerResponse}
-                    works={visible}
-                    apply={(w) => {
+                  >
+                    {t("내용 전체 선택")}
+                  </button>
+                  <button
+                    className="primary"
+                    onClick={() => setCopyFallback(null)}
+                  >
+                    {t("닫기")}
+                  </button>
+                </div>
+              </>
+            ) : dialog ? (
+              <>
+                <h2 id="app-dialog-title">{t(dialog.title)}</h2>
+                <p>{t(dialog.body)}</p>
+                <div className="button-row">
+                  {dialog.backup.length ? (
+                    <button onClick={() => backup(dialog.backup)}>
+                      <Icon name="download" />
+                      {t("삭제 전 파일 백업")}
+                    </button>
+                  ) : null}
+                  <button disabled={dialogBusy} onClick={() => setDialog(null)}>
+                    {t("취소")}
+                  </button>
+                  <button
+                    className="danger"
+                    disabled={dialogBusy}
+                    onClick={async () => {
+                      setDialogBusy(true);
                       try {
-                        applyPeer(w, peerResponse!);
+                        await dialog.action();
+                        setDialog(null);
                       } catch (e) {
                         message(
-                          `${t("합치지 못했어요.")} ${errorText(e, t, "")}`,
+                          `${t("처리하지 못했어요. 다시 시도해 주세요.")} ${errorText(e, t, "")}`,
                         );
+                      } finally {
+                        setDialogBusy(false);
                       }
                     }}
-                    cancel={() => {
-                      setPeerResponse(null);
-                      go("library");
-                    }}
-                  />
-                ) : parts[0] === "peer" ? (
-                  <PeerCheck
-                    request={peerRequest}
-                    setRequest={setPeerRequest}
-                    message={message}
-                  />
-                ) : parts[0] === "receive" && parts[1] ? (
-                  <Receive
-                    key={parts[1]}
-                    code={parts[1]}
-                    receiveWork={receiveWork}
-                    receivePeer={(p) => {
-                      setPeerRequest(p.request);
-                      go("peer");
-                      message(
-                        "친구 작품을 열었어요. 먼저 예상하고 직접 눌러 보세요.",
-                      );
-                    }}
-                    go={go}
-                  />
-                ) : parts[0] === "wrapup" ? (
-                  <WrapUp
-                    works={visible}
-                    saved={storageStatus === "기기에 저장됨"}
-                    backup={() => backup(visible)}
-                    nextUser={nextUser}
-                    clearAll={clearAll}
-                    go={go}
-                  />
-                ) : parts[0] === "library" ? (
-                  <Library
-                    works={visible}
-                    go={go}
-                    exportAll={() => backup(visible)}
-                    importFile={() => importInput.current?.click()}
-                    remove={remove}
-                    nextUser={nextUser}
-                    clearAll={clearAll}
-                    hiddenCount={works.length - visible.length}
-                    message={message}
-                    reveal={() => {
-                      setHidden([]);
-                      setting("hidden", []);
-                    }}
-                  />
-                ) : parts[0] === "work" && active && mission ? (
-                  <Workspace
-                    key={active.id + runtimeEpoch}
-                    work={active}
-                    mission={mission}
-                    {...{
-                      step,
-                      mode,
-                      go,
-                      edit,
-                      copy,
-                      message,
-                      saveVersion,
-                      restore,
-                      deleteChecks,
-                      deleteVersion,
-                      readOnly,
-                    }}
-                    takeOver={lock.takeOver}
-                    updateWork={updateWork}
-                    undo={
-                      undoHistory?.undo.length
-                        ? () => moveInHistory("undo")
-                        : undefined
-                    }
-                    redo={
-                      undoHistory?.redo.length
-                        ? () => moveInHistory("redo")
-                        : undefined
-                    }
-                    exportWork={() => backup([active])}
-                  />
-                ) : parts[0] === "portfolio" && active ? (
-                  <Portfolio
-                    work={active}
-                    go={go}
-                    exportWork={() => backup([active])}
-                    message={message}
-                  />
-                ) : (
-                  <Empty title={t("이 작품이나 미션을 찾을 수 없어요")}>
-                    <p>
-                      {t(
-                        "현재 브라우저에 저장된 작품 목록을 확인하거나 작품 파일을 가져와 주세요.",
-                      )}
-                    </p>
-                    <button onClick={() => go("library")}>
-                      {t("작품 선반으로")}
-                    </button>
-                  </Empty>
-                )}
-              </Suspense>
-            </ErrorBoundary>
-          </main>
-          <footer className="page-footer no-print">
-            <span>{t("뚝딱 바이브 공작소")}</span>
-            <span>{t("정답을 만드는 시간보다, 생각을 키우는 시간.")}</span>
-            <p className="ys-credit">
-              © 2026 엽쌤. All rights reserved. ·{" "}
-              <a
-                href="https://gmlduqzhd123-lab.github.io/YScode/"
-                target="_blank"
-                rel="noopener"
-              >
-                {t("엽쌤의 다른 앱 보기 →")}
-              </a>
-            </p>
-          </footer>
-        </div>
-        <input
-          className="sr-only"
-          tabIndex={-1}
-          ref={importInput}
-          type="file"
-          accept=".json,application/json"
-          aria-label={t("작품 JSON 파일")}
-          onChange={(e) => void importFile(e.target.files?.[0])}
-        />
-        {toast ? (
-          <div className="toast no-print" role="status">
-            <span>{t(toast)}</span>
-            <button aria-label={t("알림 닫기")} onClick={() => setToast("")}>
-              ×
-            </button>
-          </div>
-        ) : null}
-        <dialog
-          ref={dialogRef}
-          aria-labelledby="app-dialog-title"
-          onCancel={() => {
-            setDialog(null);
-            setCopyFallback(null);
-          }}
-          className="app-dialog"
-        >
-          {copyFallback !== null ? (
-            <>
-              <h2 id="app-dialog-title">{t("직접 선택해서 복사해 주세요")}</h2>
-              <p>
-                {t(
-                  "브라우저가 클립보드 쓰기를 허용하지 않았어요. 아래 내용을 선택한 뒤 Ctrl+C 또는 기기의 복사 메뉴를 사용해 주세요.",
-                )}
-              </p>
-              <Field
-                area
-                label={t("복사할 내용")}
-                value={copyFallback}
-                onChange={setCopyFallback}
-              />
-              <div className="button-row">
-                <button
-                  onClick={() =>
-                    dialogRef.current?.querySelector("textarea")?.select()
-                  }
-                >
-                  {t("내용 전체 선택")}
-                </button>
-                <button
-                  className="primary"
-                  onClick={() => setCopyFallback(null)}
-                >
-                  {t("닫기")}
-                </button>
-              </div>
-            </>
-          ) : dialog ? (
-            <>
-              <h2 id="app-dialog-title">{t(dialog.title)}</h2>
-              <p>{t(dialog.body)}</p>
-              <div className="button-row">
-                {dialog.backup.length ? (
-                  <button onClick={() => backup(dialog.backup)}>
-                    <Icon name="download" />
-                    {t("삭제 전 파일 백업")}
+                  >
+                    {dialogBusy
+                      ? t("처리 중…")
+                      : t(dialog.label ?? "대상 삭제")}
                   </button>
-                ) : null}
-                <button disabled={dialogBusy} onClick={() => setDialog(null)}>
-                  {t("취소")}
-                </button>
-                <button
-                  className="danger"
-                  disabled={dialogBusy}
-                  onClick={async () => {
-                    setDialogBusy(true);
-                    try {
-                      await dialog.action();
-                      setDialog(null);
-                    } catch (e) {
-                      message(
-                        `${t("처리하지 못했어요. 다시 시도해 주세요.")} ${errorText(e, t, "")}`,
-                      );
-                    } finally {
-                      setDialogBusy(false);
-                    }
-                  }}
-                >
-                  {dialogBusy ? t("처리 중…") : t(dialog.label ?? "대상 삭제")}
-                </button>
-              </div>
-            </>
-          ) : null}
-        </dialog>
-        <p className="sr-only" role="status" aria-live="polite">
-          {announce}
-        </p>
-      </div>
+                </div>
+              </>
+            ) : null}
+          </dialog>
+          <p className="sr-only" role="status" aria-live="polite">
+            {announce}
+          </p>
+        </div>
+      </SendGuardContext.Provider>
     </LangContext.Provider>
   );
 }

@@ -1,3 +1,4 @@
+import { RulePreview } from "./RulePreview";
 import { useEffect, useState } from "react";
 import {
   answerQuiz,
@@ -46,6 +47,8 @@ export function Preview({
   const run = () => onRun();
   if (config.kind === "pattern")
     return <PatternPreview config={config} onRun={onRun} />;
+  if (config.kind === "rule")
+    return <RulePreview config={config} onRun={onRun} />;
   if (config.kind === "quiz") {
     const question = config.questions[q.index];
     return (
@@ -207,7 +210,8 @@ export function Preview({
             {t("선택 → 연결된 장면 ID 확인 → 현재 장면 변경 → 새 장면 표시")}
           </p>
           <p>
-            {t("현재 장면:")} <b>{scene.id}</b> · 지나온 길 {trail.length}개
+            {t("현재 장면:")} <b>{scene.id}</b> ·{" "}
+            {t("지나온 길 {n}개", { n: trail.length })}
           </p>
           {trail.length ? <small>{trail.join(" / ")}</small> : null}
         </details>

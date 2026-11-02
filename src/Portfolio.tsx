@@ -1,3 +1,4 @@
+import { useSendGuard } from "./sendGuard";
 import type { Feedback, Work } from "./model";
 import { aiStatus, kindNames, stageDone, correctionPrompt } from "./model";
 import { Icon, Pill } from "./ui";
@@ -23,6 +24,7 @@ export function Portfolio({
   message?: (s: string) => void;
 }) {
   const t = useT();
+  const guard = useSendGuard();
   const lang = useLang();
   const text = (v: string) => v || t("아직 기록하지 않았어요.");
   const when = (at: string) => new Date(at).toLocaleString(dateLocale(lang));
@@ -42,23 +44,26 @@ export function Portfolio({
             {t("이어서 기록하기")}
           </button>
           <button
-            onClick={() => {
-              downloadText(
-                `뚝딱-앱-${d.title || "작품"}.html`,
-                standaloneHtml(w, t, lang),
-                "text/html",
-              );
-              message(
-                t(
-                  "앱 파일(HTML)을 내려받았어요. 인터넷 없이 브라우저에서 열려요.",
-                ),
-              );
-            }}
+            onClick={() =>
+              guard([w], () => {
+                downloadText(
+                  `뚝딱-앱-${d.title || "작품"}.html`,
+                  standaloneHtml(w, t, lang),
+                  "text/html",
+                );
+                message(
+                  t(
+                    "앱 파일(HTML)을 내려받았어요. 인터넷 없이 브라우저에서 열려요.",
+                  ),
+                );
+              })
+            }
           >
             <Icon name="download" />
             {t("앱 파일로 내보내기")}
           </button>
           <ShareButton
+            works={[w]}
             name={`뚝딱-작품-${d.title || "작품"}.json`}
             text={() => backupFiles([w])[0]}
             title={d.title || t("뚝딱 작품")}

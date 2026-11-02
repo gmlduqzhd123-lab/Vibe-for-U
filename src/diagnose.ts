@@ -7,7 +7,9 @@ import {
   patternMatch,
   reachable,
   resetQuiz,
+  ruleMatches,
   runPattern,
+  shadowedRules,
 } from "./engines";
 // 맞춤 힌트: 자동 검사와 같은 규칙으로 설정을 실행해 보고, 실패한 까닭에 맞는 힌트를 고른다.
 // AI 없이 규칙으로만 찾는다. 문장은 한국어 열쇠이며 화면에서 t()로 바꾼다.
@@ -65,6 +67,27 @@ export function diagnose(c: Config): Finding[] {
         problem: "0초가 돼도 끝났다는 안내가 나오지 않아요.",
         hint: "설정의 ‘0초가 되면 종료 안내 표시’를 켜 보세요.",
       });
+  } else if (c.kind === "rule") {
+    const hidden = shadowedRules(c);
+    if (hidden.length) {
+      const i = hidden[0];
+      const cover = c.rules.findIndex(
+        (r, k) =>
+          k < i &&
+          // 가려진 조건이 맞는 값에서 먼저 맞는 앞 조건
+          [c.rules[i].value].some((v) => ruleMatches(r, v)),
+      );
+      out.push({
+        id: "rule-shadowed",
+        problem: "「{msg}」 문구는 앞 조건에 가려서 나올 수 없어요.",
+        hint: "앱은 조건을 위에서부터 확인하고 처음 맞는 것 하나만 써요. 조건 {n}번을 조건 {k}번보다 위로 올려 보세요.",
+        vars: {
+          msg: c.rules[i].message,
+          n: i + 1,
+          k: Math.max(cover, 0) + 1,
+        },
+      });
+    }
   } else {
     const done = runPattern(c);
     const { missing, extra } = patternMatch(c, done.painted);
