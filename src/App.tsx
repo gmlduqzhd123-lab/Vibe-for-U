@@ -416,7 +416,7 @@ export default function App() {
   };
   // 버그 탐정 도전: 정상 작품에 버그 하나를 숨겨 새 작품으로 만든다.
   const startBugHunt = async (kind?: Kind) => {
-    const { makeBugChallenge, isBugChallenge } = await import("./bugHunt");
+    const { makeBugChallenge, isBugChallenge } = await import("./bugChallenge");
     const n = worksRef.current.filter(isBugChallenge).length + 1;
     const work = makeBugChallenge(
       (m) =>

@@ -3,7 +3,7 @@ import type { Kind, Work } from "./model";
 import { Icon, Pill } from "./ui";
 import { useT } from "./i18n";
 import type { Navigate } from "./Pages";
-import { bugSolved, isBugChallenge } from "./bugHunt";
+import { bugSolved, isBugChallenge } from "./bugChallenge";
 // 버그 탐정 무한 연습 화면: 새 도전을 받고, 지금까지 찾아 고친 도전을 본다.
 export function BugHunt({
   works,

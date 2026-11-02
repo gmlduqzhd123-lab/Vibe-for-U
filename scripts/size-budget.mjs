@@ -16,9 +16,9 @@ const dist = "dist";
 const html = readFileSync(`${dist}/index.html`, "utf8");
 const gz = (file) => gzipSync(readFileSync(file)).length / 1024;
 // 첫 화면이 바로 받는 파일: index.html이 부르는 JS·CSS와 미리 불러오는 JS
-const entry = [...html.matchAll(/(?:src|href)="[^"]*?(assets\/[^"]+\.(js|css))"/g)].map(
-  (m) => ({ file: `${dist}/${m[1]}`, type: m[2] }),
-);
+const entry = [
+  ...html.matchAll(/(?:src|href)="[^"]*?(assets\/[^"]+\.(js|css))"/g),
+].map((m) => ({ file: `${dist}/${m[1]}`, type: m[2] }));
 const sum = (type) =>
   entry.filter((e) => e.type === type).reduce((n, e) => n + gz(e.file), 0);
 const assets = readdirSync(`${dist}/assets`).map((f) => `${dist}/assets/${f}`);
@@ -54,6 +54,8 @@ for (const [name, limit] of Object.entries(BUDGET)) {
 }
 if (lazy[0]) console.log(`  가장 큰 나눠 불러오는 파일: ${lazy[0].f}`);
 if (failed) {
-  console.error("성능 예산을 넘었어요. 파일을 나누거나 줄인 뒤 다시 확인해 주세요.");
+  console.error(
+    "성능 예산을 넘었어요. 파일을 나누거나 줄인 뒤 다시 확인해 주세요.",
+  );
   process.exit(1);
 }

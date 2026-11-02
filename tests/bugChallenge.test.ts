@@ -5,7 +5,7 @@ import {
   bugSolved,
   isBugChallenge,
   makeBugChallenge,
-} from "../src/bugHunt";
+} from "../src/bugChallenge";
 import { diagnose } from "../src/diagnose";
 describe("버그 탐정 무한 연습", () => {
   it("네 종류 모두 오류를 넣을 수 있는 도전이 있고, 넣은 오류는 맞춤 힌트가 찾는다", () => {
