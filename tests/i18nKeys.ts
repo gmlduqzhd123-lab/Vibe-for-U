@@ -44,7 +44,10 @@ export function listedKeys(files = readdirSync("src")) {
   const add = (f: string, k: string) => {
     if (HANGUL.test(k) && !keys.has(k)) keys.set(k, f);
   };
-  for (const f of files.filter((f) => /\.tsx$/.test(f))) {
+  // 미션 만들기는 교사 화면이라 한국어로 둔다.
+  for (const f of files.filter(
+    (f) => /\.tsx$/.test(f) && f !== "MissionMaker.tsx",
+  )) {
     const code = readFileSync(`src/${f}`, "utf8");
     // 알림과 저장 상태는 보여 줄 때 t()로 바꾼다.
     for (const m of code.matchAll(
@@ -62,8 +65,33 @@ export function listedKeys(files = readdirSync("src")) {
   const app = readFileSync("src/App.tsx", "utf8");
   for (const m of app.matchAll(/\b(?:title|body|label):\s*"([^"]+)"/g))
     add("App.tsx", m[1]);
-  // 낱말 블록은 파일 전체가 화면 문장이다.
-  for (const k of strings(readFileSync("src/BlockPrompt.tsx", "utf8")))
-    add("BlockPrompt.tsx", k);
+  // 파일 검사 오류(AppError)와 그 안에 넣는 항목 이름: 검사 함수 호출의 모든 문자열을 모은다.
+  for (const f of [
+    "storage.ts",
+    "peer.ts",
+    "engines.ts",
+    "qrTransfer.ts",
+    "customMissions.ts",
+  ]) {
+    const code = readFileSync(`src/${f}`, "utf8");
+    for (const m of code.matchAll(
+      /\b(?:new AppError|fail|obj|str|bool|num|arr|one|stamp|unique|list|checkVersion|text)\(/g,
+    )) {
+      // 첫 인자뿐 아니라 괄호 안 전체(항목 이름은 둘째 인자)를 본다.
+      let depth = 0;
+      let end = m.index! + m[0].length;
+      for (; end < code.length; end++) {
+        const c = code[end];
+        if (c === '"' || c === "`") end = code.indexOf(c, end + 1);
+        else if (c === "(") depth++;
+        else if (c === ")" && !depth--) break;
+      }
+      for (const k of strings(code.slice(m.index!, end))) add(f, k);
+    }
+  }
+  // 낱말 블록과 첫 체험·소개 화면은 파일 전체(자료 배열 포함)가 화면 문장이다.
+  // 맞춤 힌트의 문제·힌트 문장도 화면에서 t()로 바꾼다.
+  for (const f of ["BlockPrompt.tsx", "Welcome.tsx", "diagnose.ts"])
+    for (const k of strings(readFileSync(`src/${f}`, "utf8"))) add(f, k);
   return keys;
 }

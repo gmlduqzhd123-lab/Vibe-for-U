@@ -1,4 +1,12 @@
 import {
+  MISSION_FORMAT,
+  forgetCustomMissions,
+  loadCustomMissions,
+  parseMissionFile,
+  saveCustomMission,
+} from "./customMissions";
+import { errorText } from "./appError";
+import {
   lazy,
   Suspense,
   useCallback,
@@ -7,6 +15,7 @@ import {
   useState,
 } from "react";
 import type { Mode, Work, Mission, Snapshot, Version } from "./model";
+import type { SharePayload } from "./qrTransfer";
 import {
   APP_PREFIX,
   LIMITS,
@@ -61,6 +70,12 @@ import {
 } from "./missionText";
 import type { Lang } from "./i18n";
 const SharePage = lazy(() => import("./SharePage"));
+const Receive = lazy(() =>
+  import("./QrShare").then((m) => ({ default: m.Receive })),
+);
+const WrapUp = lazy(() =>
+  import("./WrapUp").then((m) => ({ default: m.WrapUp })),
+);
 // 첫 화면에 필요 없는 화면은 열 때 불러온다(오프라인 캐시에는 미리 들어간다).
 const Workspace = lazy(() =>
   import("./Workspace").then((m) => ({ default: m.Workspace })),
@@ -107,6 +122,8 @@ type Dialog = {
   backup: Work[];
   label?: string;
 };
+// 선생님이 만든 미션을 기본 미션 뒤에 붙인다(첫 화면을 그리기 전에).
+loadCustomMissions();
 const readRoute = () => location.hash.replace(/^#\/?/, "") || "home";
 export default function App() {
   const [route, setRoute] = useState(readRoute);
@@ -138,6 +155,23 @@ export default function App() {
       : [];
   });
   const [lastId, setLastId] = useState<string>(() => getSetting("last", ""));
+  // 화면 보기: 고대비, 읽기 쉬운 글꼴·넓은 줄 간격. 기기에 기억하고 문서 전체에 표시한다.
+  const [display, setDisplayState] = useState(() => {
+    const v = getSetting<Partial<Record<"contrast" | "readable", unknown>>>(
+      "view",
+      {},
+    );
+    return { contrast: v.contrast === true, readable: v.readable === true };
+  });
+  const setDisplay = (v: typeof display) => {
+    setDisplayState(v);
+    setting("view", v);
+  };
+  useEffect(() => {
+    const root = document.documentElement;
+    root.toggleAttribute("data-contrast", display.contrast);
+    root.toggleAttribute("data-readable", display.readable);
+  }, [display]);
   const [loading, setLoading] = useState(true);
   const [storageStatus, setStorageStatus] = useState("불러오는 중");
   const [storageError, setStorageError] = useState("");
@@ -343,6 +377,26 @@ export default function App() {
     setting("last", work.id);
     go(`work/${work.id}/0`);
   };
+  // QR로 받은 작품 설정을 이 기기의 새 작품으로 더한다. 처음 시작 버전도 받은 설정으로 둔다.
+  const receiveWork = (p: Extract<SharePayload, { k: "work" }>) => {
+    const m = missions.find((x) => x.id === p.missionId);
+    if (!m) return;
+    const work = makeWork(localizeMission(m, lang));
+    work.draft = {
+      ...work.draft,
+      title: p.title || work.draft.title,
+      config: p.config,
+    };
+    work.versions = [
+      { ...work.versions[0], label: "QR로 받은 작품", data: clone(work.draft) },
+    ];
+    work.editingLabel = "QR로 받은 복사본 · 현재 편집본";
+    persist(work);
+    setLastId(work.id);
+    setting("last", work.id);
+    go(`work/${work.id}/0`);
+    message("QR로 받은 작품을 새 작품으로 더했어요.");
+  };
   const parts = route.split("/");
   const active = works.find((w) => w.id === parts[1]);
   const lock = useWorkLock(
@@ -406,6 +460,7 @@ export default function App() {
       setCopyFallback(text);
     }
   };
+  // 파일 받기를 요청했으면 true(정리 도우미가 다음 단계를 켠다).
   const backup = (items: Work[]) => {
     try {
       const count = downloadWorks(items);
@@ -417,12 +472,16 @@ export default function App() {
             )
           : "작품 JSON 파일의 다운로드를 요청했어요.",
       );
+      return true;
     } catch (e) {
       message(
-        e instanceof Error
-          ? e.message
-          : "파일을 만들지 못했어요. 불필요한 버전을 백업 후 정리해 주세요.",
+        errorText(
+          e,
+          t,
+          t("파일을 만들지 못했어요. 불필요한 버전을 백업 후 정리해 주세요."),
+        ),
       );
+      return false;
     }
   };
   const exportAll = () => {
@@ -465,6 +524,7 @@ export default function App() {
         await flush();
         await clearWorks();
         await clearClassSession().catch(() => {});
+        forgetCustomMissions();
         histories.current.clear();
         forgetHistory();
         announceChange();
@@ -477,6 +537,7 @@ export default function App() {
         setHidden([]);
         setLastId("");
         setModeState("child");
+        setDisplayState({ contrast: false, readable: false });
         setStorageError("");
         setStorageStatus("이 앱의 데이터 삭제됨");
         go("home");
@@ -640,6 +701,17 @@ export default function App() {
       } catch {
         // 아래 parseImport가 읽을 수 없는 파일이라고 알린다.
       }
+      // 선생님이 나눠 준 미션 파일
+      if ((data as { format?: unknown } | null)?.format === MISSION_FORMAT) {
+        const m = saveCustomMission(parseMissionFile(data));
+        message(
+          t("선생님 미션 「{title}」을 미션 공작대에 더했어요.", {
+            title: m.title,
+          }),
+        );
+        go(`mission/${m.id}`);
+        return;
+      }
       const peer = peerFileKind(data);
       if (peer === "request") {
         setPeerRequest(validatePeerRequest(data));
@@ -675,7 +747,7 @@ export default function App() {
       go("library");
     } catch (e) {
       message(
-        `${t("가져오지 못했어요.")} ${e instanceof Error ? e.message : t("내보낸 JSON 파일을 다시 선택해 주세요.")} ${t("기존 작품은 그대로예요.")}`,
+        `${t("가져오지 못했어요.")} ${errorText(e, t, t("내보낸 JSON 파일을 다시 선택해 주세요."))} ${t("기존 작품은 그대로예요.")}`,
       );
     } finally {
       if (importInput.current) importInput.current.value = "";
@@ -689,7 +761,9 @@ export default function App() {
     ? "home"
     : ["teacher", "prepare", "present"].includes(parts[0])
       ? "teacher"
-      : ["library", "portfolio", "peer", "peer-apply"].includes(parts[0])
+      : ["library", "portfolio", "peer", "peer-apply", "wrapup"].includes(
+            parts[0],
+          )
         ? "library"
         : "missions";
   const step = Math.max(0, Math.min(4, Number(parts[2]) || 0));
@@ -706,13 +780,17 @@ export default function App() {
               ? "친구 작품 검사하기"
               : parts[0] === "present"
                 ? "수업 진행 화면"
-                : navActive === "home"
-                  ? "공작소 홈"
-                  : navActive === "missions"
-                    ? "미션 공작대"
-                    : navActive === "library"
-                      ? "내 작품 선반"
-                      : "교사 자료실",
+                : parts[0] === "wrapup"
+                  ? "수업 끝 정리 도우미"
+                  : parts[0] === "receive"
+                    ? "QR로 받기"
+                    : navActive === "home"
+                      ? "공작소 홈"
+                      : navActive === "missions"
+                        ? "미션 공작대"
+                        : navActive === "library"
+                          ? "내 작품 선반"
+                          : "교사 자료실",
   );
   const pageTitle =
     parts[0] === "work" && active
@@ -852,6 +930,31 @@ export default function App() {
                   <option value="adult">{t("일반 입문자 모드")}</option>
                 </select>
               </label>
+              <details className="view-menu">
+                <summary>{t("화면 보기")}</summary>
+                <div className="view-menu-panel">
+                  <label className="checkbox">
+                    <input
+                      type="checkbox"
+                      checked={display.contrast}
+                      onChange={(e) =>
+                        setDisplay({ ...display, contrast: e.target.checked })
+                      }
+                    />
+                    {t("고대비 화면")}
+                  </label>
+                  <label className="checkbox">
+                    <input
+                      type="checkbox"
+                      checked={display.readable}
+                      onChange={(e) =>
+                        setDisplay({ ...display, readable: e.target.checked })
+                      }
+                    />
+                    {t("읽기 쉬운 글꼴 · 넓은 줄 간격")}
+                  </label>
+                </div>
+              </details>
               <label className="mode-select">
                 <span className="sr-only">언어 · Language</span>
                 <select
@@ -972,6 +1075,7 @@ export default function App() {
                   />
                 ) : parts[0] === "teacher" ? (
                   <Teacher
+                    works={works}
                     create={create}
                     go={go}
                     copy={copy}
@@ -996,7 +1100,7 @@ export default function App() {
                         applyPeer(w, peerResponse!);
                       } catch (e) {
                         message(
-                          `${t("합치지 못했어요.")} ${e instanceof Error ? e.message : ""}`,
+                          `${t("합치지 못했어요.")} ${errorText(e, t, "")}`,
                         );
                       }
                     }}
@@ -1010,6 +1114,29 @@ export default function App() {
                     request={peerRequest}
                     setRequest={setPeerRequest}
                     message={message}
+                  />
+                ) : parts[0] === "receive" && parts[1] ? (
+                  <Receive
+                    key={parts[1]}
+                    code={parts[1]}
+                    receiveWork={receiveWork}
+                    receivePeer={(p) => {
+                      setPeerRequest(p.request);
+                      go("peer");
+                      message(
+                        "친구 작품을 열었어요. 먼저 예상하고 직접 눌러 보세요.",
+                      );
+                    }}
+                    go={go}
+                  />
+                ) : parts[0] === "wrapup" ? (
+                  <WrapUp
+                    works={visible}
+                    saved={storageStatus === "기기에 저장됨"}
+                    backup={() => backup(visible)}
+                    nextUser={nextUser}
+                    clearAll={clearAll}
+                    go={go}
                   />
                 ) : parts[0] === "library" ? (
                   <Library
@@ -1176,7 +1303,7 @@ export default function App() {
                       setDialog(null);
                     } catch (e) {
                       message(
-                        `${t("처리하지 못했어요. 다시 시도해 주세요.")} ${e instanceof Error ? e.message : ""}`,
+                        `${t("처리하지 못했어요. 다시 시도해 주세요.")} ${errorText(e, t, "")}`,
                       );
                     } finally {
                       setDialogBusy(false);

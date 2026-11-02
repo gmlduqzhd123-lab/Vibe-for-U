@@ -51,6 +51,13 @@ jobs:
       - run: npx playwright test
         env:
           PW_BROWSER: ${{ matrix.browser }}
+      # 화면 모습 검사가 찍은 휴대전화·태블릿·PC 사진(한국어·영어)을 사람이 훑어볼 수 있게 남긴다.
+      - if: always() && matrix.browser == 'chromium'
+        uses: actions/upload-artifact@v6
+        with:
+          name: layout-screenshots
+          path: test-results/layout-*/*.png
+          retention-days: 14
       - if: failure()
         uses: actions/upload-artifact@v6
         with:

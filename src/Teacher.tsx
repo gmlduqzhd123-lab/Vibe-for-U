@@ -1,3 +1,5 @@
+import { MissionMaker } from "./MissionMaker";
+import type { Work } from "./model";
 import { useEffect, useState } from "react";
 import { missions, lessons, rubric } from "./data";
 import { kindNames } from "./model";
@@ -27,9 +29,17 @@ const classroomDocuments = [
     id: "new-features-guide",
     title: "새 기능 수업 보충 안내",
     description:
-      "패턴 그리기·쉬운 모드·친구 검사·자기 평가·수업 진행 화면·되돌리기·영어 화면 · 친구 검사 기록지 1쪽",
-    pages: 4,
+      "패턴 그리기·쉬운 모드·친구 검사·자기 평가·수업 진행·맞춤 힌트·앱 파일·QR·화면 보기·선생님 미션 · 친구 검사 기록지 1쪽",
+    pages: 5,
     downloadName: "뚝딱_바이브_새_기능_수업_보충_안내",
+  },
+  {
+    id: "student-worksheets-en",
+    title: "학생 활동지 영어판 (Student worksheets in English)",
+    description:
+      "1~8차시 활동지를 같은 배치로 옮긴 영어판 · 영어 화면으로 배우는 학생용",
+    pages: 16,
+    downloadName: "Ttukttak_Vibe_student_worksheets_EN",
   },
 ];
 export function Teacher({
@@ -37,7 +47,9 @@ export function Teacher({
   go,
   copy,
   message,
+  works,
 }: {
+  works: Work[];
   create: (m: Mission) => void;
   go: Navigate;
   copy: (text: string) => void;
@@ -172,6 +184,7 @@ export function Teacher({
           ["rubric", "과정 평가표"],
           ["class", "학급 작품 모으기"],
           ["examples", "시범 작품"],
+          ["maker", "미션 만들기"],
         ].map(([k, t]) => (
           <button
             key={k}
@@ -466,6 +479,13 @@ export function Teacher({
         </div>
       ) : null}
       {tab === "class" ? <ClassReview message={message} /> : null}
+      {tab === "maker" ? (
+        <MissionMaker
+          works={works}
+          message={message}
+          open={(id) => go(`mission/${id}`)}
+        />
+      ) : null}
       {tab === "examples" ? (
         <div className="project-grid">
           {["quiz-3", "story-3", "timer-3"].map((id) => {

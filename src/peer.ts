@@ -1,3 +1,4 @@
+import { AppError } from "./appError";
 import { missions } from "./data";
 import { LIMITS, now, uid } from "./model";
 import type { Check, Config, Work } from "./model";
@@ -46,21 +47,24 @@ export function makePeerRequest(w: Work): PeerRequest {
   };
 }
 type Obj = Record<string, unknown>;
-const fail = (msg: string): never => {
-  throw new Error(msg);
+const fail = (
+  key: string,
+  vars: Record<string, string | number> = {},
+): never => {
+  throw new AppError(key, vars);
 };
 const obj = (v: unknown, what: string) =>
   v && typeof v === "object" && !Array.isArray(v)
     ? (v as Obj)
-    : fail(`${what}: 객체 형식이 필요해요.`);
+    : fail("{what}: 객체 형식이 필요해요.", { what });
 const str = (v: unknown, what: string, max: number) =>
   typeof v === "string" && v.length <= max
     ? v
-    : fail(`${what}: ${max}자 이내의 글자여야 해요.`);
+    : fail("{what}: {max}자 이내의 글자여야 해요.", { what, max });
 const list = (v: unknown, what: string, max: number) =>
   Array.isArray(v) && v.length <= max
     ? v
-    : fail(`${what}: 항목이 ${max}개 이하여야 해요.`);
+    : fail("{what}: 항목이 {max}개 이하여야 해요.", { what, max });
 export function peerFileKind(data: unknown) {
   const f = data && typeof data === "object" ? (data as Obj).format : null;
   return f === "ttukttak-vibe-peer-request"

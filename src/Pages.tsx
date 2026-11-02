@@ -64,6 +64,9 @@ export function Missions({
                     {t(kindNames[m.kind])} {m.order}
                   </Pill>
                   {m.id === "quiz-1" ? <Pill>{t("첫 미션 추천")}</Pill> : null}
+                  {m.id.startsWith("custom-") ? (
+                    <Pill tone="green">{t("선생님 미션")}</Pill>
+                  ) : null}
                   {m.learningError ? (
                     <Pill tone="orange">{t("학습용 오류 포함")}</Pill>
                   ) : null}
@@ -316,6 +319,9 @@ export function Library({
           </small>
         </div>
         <div className="button-row">
+          <button className="primary" onClick={() => go("wrapup")}>
+            {t("수업 끝 정리 도우미")}
+          </button>
           <button onClick={nextUser}>{t("다음 사용자 시작")}</button>
           <button className="danger-text" onClick={clearAll}>
             {t("이 앱의 데이터 전체 삭제")}

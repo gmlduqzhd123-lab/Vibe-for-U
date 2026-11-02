@@ -1,3 +1,4 @@
+import { ClassCharts } from "./ClassCharts";
 import { useEffect, useRef, useState } from "react";
 import { LIMITS, now, stageDone } from "./model";
 import type { Feedback } from "./model";
@@ -263,6 +264,7 @@ export function ClassReview({ message }: { message: (s: string) => void }) {
               </table>
             </div>
           </div>
+          <ClassCharts works={entries.map((e) => e.work)} />
           <div className="class-cards">
             {entries.map((e) => (
               <ReviewCard

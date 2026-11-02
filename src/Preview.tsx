@@ -21,7 +21,7 @@ export function Preview({
   onRun: () => void;
 }) {
   const t = useT();
-  const [q, setQ] = useState(initialQuiz);
+  const [q, setQ] = useState(() => initialQuiz(t));
   const [sceneId, setSceneId] = useState(
     config.kind === "story" ? config.start : "",
   );
@@ -83,7 +83,7 @@ export function Preview({
                   key={i}
                   onClick={() => {
                     run();
-                    setQ((s) => answerQuiz(config, s, i));
+                    setQ((s) => answerQuiz(config, s, i, t));
                   }}
                 >
                   <span>{i + 1}</span>
@@ -103,7 +103,7 @@ export function Preview({
                   className="primary full"
                   onClick={() => {
                     run();
-                    setQ((s) => nextQuiz(config, s));
+                    setQ((s) => nextQuiz(config, s, t));
                   }}
                 >
                   {q.index === config.questions.length - 1
@@ -123,7 +123,7 @@ export function Preview({
           className="text-button"
           onClick={() => {
             run();
-            setQ((s) => resetQuiz(config, s));
+            setQ((s) => resetQuiz(config, s, t));
           }}
         >
           {t("↺ 다시 시작")}

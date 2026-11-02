@@ -32,6 +32,8 @@ describe("학생 화면 전체 번역", () => {
       ...predictionStarters,
       "시작 작품 · 현재 편집본",
       "가져온 복사본 · 현재 편집본",
+      "QR로 받은 복사본 · 현재 편집본",
+      "QR로 받은 작품",
       ...missions.flatMap((m) => [
         aiStatus(makeWork(m).draft.ai),
         ...autoChecks(m.starter, "r").map((c) => c.label),
