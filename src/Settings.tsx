@@ -1,3 +1,4 @@
+import { RuleSettings } from "./RuleSettings";
 import type { Config, QuizConfig, StoryConfig } from "./model";
 import { LIMITS, uid } from "./model";
 import { Field, Icon } from "./ui";
@@ -198,6 +199,8 @@ export function Settings({
   }
   if (config.kind === "pattern")
     return <PatternSettings config={config} onChange={onChange} />;
+  if (config.kind === "rule")
+    return <RuleSettings config={config} onChange={onChange} />;
   if (config.kind === "story") {
     const edit = (patch: Partial<StoryConfig>) =>
       onChange({ ...config, ...patch });

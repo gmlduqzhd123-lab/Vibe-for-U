@@ -20,7 +20,7 @@ function firstArg(code: string, start: number) {
 }
 const strings = (s: string) =>
   [...s.matchAll(/"((?:[^"\\]|\\.)*)"/g)]
-    .map((m) => m[1].replace(/\\"/g, '"'))
+    .map((m) => m[1].replace(/\\"/g, '"').replace(/\\n/g, "\n"))
     .filter((x) => HANGUL.test(x));
 export function codeKeys(files = readdirSync("src")) {
   const keys = new Map<string, string>();
@@ -34,7 +34,8 @@ export function codeKeys(files = readdirSync("src")) {
       for (const k of strings(arg)) add(f, k);
     }
     for (const m of code.matchAll(/\bt\(\s*"((?:[^"\\]|\\.)*)"/g))
-      if (HANGUL.test(m[1])) add(f, m[1]);
+      if (HANGUL.test(m[1]))
+        add(f, m[1].replace(/\\"/g, '"').replace(/\\n/g, "\n"));
   }
   return keys;
 }
@@ -44,10 +45,7 @@ export function listedKeys(files = readdirSync("src")) {
   const add = (f: string, k: string) => {
     if (HANGUL.test(k) && !keys.has(k)) keys.set(k, f);
   };
-  // 미션 만들기는 교사 화면이라 한국어로 둔다.
-  for (const f of files.filter(
-    (f) => /\.tsx$/.test(f) && f !== "MissionMaker.tsx",
-  )) {
+  for (const f of files.filter((f) => /\.tsx$/.test(f))) {
     const code = readFileSync(`src/${f}`, "utf8");
     // 알림과 저장 상태는 보여 줄 때 t()로 바꾼다.
     for (const m of code.matchAll(
@@ -91,7 +89,17 @@ export function listedKeys(files = readdirSync("src")) {
   }
   // 낱말 블록과 첫 체험·소개 화면은 파일 전체(자료 배열 포함)가 화면 문장이다.
   // 맞춤 힌트의 문제·힌트 문장도 화면에서 t()로 바꾼다.
-  for (const f of ["BlockPrompt.tsx", "Welcome.tsx", "diagnose.ts"])
-    for (const k of strings(readFileSync(`src/${f}`, "utf8"))) add(f, k);
+  // 교사 화면의 자료 배열(자료 카드·검사표·탭·그래프 항목·발표 장면)도 화면 문장이다.
+  for (const f of [
+    "BlockPrompt.tsx",
+    "Welcome.tsx",
+    "diagnose.ts",
+    "Teacher.tsx",
+    "ClassCharts.tsx",
+    "ShowCase.tsx",
+  ])
+    for (const k of strings(readFileSync(`src/${f}`, "utf8")))
+      // 내려받을 파일 이름(밑줄·확장자)은 번역하지 않는다.
+      if (!/_|\.(pdf|docx|zip|json|csv)$/.test(k)) add(f, k);
   return keys;
 }

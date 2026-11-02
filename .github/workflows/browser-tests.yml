@@ -38,6 +38,8 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+      # 성능 예산: 첫 화면 파일 크기가 정한 한도를 넘으면 실패한다.
+      - run: npm run budget
       - if: matrix.browser != 'msedge'
         run: npx playwright install --with-deps ${{ matrix.browser }}
       # Edge는 러너 이미지에 이미 있으므로 버전만 기록하고, 없을 때만 설치한다.

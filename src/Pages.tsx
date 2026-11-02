@@ -30,6 +30,15 @@ export function Missions({
             {t("처음이라면 퀴즈 1부터. 문제를 찾는 연습은 퀴즈 3을 골라요.")}
           </p>
         </div>
+        <div className="button-row">
+          <button onClick={() => go("map")}>
+            <Icon name="grid" />
+            {t("나의 미션 지도")}
+          </button>
+          <button onClick={() => go("bughunt")}>
+            {t("버그 탐정 무한 연습")}
+          </button>
+        </div>
       </div>
       <div className="filter-row">
         {["all", ...kinds].map((k) => (
@@ -221,6 +230,10 @@ export function Library({
           <button onClick={importFile}>
             <Icon name="folder" />
             {t("파일 가져오기")}
+          </button>
+          <button onClick={() => go("growth")}>
+            <Icon name="print" />
+            {t("학기말 성장 포트폴리오")}
           </button>
           <button disabled={!works.length} onClick={exportAll}>
             <Icon name="download" />

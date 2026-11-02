@@ -1,3 +1,5 @@
+import { translate, useLang, useT } from "./i18n";
+import { localizeMission } from "./missionText";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { lessons } from "./data";
 import { initialTimer, pauseTimer, startTimer, tickTimer } from "./engines";
@@ -7,21 +9,36 @@ import type { Navigate } from "./Pages";
 import { Icon, Pill } from "./ui";
 // 교사용 수업 진행 화면: 프로젝터에 미션을 단계별로 크게 보여 주고, 활동 타이머와 짝 역할 교대를 알린다.
 export type Slide = { title: string; lines: string[] };
-export function slidesFor(m: Mission, lesson?: (typeof lessons)[number]) {
+type Translate = (
+  text: string,
+  vars?: Record<string, string | number>,
+) => string;
+const korean: Translate = (text, vars) => translate("ko", text, vars);
+export function slidesFor(
+  m: Mission,
+  lesson?: (typeof lessons)[number],
+  t: Translate = korean,
+) {
   const slides: Slide[] = [
     {
-      title: lesson ? `오늘의 활동 · ${lesson.title}` : "오늘의 미션",
-      lines: [m.title, m.goal, ...(lesson ? [`목표: ${lesson.goal}`] : [])],
+      title: lesson
+        ? t("오늘의 활동 · {title}", { title: t(lesson.title) })
+        : t("오늘의 미션"),
+      lines: [
+        m.title,
+        m.goal,
+        ...(lesson ? [t("목표: {goal}", { goal: t(lesson.goal) })] : []),
+      ],
     },
-    { title: "먼저 예상하기", lines: [m.prediction] },
+    { title: t("먼저 예상하기"), lines: [m.prediction] },
     {
-      title: "검사할 것",
-      lines: m.tests.map((t) => `${t.label} → ${t.expected}`),
+      title: t("검사할 것"),
+      lines: m.tests.map((c) => `${c.label} → ${c.expected}`),
     },
-    { title: "이번 수정 과제", lines: [m.task] },
+    { title: t("이번 수정 과제"), lines: [m.task] },
     {
-      title: "마무리 질문",
-      lines: [m.closing, ...(lesson ? [`“${lesson.question}”`] : [])],
+      title: t("마무리 질문"),
+      lines: [m.closing, ...(lesson ? [`“${t(lesson.question)}”`] : [])],
     },
   ];
   return slides;
@@ -59,7 +76,7 @@ const clock = (ms: number) => {
   return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 };
 export function Present({
-  mission: m,
+  mission,
   lessonNumber,
   go,
 }: {
@@ -67,18 +84,22 @@ export function Present({
   lessonNumber?: number;
   go: Navigate;
 }) {
+  const t = useT();
+  const lang = useLang();
+  const m = localizeMission(mission, lang);
   const lesson = lessonNumber ? lessons[lessonNumber - 1] : undefined;
-  const slides = slidesFor(m, lesson);
+  const slides = slidesFor(m, lesson, t);
   const [index, setIndex] = useState(0);
   const [minutes, setMinutes] = useState(lesson ? 30 : 10);
+  const endMessage = t("활동 시간이 끝났어요.");
   const config: TimerConfig = useMemo(
     () => ({
       kind: "timer",
       seconds: minutes * 60,
       showEnd: true,
-      endMessage: "활동 시간이 끝났어요.",
+      endMessage,
     }),
-    [minutes],
+    [minutes, endMessage],
   );
   const [timer, setTimer] = useState(() => initialTimer(config));
   const [roles, setRoles] = useState(true);
@@ -133,8 +154,8 @@ export function Present({
       <header className="present-top">
         <div>
           <Pill tone="paper">
-            {kindNames[m.kind]} {m.order}
-            {lesson ? ` · ${lessonNumber}차시` : ""}
+            {t(kindNames[m.kind])} {m.order}
+            {lesson ? t(" · {n}차시", { n: lessonNumber ?? "" }) : ""}
           </Pill>
           <span className="present-count">
             {index + 1} / {slides.length}
@@ -149,15 +170,16 @@ export function Present({
                   : void document.documentElement.requestFullscreen()
               }
             >
-              전체 화면
+              {t("전체 화면")}
             </button>
           ) : (
             <small className="present-tip">
-              이 기기는 전체 화면을 지원하지 않아요. 기기를 가로로 놓거나
-              브라우저 메뉴의 ‘홈 화면에 추가’로 열면 화면을 넓게 쓸 수 있어요.
+              {t(
+                "이 기기는 전체 화면을 지원하지 않아요. 기기를 가로로 놓거나 브라우저 메뉴의 ‘홈 화면에 추가’로 열면 화면을 넓게 쓸 수 있어요.",
+              )}
             </small>
           )}
-          <button onClick={() => go("teacher")}>수업 진행 끝내기</button>
+          <button onClick={() => go("teacher")}>{t("수업 진행 끝내기")}</button>
         </div>
       </header>
       <article className="present-slide" aria-live="polite">
@@ -168,13 +190,13 @@ export function Present({
           </p>
         ))}
       </article>
-      <nav className="present-nav button-row" aria-label="진행 단계">
+      <nav className="present-nav button-row" aria-label={t("진행 단계")}>
         <button
           disabled={index === 0}
           onClick={() => setIndex((i) => i - 1)}
           aria-keyshortcuts="ArrowLeft"
         >
-          ← 이전
+          {t("← 이전")}
         </button>
         {slides.map((s, i) => (
           <button
@@ -192,17 +214,17 @@ export function Present({
           onClick={() => setIndex((i) => i + 1)}
           aria-keyshortcuts="ArrowRight"
         >
-          다음 →
+          {t("다음 →")}
         </button>
       </nav>
-      <aside className="present-timer panel" aria-label="활동 타이머">
+      <aside className="present-timer panel" aria-label={t("활동 타이머")}>
         <div className="present-clock" data-testid="present-clock">
           {clock(timer.remaining)}
         </div>
         <div className="button-row">
           {(lesson ? [5, 30, 5] : [5, 10, 20]).map((n, i) => (
             <button key={i} onClick={() => reset(n)}>
-              {lesson ? ["도입", "전개", "정리"][i] : ""} {n}분
+              {lesson ? t(["도입", "전개", "정리"][i]) : ""} {t("{n}분", { n })}
             </button>
           ))}
         </div>
@@ -215,15 +237,15 @@ export function Present({
               setTimer((t) => startTimer(t, Date.now()));
             }}
           >
-            <Icon name="play" /> 시작
+            <Icon name="play" /> {t("시작")}
           </button>
           <button
             disabled={!timer.running}
             onClick={() => setTimer((t) => pauseTimer(t, Date.now(), config))}
           >
-            일시정지
+            {t("일시정지")}
           </button>
-          <button onClick={() => reset()}>초기화</button>
+          <button onClick={() => reset()}>{t("초기화")}</button>
         </div>
         <label className="checkbox">
           <input
@@ -231,7 +253,7 @@ export function Present({
             checked={roles}
             onChange={(e) => setRoles(e.target.checked)}
           />
-          10분마다 짝 역할 교대 알림
+          {t("10분마다 짝 역할 교대 알림")}
         </label>
         <label className="checkbox">
           <input
@@ -239,25 +261,30 @@ export function Present({
             checked={sound}
             onChange={(e) => setSound(e.target.checked)}
           />
-          소리로도 알리기 (교대 두 번, 종료 세 번)
+          {t("소리로도 알리기 (교대 두 번, 종료 세 번)")}
         </label>
         {roles ? (
           <p className="present-roles">
-            운전자: <b>{role.swaps % 2 ? "짝 B" : "짝 A"}</b> · 관찰자:{" "}
-            <b>{role.swaps % 2 ? "짝 A" : "짝 B"}</b>
+            {t("운전자:")} <b>{t(role.swaps % 2 ? "짝 B" : "짝 A")}</b> ·{" "}
+            {t("관찰자:")} <b>{t(role.swaps % 2 ? "짝 A" : "짝 B")}</b>
             <br />
-            <small>다음 교대까지 {clock(role.nextInMs)}</small>
+            <small>
+              {t("다음 교대까지 {time}", { time: clock(role.nextInMs) })}
+            </small>
           </p>
         ) : null}
         <div role="status" className="present-status">
-          {timer.ended ? "활동 시간이 끝났어요. 정리해 볼까요?" : ""}
+          {timer.ended ? t("활동 시간이 끝났어요. 정리해 볼까요?") : ""}
         </div>
       </aside>
       {swapDue ? (
         <div role="alert" className="present-swap">
-          <b>역할을 바꿔요!</b> 이제 운전자는 {role.swaps % 2 ? "짝 B" : "짝 A"}
-          , 관찰자는 {role.swaps % 2 ? "짝 A" : "짝 B"}예요.
-          <button onClick={() => setSeenSwaps(role.swaps)}>확인</button>
+          <b>{t("역할을 바꿔요!")}</b>{" "}
+          {t("이제 운전자는 {driver}, 관찰자는 {observer}예요.", {
+            driver: t(role.swaps % 2 ? "짝 B" : "짝 A"),
+            observer: t(role.swaps % 2 ? "짝 A" : "짝 B"),
+          })}
+          <button onClick={() => setSeenSwaps(role.swaps)}>{t("확인")}</button>
         </div>
       ) : null}
     </section>

@@ -3,11 +3,12 @@ import { addTranslations, translate } from "../src/i18n";
 import { en } from "../src/i18nEn";
 import { stageNames, kindNames, aiStatus, makeWork } from "../src/model";
 import { dirNames, autoChecks } from "../src/engines";
-import { rubric, missions } from "../src/data";
+import { lessons, missions, quiz, rubric, story, timer } from "../src/data";
 import { levelNames } from "../src/classSummary";
 import { stageGuides } from "../src/Workspace";
 import { blockGroups, predictionStarters } from "../src/BlockPrompt";
 import { codeKeys, listedKeys } from "./i18nKeys";
+import { configStrings } from "../src/missionText";
 describe("화면 틀 번역", () => {
   it("번역이 없으면 한국어 문장을 그대로 보여 준다", () => {
     expect(translate("ko", "미션 공작대")).toBe("미션 공작대");
@@ -34,6 +35,10 @@ describe("학생 화면 전체 번역", () => {
       "가져온 복사본 · 현재 편집본",
       "QR로 받은 복사본 · 현재 편집본",
       "QR로 받은 작품",
+      // 차시 안내와 완성 예제·미션의 시작 글
+      ...lessons.flatMap((l) => Object.values(l)),
+      ...[quiz, story, timer].flatMap(configStrings),
+      ...missions.flatMap((m) => configStrings(m.starter)),
       ...missions.flatMap((m) => [
         aiStatus(makeWork(m).draft.ai),
         ...autoChecks(m.starter, "r").map((c) => c.label),

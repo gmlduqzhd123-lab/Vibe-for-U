@@ -1,3 +1,4 @@
+import { useSendGuard } from "./sendGuard";
 import { useEffect, useRef, useState } from "react";
 import { Inspection } from "./Inspection";
 import { compareSnapshots, configSummary, updatePrediction } from "./learning";
@@ -76,6 +77,7 @@ export function Workspace({
   updateWork = () => {},
 }: Props) {
   const t = useT();
+  const guard = useSendGuard();
   const lang = useLang();
   const d = w.draft;
   const done = stageDone(d);
@@ -160,29 +162,33 @@ export function Workspace({
             {t("파일 백업")}
           </button>
           <button
-            onClick={() => {
-              downloadText(
-                `뚝딱-앱-${d.title || "작품"}.html`,
-                standaloneHtml(w, t, lang),
-                "text/html",
-              );
-              message(
-                t(
-                  "앱 파일(HTML)을 내려받았어요. 인터넷 없이 브라우저에서 열려요.",
-                ),
-              );
-            }}
+            onClick={() =>
+              guard([w], () => {
+                downloadText(
+                  `뚝딱-앱-${d.title || "작품"}.html`,
+                  standaloneHtml(w, t, lang),
+                  "text/html",
+                );
+                message(
+                  t(
+                    "앱 파일(HTML)을 내려받았어요. 인터넷 없이 브라우저에서 열려요.",
+                  ),
+                );
+              })
+            }
           >
             <Icon name="download" />
             {t("앱 파일로 내보내기")}
           </button>
           <ShareButton
+            works={[w]}
             name={`뚝딱-작품-${d.title || "작품"}.json`}
             text={() => backupFiles([w])[0]}
             title={d.title || "뚝딱 작품"}
             message={message}
           />
           <QrSendButton
+            works={[w]}
             payload={() => workPayload(w)}
             label={t("QR로 보내기")}
             message={message}
@@ -627,10 +633,12 @@ export function Workspace({
                   </p>
                   <button
                     onClick={() =>
-                      downloadText(
-                        `친구검사요청-${d.title || "작품"}.json`,
-                        JSON.stringify(makePeerRequest(w)),
-                        "application/json",
+                      guard([w], () =>
+                        downloadText(
+                          `친구검사요청-${d.title || "작품"}.json`,
+                          JSON.stringify(makePeerRequest(w)),
+                          "application/json",
+                        ),
                       )
                     }
                   >
@@ -638,6 +646,7 @@ export function Workspace({
                     {t("친구 검사 요청 파일 만들기")}
                   </button>
                   <ShareButton
+                    works={[w]}
                     name={`친구검사요청-${d.title || "작품"}.json`}
                     text={() => JSON.stringify(makePeerRequest(w))}
                     title={t("친구 검사 요청")}
@@ -645,6 +654,7 @@ export function Workspace({
                     label={t("요청 파일 공유로 보내기")}
                   />
                   <QrSendButton
+                    works={[w]}
                     payload={() => peerPayload(w)}
                     label={t("요청을 QR로 보내기")}
                     message={message}

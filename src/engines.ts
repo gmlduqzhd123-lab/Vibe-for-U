@@ -7,6 +7,7 @@ import type {
   Direction,
   PatternConfig,
   QuizConfig,
+  RuleConfig,
   StoryConfig,
   TimerConfig,
   Mission,
@@ -81,6 +82,68 @@ export function resetQuiz(c: QuizConfig, s: QuizState, t: Tr = ko): QuizState {
       n: c.resetScore ? 0 : s.score,
     }),
   };
+}
+// 만약 규칙 앱
+export type RuleState = { value: number; presses: number; event: string };
+export const ruleMatches = (
+  r: RuleConfig["rules"][number],
+  v: number,
+): boolean =>
+  r.when === "gte"
+    ? v >= r.value
+    : r.when === "lte"
+      ? v <= r.value
+      : v === r.value;
+// 위에서부터 처음 맞는 조건의 문구. 하나도 맞지 않으면 '그 밖에' 문구를 쓴다.
+export function ruleMessage(c: RuleConfig, v: number) {
+  const hit = c.rules.findIndex((r) => ruleMatches(r, v));
+  return { index: hit, message: hit < 0 ? c.otherwise : c.rules[hit].message };
+}
+export const initialRule = (c: RuleConfig, t: Tr = ko): RuleState => ({
+  value: c.start,
+  presses: 0,
+  event: t("처음 값 {v}에서 시작해요.", { v: c.start }),
+});
+export function pressRule(
+  c: RuleConfig,
+  s: RuleState,
+  button: number,
+  t: Tr = ko,
+): RuleState {
+  const b = c.buttons[button];
+  if (!b) return s;
+  const raw = s.value + b.change;
+  const value = c.floor === null ? raw : Math.max(c.floor, raw);
+  const hit = ruleMessage(c, value);
+  return {
+    value,
+    presses: s.presses + 1,
+    event: t("{label} → {name} {a} → {b} → {rule}", {
+      label: b.label,
+      name: c.variable,
+      a: s.value,
+      b: value,
+      rule:
+        hit.index < 0
+          ? t("맞는 조건 없음 → 그 밖에 문구")
+          : t("조건 {n}번이 처음으로 맞음", { n: hit.index + 1 }),
+    }),
+  };
+}
+export const resetRule = (c: RuleConfig, t: Tr = ko): RuleState => ({
+  ...initialRule(c, t),
+  event: t("처음으로 → {name} {v}", { name: c.variable, v: c.start }),
+});
+// 앞 조건에 가려 절대 나올 수 없는 조건(예: '3 이상'이 '5 이상'보다 먼저 있음)을 찾는다.
+export function shadowedRules(c: RuleConfig) {
+  const lo = Math.min(c.start, ...c.rules.map((r) => r.value)) - 50;
+  const hi = Math.max(c.start, ...c.rules.map((r) => r.value)) + 50;
+  return c.rules.flatMap((r, i) => {
+    let reachable = false;
+    for (let v = lo; v <= hi && !reachable; v++)
+      if (ruleMatches(r, v) && ruleMessage(c, v).index === i) reachable = true;
+    return reachable ? [] : [i];
+  });
 }
 export function reachable(c: StoryConfig) {
   const seen = new Set<string>();
@@ -403,6 +466,49 @@ export function autoChecks(c: Config, revision: string, t: Tr = ko): Check[] {
           at: cell(reset.x, reset.y),
         }),
         pass: reset.painted.length === 1 && reset.x === 0 && reset.y === 0,
+      },
+    );
+  } else if (c.kind === "rule") {
+    const hidden = shadowedRules(c);
+    let s = initialRule(c, t);
+    const up = c.buttons.findIndex((b) => b.change > 0);
+    for (let i = 0; i < 3 && up >= 0; i++) s = pressRule(c, s, up, t);
+    const reset = resetRule(c, t);
+    const down = c.buttons.findIndex((b) => b.change < 0);
+    let low = initialRule(c, t);
+    for (let i = 0; i < 20 && down >= 0; i++) low = pressRule(c, low, down, t);
+    rows.push(
+      {
+        label: "조건마다 나올 수 있음",
+        expected: t("모든 조건의 문구가 어떤 값에서는 나온다"),
+        actual: hidden.length
+          ? t("앞 조건에 가려 나올 수 없는 조건 {n}개", { n: hidden.length })
+          : t("모든 조건이 나올 수 있음"),
+        pass: hidden.length === 0,
+      },
+      {
+        label: "버튼과 기억하는 값",
+        expected: t("버튼을 누른 만큼 {name}이 바뀐다", { name: c.variable }),
+        actual: t("3번 눌러 {a} → {b}", { a: c.start, b: s.value }),
+        pass: up < 0 || s.value === c.start + 3 * c.buttons[up].change,
+      },
+      {
+        label: "처음으로 다시",
+        expected: t("{name} {v}에서 다시 시작", {
+          name: c.variable,
+          v: c.start,
+        }),
+        actual: t("{name} {v}", { name: c.variable, v: reset.value }),
+        pass: reset.value === c.start,
+      },
+      {
+        label: "가장 작은 값",
+        expected:
+          c.floor === null
+            ? t("가장 작은 값 제한 없음")
+            : t("{v}보다 작아지지 않음", { v: c.floor }),
+        actual: t("20번 줄여 {v}", { v: low.value }),
+        pass: c.floor === null || low.value >= c.floor,
       },
     );
   } else {

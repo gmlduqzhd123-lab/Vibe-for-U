@@ -381,4 +381,99 @@ export const missionsEn: Record<string, MissionText> = {
     closing:
       "Without an “if … then …” condition, how many commands would you need to draw the same border?",
   },
+  "rule-1": {
+    title: "If you collect 5",
+    goal: "Change the sticker count with buttons and show a celebration message when it reaches 5.",
+    prediction:
+      "How many times must you press +1 to see the celebration? What shows after 4 presses?",
+    tests: [
+      {
+        label: "When it reaches 5",
+        expected: "Pressing +1 five times shows the celebration message.",
+      },
+      {
+        label: "Start over",
+        expected:
+          "Pressing Start over goes back to 0 stickers and the first message.",
+      },
+    ],
+    task: "Change the message of the condition “if stickers are 5 or more” to fit your class, then check again.",
+    hints: [
+      "The value the app remembers is the number of stickers.",
+      "The condition is “5 or more”, so it also matches at 5.",
+      "At 4 no condition matches, so the “otherwise” message shows.",
+    ],
+    closing:
+      "Without an “if …” condition, could the app know when to celebrate?",
+  },
+  "rule-2": {
+    title: "Not below zero",
+    goal: "Check that the stickers never go below 0, even if you press −1 many times.",
+    prediction: "With 0 stickers, what happens when you press −1?",
+    tests: [
+      {
+        label: "Take away at 0",
+        expected: "At 0 stickers, pressing −1 keeps it at 0.",
+      },
+      {
+        label: "Collect again",
+        expected: "After taking away, pressing +1 counts up from 1.",
+      },
+    ],
+    task: "Clear the “smallest value” setting, compare what changes, then set it back to 0.",
+    hints: [
+      "Find the “smallest value” in the settings.",
+      "Without a smallest value it can go down to −1, −2 and so on.",
+      "You can't have fewer than 0 stickers, so make 0 the smallest value.",
+    ],
+    closing:
+      "Why does a value the app remembers sometimes need a promise like “never go below this”?",
+  },
+  "rule-3": {
+    title: "Huh? The best message never shows!",
+    goal: "Find out why “Amazing!” doesn't show at 6 stickers and fix the order of the conditions.",
+    prediction: "Which message should show at 6 stickers? What actually shows?",
+    tests: [
+      {
+        label: "When it reaches 6",
+        expected: "At 6 stickers the “Amazing!” message shows.",
+      },
+      {
+        label: "When it reaches 3",
+        expected: "From 3 to 5 stickers the “Nice” message shows.",
+      },
+    ],
+    task: "Conditions are checked from the top. Change the order so “6 or more” is checked first.",
+    hints: [
+      "6 matches both “3 or more” and “6 or more”.",
+      "The app uses only the first condition that matches, from the top.",
+      "Try moving the “6 or more” condition up.",
+    ],
+    closing:
+      "When several conditions match, explain in which order the app checks them.",
+  },
+  "rule-4": {
+    title: "Only when it's exactly right",
+    goal: "Show the treasure message only at exactly 10 steps, and compare “equals” with “or more”.",
+    prediction: "If +2 takes you from 9 to 11, does the treasure message show?",
+    tests: [
+      {
+        label: "Exactly 10 steps",
+        expected: "The treasure message shows only when steps are exactly 10.",
+      },
+      {
+        label: "Going past 10",
+        expected:
+          "At 11 the “still walking” message shows instead of the treasure.",
+      },
+    ],
+    task: "Change the condition from “equals 10” to “10 or more”, compare the results, then choose one and write why.",
+    hints: [
+      "“Equals” matches only that exact value.",
+      "From 9, pressing +2 jumps over 10.",
+      "With “or more” it also matches at 11.",
+    ],
+    closing:
+      "For a treasure-hunt game, which condition fits better, “equals” or “or more”, and why?",
+  },
 };

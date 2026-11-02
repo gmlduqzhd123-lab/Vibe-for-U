@@ -1,3 +1,5 @@
+import type { Work } from "./model";
+import { useSendGuard } from "./sendGuard";
 import { useEffect, useId, useRef, useState } from "react";
 import { Icon, Pill } from "./ui";
 import { useLang, useT } from "./i18n";
@@ -18,12 +20,15 @@ export function QrSendButton({
   payload,
   label,
   message,
+  works,
 }: {
   payload: () => SharePayload;
   label: string;
   message: (s: string) => void;
+  works: Work[];
 }) {
   const t = useT();
+  const guard = useSendGuard();
   const dialog = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   const [url, setUrl] = useState("");
@@ -41,7 +46,7 @@ export function QrSendButton({
   const qr = url ? qrPath(url) : null;
   return (
     <>
-      <button type="button" onClick={open}>
+      <button type="button" onClick={() => guard(works, open)}>
         <Icon name="send" />
         {label}
       </button>

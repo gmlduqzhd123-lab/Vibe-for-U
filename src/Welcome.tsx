@@ -1,6 +1,14 @@
 import { useEffect, useRef, useState } from "react";
-import { useT } from "./i18n";
-import { lessons, missions, quiz, story, timer } from "./data";
+import { useLang, useT } from "./i18n";
+import { localizeConfig } from "./missionText";
+import {
+  lessonMissionIds,
+  lessons,
+  missions,
+  quiz,
+  story,
+  timer,
+} from "./data";
 import { answerQuiz, initialQuiz } from "./engines";
 import type { Kind, Mission, QuizConfig } from "./model";
 import { Preview } from "./Preview";
@@ -12,16 +20,7 @@ type Create = (
   normal?: boolean,
   starter?: { prediction: string; reason: string },
 ) => void;
-export const lessonMissionIds = [
-  "quiz-1",
-  "quiz-1",
-  "story-1",
-  "quiz-4",
-  "quiz-3",
-  "quiz-1",
-  "story-4",
-  "timer-4",
-];
+export { lessonMissionIds } from "./data";
 export const materialUrl = (file: string) =>
   `${import.meta.env.BASE_URL}materials/${file}`;
 const practiceQuiz = quiz as QuizConfig;
@@ -58,12 +57,13 @@ export function LearningWords({ compact = false }: { compact?: boolean }) {
 
 export function DemoLab({ go }: { go: Go }) {
   const t = useT();
+  const lang = useLang();
   const [kind, setKind] = useState<Kind>("quiz");
   const config =
     kind === "quiz"
-      ? quiz
+      ? localizeConfig(quiz, lang)
       : kind === "story"
-        ? story
+        ? localizeConfig(story, lang)
         : {
             ...timer,
             seconds: 5,

@@ -97,7 +97,7 @@ test("교사가 학생 파일을 모아 단계 표를 보고 평가를 학생에
   await home.goto("#/library");
   await home.locator("input[type=file]").setInputFiles((await back.path())!);
   await expect(home.locator(".work-card")).toHaveCount(1);
-  await home.getByRole("button", { name: "포트폴리오" }).click();
+  await home.getByRole("button", { name: "포트폴리오", exact: true }).click();
   const feedback = home.locator(".teacher-feedback");
   await expect(feedback).toContainText("07. 과정 평가 · 나와 선생님");
   await expect(feedback).toContainText("수행");

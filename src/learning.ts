@@ -69,6 +69,34 @@ export function configSummary(c: Config, t: Tr = ko): string[] {
         : []),
       t("목표 칸 {n}개", { n: c.target.length }),
     ];
+  if (c.kind === "rule") {
+    const when = {
+      gte: "{v} 이상이면",
+      lte: "{v} 이하이면",
+      eq: "{v}과 같으면",
+    };
+    return [
+      t("기억하는 값: {name} · 처음 {v}", { name: c.variable, v: c.start }),
+      t("가장 작은 값: {v}", {
+        v: c.floor === null ? t("제한 없음") : c.floor,
+      }),
+      ...c.buttons.map((b) =>
+        t("버튼 「{label}」: {name} {change}", {
+          label: b.label,
+          name: c.variable,
+          change: b.change > 0 ? `+${b.change}` : b.change,
+        }),
+      ),
+      ...c.rules.map((r, i) =>
+        t("조건 {n}: 만약 {cond} 「{msg}」", {
+          n: i + 1,
+          cond: t(when[r.when], { v: r.value }),
+          msg: r.message,
+        }),
+      ),
+      t("그 밖에: 「{msg}」", { msg: c.otherwise }),
+    ];
+  }
   return [
     t("제한 시간: {n}초", { n: c.seconds }),
     t("종료 안내: {v}", {

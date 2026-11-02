@@ -1,7 +1,8 @@
 import { AppError } from "./appError";
 import { missions } from "./data";
 import { LIMITS, now, uid } from "./model";
-import type { Check, Config, Work } from "./model";
+import type { Check, Config, Mission, Work } from "./model";
+import { adoptMissions, isCustom } from "./customMissions";
 import { validateConfig } from "./storage";
 // 친구 검사: 요청 파일에는 앱 설정과 검사 항목만 담고, 학생의 다른 기록은 넣지 않는다.
 export type PeerRequest = {
@@ -13,6 +14,8 @@ export type PeerRequest = {
   missionId: string;
   config: Config;
   tests: { label: string; expected: string }[];
+  // 선생님 미션이면 미션도 담아, 그 미션이 없는 친구 기기에서도 연다.
+  missions?: Mission[];
 };
 export type PeerResult = {
   label: string;
@@ -44,6 +47,7 @@ export function makePeerRequest(w: Work): PeerRequest {
     missionId: w.missionId,
     config: w.draft.config,
     tests: m?.tests ?? [],
+    ...(m && isCustom(m.id) ? { missions: [m] } : {}),
   };
 }
 type Obj = Record<string, unknown>;
@@ -77,8 +81,10 @@ export function validatePeerRequest(data: unknown): PeerRequest {
   const r = obj(data, "친구 검사 요청");
   if (r.version !== 1) fail("지원하지 않는 친구 검사 요청 파일이에요.");
   const missionId = str(r.missionId, "미션", 80);
-  if (!missions.some((m) => m.id === missionId))
-    fail("지원하지 않는 미션이에요.");
+  // 함께 온 선생님 미션은 이번 검사 동안만 쓴다(친구 기기에 남기지 않는다).
+  adoptMissions(r.missions, false);
+  const mission = missions.find((m) => m.id === missionId);
+  if (!mission) fail("지원하지 않는 미션이에요.");
   return {
     format: "ttukttak-vibe-peer-request",
     version: 1,
@@ -94,6 +100,7 @@ export function validatePeerRequest(data: unknown): PeerRequest {
         expected: str(o.expected, "기대 결과", LIMITS.checkText),
       };
     }),
+    ...(mission && isCustom(mission.id) ? { missions: [mission] } : {}),
   };
 }
 export function validatePeerResponse(data: unknown): PeerResponse {
