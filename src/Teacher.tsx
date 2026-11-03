@@ -22,8 +22,9 @@ const classroomDocuments = [
   {
     id: "student-worksheets",
     title: "차시별 학생 활동지 전체",
-    description: "1~8차시 예상·관찰·수정·재검사 기록지 · 차시마다 앞뒤 2쪽",
-    pages: 16,
+    description:
+      "1~8차시 예상·관찰·수정·재검사 기록지와 보충 차시(만약 규칙 앱) · 차시마다 앞뒤 2쪽",
+    pages: 18,
     downloadName: "뚝딱_바이브_차시별_학생_활동지",
   },
   {
@@ -38,9 +39,24 @@ const classroomDocuments = [
     id: "student-worksheets-en",
     title: "학생 활동지 영어판 (Student worksheets in English)",
     description:
-      "1~8차시 활동지를 같은 배치로 옮긴 영어판 · 영어 화면으로 배우는 학생용",
-    pages: 16,
+      "1~8차시와 보충 차시(만약 규칙 앱) 활동지를 같은 배치로 옮긴 영어판 · 영어 화면으로 배우는 학생용",
+    pages: 18,
     downloadName: "Ttukttak_Vibe_student_worksheets_EN",
+  },
+  {
+    id: "teacher-guide-en",
+    title: "교사용 안내서 영어판 (Teacher guide in English)",
+    description:
+      "14쪽 안내서를 같은 배치로 옮긴 영어판 · 영어로 수업하는 교사용",
+    pages: 14,
+    downloadName: "Ttukttak_Vibe_teacher_guide_EN",
+  },
+  {
+    id: "new-features-guide-en",
+    title: "새 기능 보충 안내 영어판 (New features supplement in English)",
+    description: "6쪽 보충 안내의 영어판",
+    pages: 6,
+    downloadName: "Ttukttak_Vibe_new_features_guide_EN",
   },
 ];
 export function Teacher({

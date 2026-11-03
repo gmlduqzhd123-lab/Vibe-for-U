@@ -78,7 +78,8 @@ export function configStrings(c: Config): string[] {
   return [];
 }
 export function localizeMission(m: Mission, lang: Lang): Mission {
-  const en = lang === "en" ? english?.[m.id] : undefined;
+  // 선생님 미션은 미션 안에 담긴 영어 글을 쓴다(없으면 한국어 그대로).
+  const en = lang === "en" ? (m.en ?? english?.[m.id]) : undefined;
   if (!en) return m;
   return {
     ...m,

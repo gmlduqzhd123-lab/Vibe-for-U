@@ -9,6 +9,7 @@ const types = {
   ".css": "text/css; charset=utf-8",
   ".svg": "image/svg+xml",
   ".png": "image/png",
+  ".webp": "image/webp",
   ".pdf": "application/pdf",
   ".docx":
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",

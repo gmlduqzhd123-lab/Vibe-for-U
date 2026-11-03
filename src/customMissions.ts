@@ -11,6 +11,42 @@ const KEY = `${APP_PREFIX}missions`;
 export const isCustom = (id: string) => id.startsWith("custom-");
 const builtIn = missions.filter((m) => !isCustom(m.id)).length;
 type Obj = Record<string, unknown>;
+// 영어 글(선택): 제목·목표·예상·과제·마무리가 모두 있어야 쓰고, 검사·힌트 수는 한국어와 같아야 한다.
+function englishOf(raw: unknown, tests: number, hints: number) {
+  if (!raw || typeof raw !== "object") return undefined;
+  const e = raw as Obj;
+  const opt = (v: unknown, max: number) =>
+    typeof v === "string" ? v.trim().slice(0, max) : "";
+  const title = opt(e.title, LIMITS.short);
+  const goal = opt(e.goal, LIMITS.promise);
+  const prediction = opt(e.prediction, LIMITS.promise);
+  const task = opt(e.task, LIMITS.promise);
+  const closing = opt(e.closing, LIMITS.promise);
+  if (![title, goal, prediction, task, closing].every(Boolean))
+    return undefined;
+  const ts = Array.isArray(e.tests) ? e.tests : [];
+  const hs = Array.isArray(e.hints) ? e.hints : [];
+  if (ts.length !== tests || hs.length !== hints) return undefined;
+  const parsed = ts.map((t) => {
+    const o = (t ?? {}) as Obj;
+    return {
+      label: opt(o.label, LIMITS.short),
+      expected: opt(o.expected, LIMITS.checkText),
+    };
+  });
+  const hintList = hs.map((h) => opt(h, LIMITS.promise));
+  if (parsed.some((t) => !t.label || !t.expected) || hintList.some((h) => !h))
+    return undefined;
+  return {
+    title,
+    goal,
+    prediction,
+    task,
+    closing,
+    tests: parsed,
+    hints: hintList,
+  };
+}
 const text = (v: unknown, what: string, max: number, required = true) => {
   if (typeof v !== "string" || v.length > max || (required && !v.trim()))
     throw new AppError("{what}: {max}자 이내로 적어 주세요.", { what, max });
@@ -55,7 +91,21 @@ export function validateMission(data: unknown): Mission {
     closing: text(m.closing, "마무리 질문", LIMITS.promise),
     learningError: m.learningError === true,
     starter,
+    version:
+      typeof m.version === "number" &&
+      Number.isInteger(m.version) &&
+      m.version > 0
+        ? Math.min(m.version, 9999)
+        : 1,
+    en: englishOf(m.en, parsedTests.length, hints.length),
   };
+}
+// 같은 미션의 더 새로운 판인지(교사가 고쳐서 다시 나눠 준 경우)
+export const isNewerMission = (incoming: Mission, stored: Mission) =>
+  (incoming.version ?? 1) > (stored.version ?? 1);
+// 저장된 미션을 새 판으로 바꾼다. 이미 만든 작품은 작품 안에 설정이 따로 있어 그대로 남는다.
+export function replaceCustomMission(m: Mission) {
+  return saveCustomMission(m);
 }
 export const missionFile = (m: Mission) =>
   JSON.stringify({ format: MISSION_FORMAT, version: 1, mission: m });
@@ -116,7 +166,13 @@ export function forgetCustomMissions() {
 }
 // 작품 파일·친구 검사 요청·QR에 함께 온 선생님 미션을 받아들인다.
 // save가 true면 이 기기에 남기고(작품을 더할 때), 아니면 이번에 열어 보는 동안만 쓴다(친구 검사).
-export function adoptMissions(list: unknown, save = true): Mission[] {
+// 함께 온 미션 가운데 이 기기에 있는 것보다 새 판인 미션(바꿀지 교사·학생이 정한다)
+export type MissionUpdate = { incoming: Mission; stored: Mission };
+export function adoptMissions(
+  list: unknown,
+  save = true,
+  updates?: MissionUpdate[],
+): Mission[] {
   if (list === undefined) return [];
   if (!Array.isArray(list) || list.length > CUSTOM_LIMIT)
     throw new AppError("미션 파일 형식을 알 수 없어요.");
@@ -127,8 +183,10 @@ export function adoptMissions(list: unknown, save = true): Mission[] {
     if (!isCustom(m.id)) continue;
     // 남길 때는 기기에 저장된 적이 없는 미션만, 잠깐 쓸 때는 목록에 없는 미션만 더한다.
     if (save) {
-      if (!stored.some((x) => x.id === m.id))
-        adopted.push(saveCustomMission(m));
+      const old = stored.find((x) => x.id === m.id);
+      if (!old) adopted.push(saveCustomMission(m));
+      else if (isNewerMission(m, old))
+        updates?.push({ incoming: m, stored: old });
     } else if (!missions.some((x) => x.id === m.id)) {
       const order = missions.filter((x) => x.kind === m.kind).length + 1;
       missions.push({ ...m, order });

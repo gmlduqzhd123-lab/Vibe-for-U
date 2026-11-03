@@ -243,12 +243,22 @@ test("교사 입구의 차시·활동지·교과 연결과 고치기 전후 예�
     "1점",
   ]);
   for (let i = 1; i <= 5; i++) {
-    const response = await page.request.get(
-      new URL(`guide/step-${i}.png`, test.info().project.use.baseURL!).href,
-    );
-    expect(response.ok()).toBeTruthy();
-    expect(response.headers()["content-type"]).toContain("image/png");
+    for (const ext of ["webp", "png"]) {
+      const response = await page.request.get(
+        new URL(`guide/step-${i}.${ext}`, test.info().project.use.baseURL!)
+          .href,
+      );
+      expect(response.ok()).toBeTruthy();
+      expect(response.headers()["content-type"]).toContain(`image/${ext}`);
+    }
   }
+  // 화면에는 WebP가 실제로 쓰인다.
+  expect(
+    await page
+      .locator(".path-cards img")
+      .first()
+      .evaluate((img) => (img as HTMLImageElement).currentSrc),
+  ).toMatch(/step-1\.webp$/);
   await page.getByText("낯선 말은 쉽게 풀어볼까요?", { exact: true }).click();
   await expect(page.locator(".word-grid")).toContainText(
     "고치기 전후의 모습을 이름 붙여",

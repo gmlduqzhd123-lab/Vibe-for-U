@@ -1943,4 +1943,33 @@ export const en: Record<string, string> = {
   "처음으로 다시": "Start over",
   "뚝딱 바이브 공작소에서 퀴즈·이야기·타이머를 만들고 고치며 코딩의 원리를 배워요.\n오늘의 안내: {title}\n{detail}\n학생 가입 없이 시작할 수 있어요.\n{url}":
     "At Ttukttak Vibe Workshop, kids learn how coding works by making and fixing quizzes, stories and timers.\nToday's guide: {title}\n{detail}\nNo student sign-up needed.\n{url}",
+  "{list} — 이 기기의 미션을 새 판으로 바꿀까요? 이미 만든 작품은 그대로 남고, 새로 시작하는 작품부터 새 판을 써요.":
+    "{list} — Replace the mission on this device with the new edition? Works you already made stay as they are; new works use the new edition.",
+  "선생님 미션 {n}개를 새 판으로 바꿨어요.":
+    "Updated {n} teacher's mission(s) to the new edition.",
+  "「{title}」은 이미 같은 판이 이 기기에 있어요.":
+    "“{title}” is already on this device in the same edition.",
+  "「{title}」 {v}판을 고치는 중이에요. 저장하면 {next}판이 되고, 이 미션을 이미 받은 기기는 다음에 파일을 열 때 새 판으로 바꿀지 물어요.":
+    "Editing “{title}” edition {v}. Saving makes edition {next}; devices that already have this mission will be asked to update the next time they open a file.",
+  "고치기 그만두기": "Stop editing",
+  "영어 글 함께 적기 (선택)": "Add English text (optional)",
+  "영어 화면을 쓰는 학급에 나눠 줄 때 채워요. 다섯 칸을 모두 적고 검사·힌트 줄 수가 한국어와 같아야 영어 화면에 나와요. 비워 두면 영어 화면에서도 한국어 글을 보여 줘요.":
+    "Fill this in for classes that use the English screen. All five fields must be filled and the number of check and hint lines must match the Korean for it to show in English. Left empty, the Korean text is shown in English too.",
+  "Checks · 한 줄에 하나, 「이름 | 기대 결과」 ({n}줄)":
+    "Checks · one per line, “name | expected result” ({n} lines)",
+  "Hints · 한 줄에 하나 ({n}줄)": "Hints · one per line ({n} lines)",
+  "고쳐서 새 판 만들기": "Edit as new edition",
+  "선생님 미션의 새 판이 왔어요":
+    "A new edition of a teacher's mission arrived",
+  "새 판으로 바꾸기": "Update to new edition",
+  "1~8차시 예상·관찰·수정·재검사 기록지와 보충 차시(만약 규칙 앱) · 차시마다 앞뒤 2쪽":
+    "Predict · observe · fix · re-check sheets for Lessons 1–8 plus the extra lesson (If-then rule app) · 2 pages per lesson",
+  "1~8차시와 보충 차시(만약 규칙 앱) 활동지를 같은 배치로 옮긴 영어판 · 영어 화면으로 배우는 학생용":
+    "English edition of the Lesson 1–8 and extra-lesson worksheets, same layout · for students using the English screen",
+  "교사용 안내서 영어판 (Teacher guide in English)": "Teacher guide in English",
+  "14쪽 안내서를 같은 배치로 옮긴 영어판 · 영어로 수업하는 교사용":
+    "English edition of the 14-page guide, same layout · for teachers teaching in English",
+  "새 기능 보충 안내 영어판 (New features supplement in English)":
+    "New features supplement in English",
+  "6쪽 보충 안내의 영어판": "English edition of the 6-page supplement",
 };

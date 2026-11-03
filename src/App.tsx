@@ -4,10 +4,13 @@ import {
   MISSION_FORMAT,
   adoptMissions,
   forgetCustomMissions,
+  isNewerMission,
   loadCustomMissions,
   parseMissionFile,
+  replaceCustomMission,
   saveCustomMission,
 } from "./customMissions";
+import type { MissionUpdate } from "./customMissions";
 import { errorText } from "./appError";
 import {
   lazy,
@@ -544,6 +547,31 @@ export default function App() {
     else message("백업할 작품이 없어요.");
   };
   const ask = (d: Dialog) => setDialog(d);
+  // 이 기기에 있는 선생님 미션보다 새 판이 파일에 담겨 왔을 때, 바꿀지 묻는다.
+  const askMissionUpdate = (updates: MissionUpdate[], after?: () => void) =>
+    ask({
+      title: "선생님 미션의 새 판이 왔어요",
+      body: t(
+        "{list} — 이 기기의 미션을 새 판으로 바꿀까요? 이미 만든 작품은 그대로 남고, 새로 시작하는 작품부터 새 판을 써요.",
+        {
+          list: updates
+            .map(
+              (u) =>
+                `「${u.incoming.title}」 ${u.stored.version ?? 1}판 → ${u.incoming.version ?? 1}판`,
+            )
+            .join(", "),
+        },
+      ),
+      backup: [],
+      action: () => {
+        for (const u of updates) replaceCustomMission(u.incoming);
+        message(
+          t("선생님 미션 {n}개를 새 판으로 바꿨어요.", { n: updates.length }),
+        );
+        after?.();
+      },
+      label: "새 판으로 바꾸기",
+    });
   const remove = (w: Work) =>
     ask({
       title: "이 작품을 삭제할까요?",
@@ -758,7 +786,24 @@ export default function App() {
       }
       // 선생님이 나눠 준 미션 파일
       if ((data as { format?: unknown } | null)?.format === MISSION_FORMAT) {
-        const m = saveCustomMission(parseMissionFile(data));
+        const incoming = parseMissionFile(data);
+        const stored = missions.find((x) => x.id === incoming.id);
+        if (stored && !isNewerMission(incoming, stored)) {
+          message(
+            t("「{title}」은 이미 같은 판이 이 기기에 있어요.", {
+              title: incoming.title,
+            }),
+          );
+          go(`mission/${stored.id}`);
+          return;
+        }
+        if (stored) {
+          askMissionUpdate([{ incoming, stored }], () =>
+            go(`mission/${incoming.id}`),
+          );
+          return;
+        }
+        const m = saveCustomMission(incoming);
         message(
           t("선생님 미션 「{title}」을 미션 공작대에 더했어요.", {
             title: m.title,
@@ -789,8 +834,13 @@ export default function App() {
         applyPeer(target, r);
         return;
       }
-      // 작품 파일에 함께 담긴 선생님 미션을 먼저 이 기기에 더한다.
-      adoptMissions((data as { missions?: unknown } | null)?.missions);
+      // 작품 파일에 함께 담긴 선생님 미션을 먼저 이 기기에 더한다. 더 새로운 판이면 작품을 넣은 뒤 물어본다.
+      const updates: MissionUpdate[] = [];
+      adoptMissions(
+        (data as { missions?: unknown } | null)?.missions,
+        true,
+        updates,
+      );
       const imported = parseImport(text);
       await flush();
       await importWorks(imported);
@@ -802,6 +852,7 @@ export default function App() {
         }),
       );
       go("library");
+      if (updates.length) askMissionUpdate(updates);
     } catch (e) {
       message(
         `${t("가져오지 못했어요.")} ${errorText(e, t, t("내보낸 JSON 파일을 다시 선택해 주세요."))} ${t("기존 작품은 그대로예요.")}`,

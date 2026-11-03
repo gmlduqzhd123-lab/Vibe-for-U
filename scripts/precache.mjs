@@ -4,7 +4,16 @@ import { readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 // 큰 수업 자료·시안·공유 이미지는 사용자가 고를 때만 받는다.
-const SKIP = [/^materials\//, /^concepts\//, /^og-image\./, /^sw\.js$/];
+// 안내 그림은 WebP만 미리 받고, PNG 원본은 WebP를 못 읽는 브라우저가 그때 받는다.
+const SKIP = [
+  /^materials\//,
+  /^concepts\//,
+  /^og-image\./,
+  /^sw\.js$/,
+  /^guide\/.*\.png$/,
+  // 영어 안내 그림은 영어 화면을 처음 볼 때 받는다(첫 설치를 가볍게).
+  /^guide\/.*-en\.webp$/,
+];
 
 export function precacheFiles(files) {
   return files

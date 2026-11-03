@@ -153,6 +153,9 @@ const journey = [
 ];
 export function LearningPath() {
   const t = useT();
+  const lang = useLang();
+  // 안내 그림은 한국어·영어 화면을 따로 찍어 둔다(scripts/guide-shots.mjs).
+  const suffix = lang === "en" ? "-en" : "";
   return (
     <section className="learning-path" aria-labelledby="path-title">
       <div className="section-heading">
@@ -170,20 +173,29 @@ export function LearningPath() {
               {t("작업실의 {stage}", { stage: t(stage) })}
             </span>
             <a
-              href={`${import.meta.env.BASE_URL}guide/step-${index + 1}.png`}
+              href={`${import.meta.env.BASE_URL}guide/step-${index + 1}${suffix}.png`}
               target="_blank"
               rel="noopener noreferrer"
               aria-label={t("{stage} 실제 화면 크게 보기 (새 탭)", {
                 stage: t(stage),
               })}
             >
-              <img
-                src={`${import.meta.env.BASE_URL}guide/step-${index + 1}.png`}
-                alt={t("{stage} 단계의 실제 작업실 화면", { stage: t(stage) })}
-                loading="lazy"
-                width="320"
-                height="210"
-              />
+              {/* WebP가 PNG보다 60% 작다. 못 읽는 오래된 브라우저만 PNG를 받는다. */}
+              <picture>
+                <source
+                  srcSet={`${import.meta.env.BASE_URL}guide/step-${index + 1}${suffix}.webp`}
+                  type="image/webp"
+                />
+                <img
+                  src={`${import.meta.env.BASE_URL}guide/step-${index + 1}${suffix}.png`}
+                  alt={t("{stage} 단계의 실제 작업실 화면", {
+                    stage: t(stage),
+                  })}
+                  loading="lazy"
+                  width="320"
+                  height="210"
+                />
+              </picture>
             </a>
             <b>{t(action)}</b>
             <p className="speech">“{t(speech)}”</p>
