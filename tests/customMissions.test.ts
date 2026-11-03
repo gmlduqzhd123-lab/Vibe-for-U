@@ -99,3 +99,72 @@ describe("작품 파일에 담긴 선생님 미션", () => {
     expect(customMissions().map((x) => x.id)).toEqual([m.id]);
   });
 });
+describe("선생님 미션의 판", () => {
+  beforeEach(() => {
+    store.clear();
+    loadCustomMissions();
+  });
+  it("같은 ID의 새 판은 바로 덮어쓰지 않고 물어볼 목록에 넣는다", async () => {
+    const { adoptMissions, isNewerMission, replaceCustomMission } =
+      await import("../src/customMissions");
+    const v1 = saveCustomMission(
+      validateMission({ ...sample(), id: "custom-a" }),
+    );
+    expect(v1.version).toBe(1);
+    const v2 = validateMission({
+      ...sample(),
+      id: "custom-a",
+      title: "식물 퀴즈 (고침)",
+      version: 2,
+    });
+    expect(isNewerMission(v2, v1)).toBe(true);
+    const updates: { incoming: typeof v2; stored: typeof v1 }[] = [];
+    expect(adoptMissions([v2], true, updates)).toEqual([]);
+    expect(updates.map((u) => u.incoming.title)).toEqual(["식물 퀴즈 (고침)"]);
+    expect(customMissions()[0].title).toBe("식물 퀴즈");
+    // 같은 판이나 더 낮은 판은 조용히 넘어간다.
+    const older: typeof updates = [];
+    adoptMissions([v1], true, older);
+    expect(older).toEqual([]);
+    replaceCustomMission(v2);
+    expect(customMissions()[0]).toMatchObject({
+      title: "식물 퀴즈 (고침)",
+      version: 2,
+    });
+  });
+});
+describe("선생님 미션의 영어 글", () => {
+  beforeEach(() => {
+    store.clear();
+    loadCustomMissions();
+  });
+  it("다섯 칸이 모두 있고 검사·힌트 수가 같을 때만 영어 글을 받고, 영어 화면에서 그 글을 쓴다", async () => {
+    const { localizeMission } = await import("../src/missionText");
+    const full = {
+      title: "Plant quiz",
+      goal: "Make a quiz about what plants need.",
+      prediction: "What if you press the answer twice?",
+      task: "Fix the scoring rule.",
+      closing: "What did the app have to remember?",
+      tests: [{ label: "Press twice", expected: "Only 1 point counts" }],
+      hints: ["Look at the scoring rule."],
+    };
+    const m = validateMission({ ...sample(), en: full });
+    expect(m.en?.title).toBe("Plant quiz");
+    expect(localizeMission(m, "ko").title).toBe("식물 퀴즈");
+    const en = localizeMission(m, "en");
+    expect(en.title).toBe("Plant quiz");
+    expect(en.tests[0].label).toBe("Press twice");
+    expect(en.guide).toMatch(/^Predict first/);
+    // 칸이 비거나 줄 수가 다르면 영어 글을 쓰지 않는다.
+    expect(
+      validateMission({ ...sample(), en: { ...full, goal: "" } }).en,
+    ).toBeUndefined();
+    expect(
+      validateMission({ ...sample(), en: { ...full, hints: [] } }).en,
+    ).toBeUndefined();
+    expect(localizeMission(validateMission(sample()), "en").title).toBe(
+      "식물 퀴즈",
+    );
+  });
+});

@@ -8,6 +8,8 @@ describe("오프라인 캐시 목록", () => {
       "assets/index-abc.js",
       "assets/index-abc.css",
       "guide/step-1.png",
+      "guide/step-1.webp",
+      "guide/step-1-en.webp",
       "materials/teacher-guide.pdf",
       "concepts/a.html",
       "og-image.jpg",
@@ -16,7 +18,7 @@ describe("오프라인 캐시 목록", () => {
     expect(files).toEqual([
       "assets/index-abc.css",
       "assets/index-abc.js",
-      "guide/step-1.png",
+      "guide/step-1.webp",
       "index.html",
     ]);
   });

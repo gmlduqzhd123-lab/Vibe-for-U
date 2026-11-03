@@ -3,10 +3,12 @@
 웹앱: https://gmlduqzhd123-lab.github.io/Vibe-for-U/
 
 교사용_사용_안내서: 수업 준비, 앱 사용법, 8차시 시간표와 지도 메모, 평가와 저장 안내 (14쪽)
-차시별_학생_활동지: 각 차시 앞뒤 2쪽씩 총 16쪽
+차시별_학생_활동지: 각 차시 앞뒤 2쪽씩 16쪽과 보충 차시(만약 규칙 앱) 2쪽, 총 18쪽
 각 차시 PDF: 해당 차시의 2쪽만 포함하며 합본의 쪽번호를 유지합니다.
 새_기능_수업_보충_안내: 2026년 11월 2일 갱신. 새로 더한 기능(패턴 그리기부터 만약 규칙 앱·버그 탐정·미션 지도·성장 포트폴리오·작품 발표 화면·수업 키트·개인정보 확인까지)을 차시에 넣는 방법과 친구 검사 기록지 (6쪽)
-Student_worksheets_EN: 차시별 학생 활동지 영어판, 같은 배치 16쪽 (English edition of the student worksheets)
+Student_worksheets_EN: 차시별 학생 활동지 영어판, 같은 배치 18쪽 (English edition of the student worksheets)
+Teacher_guide_EN: 교사용 안내서 영어판 14쪽 (English edition of the teacher guide)
+New_features_guide_EN: 새 기능 보충 안내 영어판 6쪽 (English edition of the supplement)
 
 PDF는 인쇄용, DOCX는 Word에서 내용을 수정할 때 사용합니다.
 학생 활동지는 한 면당 한 쪽으로 출력합니다. 양면 인쇄 시 긴 쪽 넘김을 선택합니다.

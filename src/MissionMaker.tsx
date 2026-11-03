@@ -24,6 +24,9 @@ const starterOf = (kind: Kind): Config =>
     true,
   ).draft.config;
 const blank = (kind: Kind) => ({
+  // 기존 미션을 고칠 때만 채운다(같은 ID로 새 판을 만든다).
+  id: undefined as string | undefined,
+  version: 1,
   title: "",
   goal: "",
   prediction: "",
@@ -33,6 +36,28 @@ const blank = (kind: Kind) => ({
   tests: [{ label: "", expected: "" }],
   hints: ["", "", ""],
   starter: starterOf(kind),
+  // 영어 글(선택). 영어 화면을 쓰는 학급에 나눠 줄 때 채운다.
+  en: {
+    title: "",
+    goal: "",
+    prediction: "",
+    task: "",
+    closing: "",
+    tests: "",
+    hints: "",
+  },
+});
+// 영어 검사·힌트는 줄마다 하나씩 적는다(검사는 "이름 | 기대 결과").
+const parseEnglish = (en: ReturnType<typeof blank>["en"]) => ({
+  ...en,
+  tests: en.tests
+    .split("\n")
+    .filter((l) => l.trim())
+    .map((l) => {
+      const [label = "", expected = ""] = l.split("|");
+      return { label: label.trim(), expected: expected.trim() };
+    }),
+  hints: en.hints.split("\n").filter((l) => l.trim()),
 });
 export function MissionMaker({
   works,
@@ -51,8 +76,11 @@ export function MissionMaker({
   const build = () =>
     validateMission({
       ...draft,
+      // 고치는 중이면 판을 하나 올려, 이미 받은 기기에서 새 판으로 바꿀지 물을 수 있게 한다.
+      version: draft.id ? draft.version + 1 : 1,
       tests: draft.tests.filter((t) => t.label.trim() || t.expected.trim()),
       hints: draft.hints.filter((h) => h.trim()),
+      en: parseEnglish(draft.en),
     });
   const attempt = (fn: () => void) => {
     try {
@@ -65,6 +93,25 @@ export function MissionMaker({
     <div className="mission-maker">
       <section className="panel">
         <h2>{t("선생님 미션 만들기")}</h2>
+        {draft.id ? (
+          <p className="note">
+            {t(
+              "「{title}」 {v}판을 고치는 중이에요. 저장하면 {next}판이 되고, 이 미션을 이미 받은 기기는 다음에 파일을 열 때 새 판으로 바꿀지 물어요.",
+              {
+                title: draft.title,
+                v: draft.version,
+                next: draft.version + 1,
+              },
+            )}{" "}
+            <button
+              type="button"
+              className="text-button"
+              onClick={() => setDraft(blank(draft.starter.kind))}
+            >
+              {t("고치기 그만두기")}
+            </button>
+          </p>
+        ) : null}
         <p className="small muted">
           {t(
             "시작 설정과 검사 항목을 정해 우리 반 미션을 만들어요. 이 기기에 더하면 미션 공작대에 바로 나오고, 미션 파일을 나눠 주면 학생이 ‘파일 가져오기’로 더해요.",
@@ -214,6 +261,51 @@ export function MissionMaker({
           value={draft.closing}
           onChange={(closing) => set({ closing })}
         />
+        <details className="maker-english">
+          <summary>{t("영어 글 함께 적기 (선택)")}</summary>
+          <p className="small muted">
+            {t(
+              "영어 화면을 쓰는 학급에 나눠 줄 때 채워요. 다섯 칸을 모두 적고 검사·힌트 줄 수가 한국어와 같아야 영어 화면에 나와요. 비워 두면 영어 화면에서도 한국어 글을 보여 줘요.",
+            )}
+          </p>
+          {(
+            [
+              ["title", "Mission title", false],
+              ["goal", "Goal", true],
+              ["prediction", "Prediction question", true],
+              ["task", "Task", true],
+              ["closing", "Closing question", true],
+            ] as const
+          ).map(([key, label, area]) => (
+            <Field
+              key={key}
+              label={label}
+              area={area}
+              max={area ? 500 : 200}
+              value={draft.en[key]}
+              onChange={(v) => set({ en: { ...draft.en, [key]: v } })}
+            />
+          ))}
+          <Field
+            label={t("Checks · 한 줄에 하나, 「이름 | 기대 결과」 ({n}줄)", {
+              n: draft.tests.filter((x) => x.label.trim() || x.expected.trim())
+                .length,
+            })}
+            area
+            max={2000}
+            value={draft.en.tests}
+            onChange={(v) => set({ en: { ...draft.en, tests: v } })}
+          />
+          <Field
+            label={t("Hints · 한 줄에 하나 ({n}줄)", {
+              n: draft.hints.filter((h) => h.trim()).length,
+            })}
+            area
+            max={1500}
+            value={draft.en.hints}
+            onChange={(v) => set({ en: { ...draft.en, hints: v } })}
+          />
+        </details>
         <div className="button-row">
           <button
             className="primary"
@@ -277,6 +369,37 @@ export function MissionMaker({
                   </div>
                   <div className="button-row">
                     <button onClick={() => open(m.id)}>{t("미션 보기")}</button>
+                    <button
+                      onClick={() => {
+                        setDraft({
+                          id: m.id,
+                          version: m.version ?? 1,
+                          title: m.title,
+                          goal: m.goal,
+                          prediction: m.prediction,
+                          task: m.task,
+                          closing: m.closing,
+                          learningError: m.learningError,
+                          tests: m.tests.map((x) => ({ ...x })),
+                          hints: [...m.hints, "", "", ""].slice(0, 3),
+                          en: {
+                            title: m.en?.title ?? "",
+                            goal: m.en?.goal ?? "",
+                            prediction: m.en?.prediction ?? "",
+                            task: m.en?.task ?? "",
+                            closing: m.en?.closing ?? "",
+                            tests: (m.en?.tests ?? [])
+                              .map((x) => `${x.label} | ${x.expected}`)
+                              .join("\n"),
+                            hints: (m.en?.hints ?? []).join("\n"),
+                          },
+                          starter: structuredClone(m.starter),
+                        });
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                    >
+                      {t("고쳐서 새 판 만들기")}
+                    </button>
                     <button
                       onClick={() =>
                         downloadText(

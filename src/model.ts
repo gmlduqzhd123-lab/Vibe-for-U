@@ -162,6 +162,19 @@ export type Mission = {
   closing: string;
   learningError: boolean;
   starter: Config;
+  // 선생님 미션의 판(고쳐서 다시 나눠 줄 때 1씩 올린다). 기본 미션에는 없다.
+  version?: number;
+  // 선생님 미션의 영어 글(선택). 비워 두면 영어 화면에서도 한국어 글을 보여 준다.
+  en?: MissionEnglish;
+};
+export type MissionEnglish = {
+  title: string;
+  goal: string;
+  prediction: string;
+  task: string;
+  closing: string;
+  tests: { label: string; expected: string }[];
+  hints: string[];
 };
 // 다섯 학습 단계의 이름
 export const stageNames = [

@@ -11,6 +11,8 @@ describe("수업 자료 파일", () => {
   it("자료 카드마다 PDF와 Word 파일이 있다", () => {
     expect(ids).toContain("new-features-guide");
     expect(ids).toContain("student-worksheets-en");
+    expect(ids).toContain("teacher-guide-en");
+    expect(ids).toContain("new-features-guide-en");
     for (const id of ids)
       for (const ext of ["pdf", "docx"])
         expect(
@@ -26,6 +28,8 @@ describe("수업 자료 파일", () => {
       "새_기능_수업_보충_안내.docx",
       "Student_worksheets_EN.pdf",
       "Student_worksheets_EN.docx",
+      "Teacher_guide_EN.pdf",
+      "New_features_guide_EN.pdf",
       "교사용_사용_안내서.pdf",
     ])
       expect(zip.includes(Buffer.from(name, "utf8")), name).toBe(true);
