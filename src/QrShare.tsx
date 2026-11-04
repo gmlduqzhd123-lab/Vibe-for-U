@@ -109,11 +109,13 @@ export function Receive({
   code,
   receiveWork,
   receivePeer,
+  receiveFeedback,
   go,
 }: {
   code: string;
   receiveWork: (p: Extract<SharePayload, { k: "work" }>) => void;
   receivePeer: (p: Extract<SharePayload, { k: "peer" }>) => void;
+  receiveFeedback: (p: Extract<SharePayload, { k: "feedback" }>) => boolean;
   go: (path: string) => void;
 }) {
   const t = useT();
@@ -144,6 +146,39 @@ export function Receive({
       </div>
     );
   const p = state.payload;
+  if (p.k === "feedback")
+    return (
+      <div className="panel receive">
+        <span className="eyebrow">{t("QR로 받기")}</span>
+        <h1>
+          {t("선생님 평가가 왔어요 · 「{title}」", {
+            title: p.title || t("제목 없는 작품"),
+          })}
+        </h1>
+        <p>
+          {t(
+            "받으면 이 작품의 포트폴리오 ‘과정 평가 · 나와 선생님’에 선생님 평가가 들어가요.",
+          )}
+        </p>
+        <div className="button-row">
+          <button
+            className="primary"
+            onClick={() => {
+              if (!receiveFeedback(p))
+                setState({
+                  error: t(
+                    "이 기기에 「{title}」 작품이 없어요. 작품을 먼저 가져온 뒤 다시 비춰 주세요.",
+                    { title: p.title || t("제목 없는 작품") },
+                  ),
+                });
+            }}
+          >
+            {t("평가 받기")}
+          </button>
+          <button onClick={() => go("home")}>{t("받지 않기")}</button>
+        </div>
+      </div>
+    );
   const missionId = p.k === "work" ? p.missionId : p.request.missionId;
   const found = missions.find((m) => m.id === missionId);
   const mission = found && localizeMission(found, lang);

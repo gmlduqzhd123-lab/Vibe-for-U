@@ -96,6 +96,13 @@ function writeHistory(id: string, h: History) {
     // 저장소를 쓸 수 없으면 이 화면에서만 기억한다.
   }
 }
+// 작품 파일에 함께 담는 최근 되돌리기 단계 수. 다른 기기에서 열어도 몇 단계는 되돌릴 수 있다.
+export const EXPORT_STEPS = 5;
+// 아직 쓰지 않은 기록이 있으면 그것이 가장 새 기록이다.
+export function recentSteps(id: string, n = EXPORT_STEPS): Step[] {
+  const h = pending.get(id)?.h ?? loadHistory(id);
+  return h.undo.slice(-n);
+}
 export function loadHistory(id: string): History {
   try {
     const raw = JSON.parse(sessionStorage.getItem(key(id)) ?? "null");

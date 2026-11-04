@@ -1,3 +1,5 @@
+import { QrSendButton } from "./QrShare";
+import { feedbackPayload } from "./qrTransfer";
 import { dateLocale, translate, useLang, useT } from "./i18n";
 import { localizeMission } from "./missionText";
 import { PraiseCards, ShowCase } from "./ShowCase";
@@ -5,7 +7,7 @@ import { adoptMissions } from "./customMissions";
 import { ClassCharts } from "./ClassCharts";
 import { useEffect, useRef, useState } from "react";
 import { LIMITS, now, stageDone } from "./model";
-import type { Feedback } from "./model";
+import type { Feedback, Work } from "./model";
 import {
   clearClassSession,
   downloadText,
@@ -17,6 +19,7 @@ import {
 import {
   emptyFeedback,
   graded,
+  lessonProgress,
   levelNames,
   summarize,
   toCSV,
@@ -27,6 +30,79 @@ import { RubricChoices } from "./Rubric";
 import { missions, rubric } from "./data";
 import { stageNames } from "./model";
 const fileBase = (name: string) => name.replace(/\.json$/i, "");
+// 차시 진행 대시보드: 8차시 계획의 미션마다 읽은 작품이 어디까지 왔는지 한 표로 본다.
+function LessonBoard({ works }: { works: Work[] }) {
+  const t = useT();
+  const rows = lessonProgress(works);
+  return (
+    <div className="panel lesson-board">
+      <h3>{t("차시별 진행")}</h3>
+      <p className="small muted">
+        {t(
+          "8차시 계획의 미션별로 읽은 작품을 셌어요. 같은 미션을 쓰는 차시는 같은 작품이 보여요. ‘많이 멈춘 단계’는 아직 기록하지 않은 첫 단계가 가장 많은 곳이에요.",
+        )}
+      </p>
+      <div
+        className="table-scroll"
+        tabIndex={0}
+        role="region"
+        aria-label={t("차시별 진행표 · 좌우 방향키로 이동해 읽기")}
+      >
+        <table className="lesson-table">
+          <thead>
+            <tr>
+              <th>{t("차시")}</th>
+              <th>{t("미션")}</th>
+              <th>{t("작품")}</th>
+              <th>{t("다섯 단계 완료")}</th>
+              <th>{t("많이 멈춘 단계")}</th>
+              <th>{t("평가 완료")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.number} className={r.works ? "" : "lesson-empty"}>
+                <td>
+                  <b>{t("{n}차시", { n: r.number })}</b>
+                  <br />
+                  <small>{t(r.title)}</small>
+                </td>
+                <td>{r.mission}</td>
+                <td>{t("{n}개", { n: r.works })}</td>
+                <td>
+                  {r.works ? (
+                    <>
+                      {r.done} / {r.works}
+                      <span className="bar-track lesson-bar" aria-hidden="true">
+                        <span
+                          className="bar-fill"
+                          style={{ width: `${(r.done / r.works) * 100}%` }}
+                        />
+                      </span>
+                    </>
+                  ) : (
+                    "–"
+                  )}
+                </td>
+                <td>
+                  {r.stuckAt >= 0
+                    ? t("{stage} · {n}명", {
+                        stage: t(stageNames[r.stuckAt]),
+                        n: r.stuckN,
+                      })
+                    : r.works
+                      ? t("모두 기록")
+                      : "–"}
+                </td>
+                <td>{r.works ? `${r.graded} / ${r.works}` : "–"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
 export function ClassReview({ message }: { message: (s: string) => void }) {
   const t = useT();
   const lang = useLang();
@@ -94,9 +170,19 @@ export function ClassReview({ message }: { message: (s: string) => void }) {
           // 미션을 읽지 못하면 아래 작품 검사가 이유를 알린다.
         }
         const works = parseImport(text);
+        // 원래 작품 ID는 파일에서 읽어 둔다(parseImport가 새 ID를 붙이기 때문).
+        let sourceIds: string[] = [];
+        try {
+          const raw = JSON.parse(text)?.works;
+          if (Array.isArray(raw))
+            sourceIds = raw.map((w) => String(w?.id ?? ""));
+        } catch {
+          // 위에서 이미 읽었으므로 여기서는 비어 있을 때만 넘어간다.
+        }
         works.forEach((work, i) =>
           added.push({
             key: `${file.name}#${i}:${work.id}`,
+            sourceId: sourceIds[i] || undefined,
             file: works.length > 1 ? `${file.name} (${i + 1})` : file.name,
             work: { ...work, feedback: work.feedback ?? emptyFeedback(now()) },
           }),
@@ -342,6 +428,7 @@ export function ClassReview({ message }: { message: (s: string) => void }) {
             </div>
           </div>
           <ClassCharts works={entries.map((e) => e.work)} />
+          <LessonBoard works={entries.map((e) => e.work)} />
           <div className="class-cards">
             {entries.map((e) => (
               <ReviewCard
@@ -349,6 +436,7 @@ export function ClassReview({ message }: { message: (s: string) => void }) {
                 entry={e}
                 onChange={(p) => setFeedback(e.key, p)}
                 download={() => returnFile(e)}
+                message={message}
               />
             ))}
           </div>
@@ -367,10 +455,12 @@ function ReviewCard({
   entry: e,
   onChange,
   download,
+  message,
 }: {
   entry: Entry;
   onChange: (p: Partial<Feedback>) => void;
   download: () => void;
+  message: (s: string) => void;
 }) {
   const t = useT();
   const d = e.work.draft;
@@ -446,10 +536,20 @@ function ReviewCard({
         value={f.note}
         onChange={(note) => onChange({ note })}
       />
-      <button onClick={download}>
-        <Icon name="download" />
-        {t("평가를 넣은 작품 파일 내려받기")}
-      </button>
+      <div className="button-row">
+        <button onClick={download}>
+          <Icon name="download" />
+          {t("평가를 넣은 작품 파일 내려받기")}
+        </button>
+        {graded(f) ? (
+          <QrSendButton
+            works={[]}
+            payload={() => feedbackPayload(e.work, e.sourceId)}
+            label={t("평가를 QR로 돌려주기")}
+            message={message}
+          />
+        ) : null}
+      </div>
       <p className="small muted">
         {t("학생이 이 파일을")} <b>{t("파일 가져오기")}</b>
         {t("로 열면 포트폴리오에서 평가와 의견을 볼 수 있어요.")}

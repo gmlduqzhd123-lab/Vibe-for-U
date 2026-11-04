@@ -1,3 +1,5 @@
+import { RunHistory, useRunHistory } from "./runHistory";
+import { SpeakButton } from "./Speak";
 import { RulePreview } from "./RulePreview";
 import { useEffect, useState } from "react";
 import {
@@ -45,6 +47,8 @@ export function Preview({
     };
   }, [clock.running, config]);
   const run = () => onRun();
+  // 실행 기록 되감기: 누른 것과 그때 앱이 기억한 값을 남긴다.
+  const history = useRunHistory();
   if (config.kind === "pattern")
     return <PatternPreview config={config} onRun={onRun} />;
   if (config.kind === "rule")
@@ -75,6 +79,10 @@ export function Preview({
             <p>
               {t("최종 점수")} <b>{q.score}점</b>
             </p>
+            <SpeakButton
+              text={`${t("퀴즈를 모두 풀었어요!")} ${t("최종 점수")} ${t("{n}점", { n: q.score })}`}
+              label={t("결과 듣기")}
+            />
           </div>
         ) : (
           <>
@@ -86,7 +94,18 @@ export function Preview({
                   key={i}
                   onClick={() => {
                     run();
-                    setQ((s) => answerQuiz(config, s, i, t));
+                    setQ((s) => {
+                      const next = answerQuiz(config, s, i, t);
+                      history.record({
+                        label: t("선택 {n}", { n: i + 1 }),
+                        state: t("점수 {a} → {b}", {
+                          a: s.score,
+                          b: next.score,
+                        }),
+                        event: next.event,
+                      });
+                      return next;
+                    });
                   }}
                 >
                   <span>{i + 1}</span>
@@ -102,11 +121,30 @@ export function Preview({
                     ? config.correctFeedback
                     : config.wrongFeedback}
                 </p>
+                <SpeakButton
+                  text={`${
+                    q.selected === question.correct
+                      ? config.correctFeedback
+                      : config.wrongFeedback
+                  }. ${t("점수 {n}점", { n: q.score })}`}
+                  label={t("결과 듣기")}
+                />
                 <button
                   className="primary full"
                   onClick={() => {
                     run();
-                    setQ((s) => nextQuiz(config, s, t));
+                    setQ((s) => {
+                      const next = nextQuiz(config, s, t);
+                      history.record({
+                        label: t(next.finished ? "결과 보기" : "다음 문제"),
+                        state: t("문제 {i} · 점수 {n}", {
+                          i: next.index + 1,
+                          n: next.score,
+                        }),
+                        event: next.event,
+                      });
+                      return next;
+                    });
                   }}
                 >
                   {q.index === config.questions.length - 1
@@ -126,11 +164,20 @@ export function Preview({
           className="text-button"
           onClick={() => {
             run();
-            setQ((s) => resetQuiz(config, s, t));
+            setQ((s) => {
+              const next = resetQuiz(config, s, t);
+              history.record({
+                label: t("↺ 다시 시작"),
+                state: t("점수 {a} → {b}", { a: s.score, b: next.score }),
+                event: next.event,
+              });
+              return next;
+            });
           }}
         >
           {t("↺ 다시 시작")}
         </button>
+        <RunHistory history={history} />
         <details className="trace" open>
           <summary>{t("동작 설명 · 지금 앱이 기억하는 값")}</summary>
           <dl>
@@ -176,6 +223,10 @@ export function Preview({
         {scene.ending ? <Pill tone="orange">{t("이야기의 결말")}</Pill> : null}
         <h3>{scene.title}</h3>
         <p className="story-text">{scene.text}</p>
+        <SpeakButton
+          text={`${scene.title}. ${scene.text}`}
+          label={t("장면 듣기")}
+        />
         <div className="answers">
           {scene.choices.map((ch, i) => (
             <button
@@ -186,6 +237,13 @@ export function Preview({
                   ...t.slice(-29),
                   `${scene.title} → ${ch.label}`,
                 ]);
+                history.record({
+                  label: ch.label,
+                  state: t("장면 {a} → {b}", { a: scene.id, b: ch.to }),
+                  event: t(
+                    "선택 → 연결된 장면 ID 확인 → 현재 장면 변경 → 새 장면 표시",
+                  ),
+                });
                 setSceneId(ch.to);
               }}
             >
@@ -198,12 +256,18 @@ export function Preview({
           className="text-button"
           onClick={() => {
             run();
+            history.record({
+              label: t("↺ 처음으로 돌아가기"),
+              state: t("장면 {a} → {b}", { a: scene.id, b: config.start }),
+              event: t("처음 장면으로 돌아감"),
+            });
             setSceneId(config.start);
             setTrail([]);
           }}
         >
           {t("↺ 처음으로 돌아가기")}
         </button>
+        <RunHistory history={history} />
         <details className="trace" open>
           <summary>{t("동작 설명 · 장면의 연결")}</summary>
           <p>
@@ -245,7 +309,19 @@ export function Preview({
           disabled={clock.running || clock.remaining === 0}
           onClick={() => {
             run();
-            setClock((s) => startTimer(s, Date.now()));
+            setClock((s) => {
+              const next = startTimer(s, Date.now());
+              history.record({
+                label: t(
+                  s.remaining === config.seconds * 1000 ? "시작" : "재개",
+                ),
+                state: t("남은 시간 {n}초", {
+                  n: Math.ceil(next.remaining / 1000),
+                }),
+                event: t("시계가 흐르기 시작함"),
+              });
+              return next;
+            });
           }}
         >
           <Icon name="play" />
@@ -255,7 +331,17 @@ export function Preview({
           disabled={!clock.running}
           onClick={() => {
             run();
-            setClock((s) => pauseTimer(s, Date.now(), config));
+            setClock((s) => {
+              const next = pauseTimer(s, Date.now(), config);
+              history.record({
+                label: t("일시정지"),
+                state: t("남은 시간 {n}초", {
+                  n: Math.ceil(next.remaining / 1000),
+                }),
+                event: t("남은 시간을 기억하고 멈춤"),
+              });
+              return next;
+            });
           }}
         >
           {t("일시정지")}
@@ -263,12 +349,28 @@ export function Preview({
         <button
           onClick={() => {
             run();
+            history.record({
+              label: t("초기화"),
+              state: t("남은 시간 {n}초", { n: config.seconds }),
+              event: t("설정 시간으로 돌아가 정지"),
+            });
             setClock(initialTimer(config));
           }}
         >
           {t("초기화")}
         </button>
       </div>
+      {clock.ended ? (
+        <SpeakButton
+          text={
+            config.showEnd
+              ? config.endMessage
+              : t("종료 안내 표시가 꺼져 있어요.")
+          }
+          label={t("결과 듣기")}
+        />
+      ) : null}
+      <RunHistory history={history} />
       <div className="timer-end" role="status">
         {clock.ended && config.showEnd
           ? config.endMessage

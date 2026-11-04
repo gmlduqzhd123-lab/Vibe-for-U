@@ -50,3 +50,25 @@ describe("학급 작품 모으기", () => {
     expect(row).toContain('"줄\n바꿈, 쉼표"');
   });
 });
+describe("차시별 진행", () => {
+  it("차시 미션별 작품 수·완료·많이 멈춘 단계를 센다", async () => {
+    const { lessonProgress } = await import("../src/classSummary");
+    const quiz1 = missions.find((m) => m.id === "quiz-1")!;
+    const a = makeWork(quiz1);
+    const b = makeWork(quiz1);
+    b.draft.goalReviewed = true;
+    b.draft.originalPrompt = "요청";
+    b.draft.arrangedPrompt = "정리";
+    const rows = lessonProgress([a, b]);
+    expect(rows).toHaveLength(8);
+    expect(rows[0].works).toBe(2);
+    expect(rows[0].done).toBe(0);
+    // 멈춘 학생 수가 같으면 앞 단계를 보여 준다.
+    expect(rows[0].stuckAt).toBe(0);
+    expect(rows[0].stuckN).toBe(1);
+    // 같은 미션을 쓰는 2차시도 같은 작품을 보여 준다.
+    expect(rows[1].works).toBe(2);
+    expect(rows[2].works).toBe(0);
+    expect(rows[2].stuckAt).toBe(-1);
+  });
+});

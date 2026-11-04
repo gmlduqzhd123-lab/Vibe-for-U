@@ -27,6 +27,7 @@ export function PeerCheck({
   const [reviewer, setReviewer] = useState("");
   const [comment, setComment] = useState("");
   const [results, setResults] = useState<PeerResult[]>([]);
+  const [answers, setAnswers] = useState<string[]>([]);
   const open = async (file?: File) => {
     if (!file) return;
     try {
@@ -37,6 +38,7 @@ export function PeerCheck({
       const r = validatePeerRequest(data);
       setRequest(r);
       setResults(r.tests.map((t) => ({ ...t, actual: "", status: "pending" })));
+      setAnswers((r.questions ?? []).map(() => ""));
       message("친구 작품을 열었어요. 먼저 예상하고 직접 눌러 보세요.");
     } catch (e) {
       message(
@@ -60,8 +62,15 @@ export function PeerCheck({
       at: now(),
       missionId: request!.missionId,
       title: request!.title,
+      answers: (request!.questions ?? []).map((question, i) => ({
+        question,
+        answer: answers[i] ?? "",
+      })),
     });
-  const filled = results.some((r) => r.actual.trim()) || comment.trim();
+  const filled =
+    results.some((r) => r.actual.trim()) ||
+    comment.trim() ||
+    answers.some((a) => a.trim());
   return (
     <>
       <div className="page-heading">
@@ -157,6 +166,25 @@ export function PeerCheck({
                 </label>
               </fieldset>
             ))}
+            {request.questions?.length ? (
+              <fieldset className="peer-questions">
+                <legend>{t("친구가 물어본 것")}</legend>
+                {request.questions.map((q, i) => (
+                  <Field
+                    key={i}
+                    area
+                    max={LIMITS.checkText}
+                    label={t("질문 {n}: {q}", { n: i + 1, q })}
+                    value={answers[i] ?? ""}
+                    onChange={(v) =>
+                      setAnswers((list) =>
+                        list.map((x, j) => (j === i ? v : x)),
+                      )
+                    }
+                  />
+                ))}
+              </fieldset>
+            ) : null}
             <Field
               area
               max={LIMITS.checkText}

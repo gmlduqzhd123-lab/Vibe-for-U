@@ -1,6 +1,9 @@
+import { SpeakButton } from "./Speak";
 import { useState } from "react";
 import { missionChecks, prepareInspection } from "./engines";
-import type { Check, Mission, Snapshot } from "./model";
+import type { Check, Config, Mission, Snapshot } from "./model";
+import { designActions, designedCheck, runDesign } from "./designedCheck";
+import type { Param } from "./designedCheck";
 import { LIMITS, now, uid } from "./model";
 import { Field, Icon, Pill } from "./ui";
 import { useT } from "./i18n";
@@ -35,6 +38,110 @@ function CheckEditor({
         value={c.expected}
         onChange={(v) => update(c.id, { expected: v, status: "pending" })}
       />
+    </details>
+  );
+}
+// 학생이 직접 설계하는 검사: 어떻게 누를지와 예상 결과를 적으면 앱이 대신 눌러 보고 비교해 카드로 남긴다.
+function DesignCheck({
+  config,
+  revision,
+  add,
+  message,
+}: {
+  config: Config;
+  revision: string;
+  add: (c: Check) => void;
+  message: (text: string) => void;
+}) {
+  const t = useT();
+  const actions = designActions(config, t);
+  const [action, setAction] = useState(actions[0]?.id ?? "");
+  const [a, setA] = useState(1);
+  const [b, setB] = useState(1);
+  const [expected, setExpected] = useState("");
+  const chosen = actions.find((x) => x.id === action) ?? actions[0];
+  if (!chosen) return null;
+  const preview = runDesign(config, { action: chosen.id, a, b, expected }, t);
+  const numberField = (p: Param) => (
+    <label className="field" key={p.key}>
+      <span>{p.label}</span>
+      <input
+        type="number"
+        min={p.min}
+        max={p.max}
+        value={p.key === "a" ? a : b}
+        onChange={(e) =>
+          (p.key === "a" ? setA : setB)(Number(e.target.value) || p.min)
+        }
+      />
+    </label>
+  );
+  return (
+    <details className="extra-checks design-check">
+      <summary>{t("내가 설계한 검사 · 앱에게 실험 시키기")}</summary>
+      <p className="small muted">
+        {t(
+          "‘이렇게 누르면 이런 결과가 나올 거야’를 적어요. 앱이 대신 눌러 본 결과와 비교해 ‘학습자 직접 확인’ 카드로 남겨요.",
+        )}
+      </p>
+      <label className="field">
+        <span>{t("어떻게 눌러 볼까요?")}</span>
+        <select
+          value={chosen.id}
+          onChange={(e) => {
+            setAction(e.target.value);
+            setA(1);
+            setB(1);
+          }}
+        >
+          {actions.map((x) => (
+            <option key={x.id} value={x.id}>
+              {x.label.replace(/\{a\}|\{b\}/g, "□")}
+            </option>
+          ))}
+        </select>
+      </label>
+      <div className="design-params">{chosen.params.map(numberField)}</div>
+      <Field
+        label={t("예상 결과 (숫자나 문구)")}
+        max={LIMITS.checkText}
+        value={expected}
+        placeholder={t("예: 점수 2")}
+        hint={
+          preview
+            ? t("실험할 것: {label}", { label: preview.label })
+            : undefined
+        }
+        onChange={setExpected}
+      />
+      <button
+        type="button"
+        onClick={() => {
+          if (!expected.trim()) {
+            message(t("예상 결과를 먼저 적어 주세요."));
+            return;
+          }
+          const c = designedCheck(
+            config,
+            { action: chosen.id, a, b, expected },
+            revision,
+            t,
+          );
+          if (!c) return;
+          add(c);
+          setExpected("");
+          message(
+            t(
+              c.status === "pass"
+                ? "예상대로였어요! 카드에 기록했어요."
+                : "예상과 달랐어요. 왜 다른지 생각해 보고 카드에 적어요.",
+            ),
+          );
+        }}
+      >
+        <Icon name="check" />
+        {t("실험하고 기록하기")}
+      </button>
     </details>
   );
 }
@@ -230,6 +337,20 @@ export function Inspection({
                 : "모두 통과했어요",
             )}
           </summary>
+          <SpeakButton
+            text={[
+              t(
+                automatic.some((c) => c.status === "fail")
+                  ? "수정할 규칙이 있어요"
+                  : "모두 통과했어요",
+              ),
+              ...automatic.map(
+                (c) =>
+                  `${t(c.label)}: ${t(c.status === "pass" ? "통과" : "수정 필요")}. ${c.actual}`,
+              ),
+            ].join(". ")}
+            label={t("자동 검사 결과 듣기")}
+          />
           {automatic.map(renderCard)}
         </details>
       ) : null}
@@ -251,6 +372,16 @@ export function Inspection({
                       },
                     )}
                   </p>
+                  <SpeakButton
+                    text={`${t(f.problem, f.vars)}. ${t(
+                      f.hint,
+                      f.vars && {
+                        ...f.vars,
+                        ...(f.vars.dir ? { dir: t(String(f.vars.dir)) } : {}),
+                      },
+                    )}`}
+                    label={t("힌트 듣기")}
+                  />
                 </details>
               </li>
             ))}
@@ -262,6 +393,12 @@ export function Inspection({
           </p>
         </section>
       ) : null}
+      <DesignCheck
+        config={d.config}
+        revision={d.revision}
+        add={(c) => add([c])}
+        message={message}
+      />
       <details className="extra-checks">
         <summary>{t("검사 카드·친구 의견 더하기")}</summary>
         <div className="button-row">

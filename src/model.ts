@@ -102,6 +102,9 @@ export type Snapshot = {
   arrangedPrompt: string;
   prediction: string;
   runRevision: string;
+  // 예상이 실제와 맞았는지 학생이 표시한 것(없으면 아직 표시 전). 틀린 예상도 배움의 근거라 남긴다.
+  predictionCheck?: "match" | "differ" | "";
+  predictionNote?: string;
   checks: Check[];
   change: {
     situation: string;

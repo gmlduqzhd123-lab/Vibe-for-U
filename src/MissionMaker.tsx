@@ -9,11 +9,16 @@ import { Preview } from "./Preview";
 import { downloadText } from "./storage";
 import { errorText } from "./appError";
 import {
+  courseFile,
+  courses,
   customMissions,
   isCustom,
   missionFile,
+  removeCourse,
   removeCustomMission,
+  saveCourse,
   saveCustomMission,
+  validateCourse,
   validateMission,
 } from "./customMissions";
 // 교사용 미션 만들기: 시작 설정·학습용 오류·검사 항목·힌트를 정해 이 기기에 더하거나 미션 파일로 나눠 준다.
@@ -440,6 +445,182 @@ export function MissionMaker({
           <p className="small muted">{t("아직 만든 미션이 없어요.")}</p>
         )}
       </section>
+      <CourseMaker message={message} attempt={attempt} />
     </div>
+  );
+}
+// 미션 묶음(코스) 만들기: 기본 미션과 선생님 미션을 순서대로 묶어 한 파일로 나눠 준다.
+function CourseMaker({
+  message,
+  attempt,
+}: {
+  message: (s: string) => void;
+  attempt: (fn: () => void) => void;
+}) {
+  const t = useT();
+  const [title, setTitle] = useState("");
+  const [picked, setPicked] = useState<string[]>([]);
+  const [choice, setChoice] = useState(missions[0]?.id ?? "");
+  const [saved, setSaved] = useState(courses);
+  const build = () => validateCourse({ title, missionIds: picked });
+  const nameOf = (id: string) => {
+    const m = missions.find((x) => x.id === id);
+    return m ? `${t(kindNames[m.kind])} ${m.order} · ${m.title}` : id;
+  };
+  const refresh = () => setSaved(courses());
+  return (
+    <section className="panel course-maker">
+      <h3>{t("미션 묶음(코스) 만들기")}</h3>
+      <p className="small muted">
+        {t(
+          "기본 미션과 선생님 미션을 순서대로 묶어요. 학생이 코스 파일을 가져오면 나의 미션 지도에 ‘우리 반 코스’ 길이 생기고, 담긴 선생님 미션도 함께 더해져요.",
+        )}
+      </p>
+      <Field
+        label={t("코스 이름")}
+        max={200}
+        value={title}
+        onChange={setTitle}
+      />
+      <label className="field">
+        <span>{t("넣을 미션")}</span>
+        <select value={choice} onChange={(e) => setChoice(e.target.value)}>
+          {missions.map((m) => (
+            <option key={m.id} value={m.id} disabled={picked.includes(m.id)}>
+              {nameOf(m.id)}
+              {isCustom(m.id) ? ` (${t("선생님 미션")})` : ""}
+            </option>
+          ))}
+        </select>
+      </label>
+      <button
+        type="button"
+        disabled={!choice || picked.includes(choice)}
+        onClick={() => setPicked([...picked, choice])}
+      >
+        <Icon name="plus" />
+        {t("코스에 더하기")}
+      </button>
+      {picked.length ? (
+        <ol className="course-steps" aria-label={t("코스 순서")}>
+          {picked.map((id, i) => (
+            <li key={id}>
+              <span>
+                {i + 1}. {nameOf(id)}
+              </span>
+              <span className="button-row">
+                <button
+                  type="button"
+                  disabled={i === 0}
+                  aria-label={t("{n}번 미션을 앞으로", { n: i + 1 })}
+                  onClick={() => {
+                    const next = [...picked];
+                    [next[i - 1], next[i]] = [next[i], next[i - 1]];
+                    setPicked(next);
+                  }}
+                >
+                  ▲
+                </button>
+                <button
+                  type="button"
+                  className="danger-text"
+                  aria-label={t("{n}번 미션 빼기", { n: i + 1 })}
+                  onClick={() => setPicked(picked.filter((x) => x !== id))}
+                >
+                  {t("빼기")}
+                </button>
+              </span>
+            </li>
+          ))}
+        </ol>
+      ) : (
+        <p className="small muted">{t("아직 넣은 미션이 없어요.")}</p>
+      )}
+      <div className="button-row">
+        <button
+          type="button"
+          className="primary"
+          onClick={() =>
+            attempt(() => {
+              const c = saveCourse(build());
+              refresh();
+              message(
+                t("코스 「{title}」을 이 기기에 더했어요.", { title: c.title }),
+              );
+              setTitle("");
+              setPicked([]);
+            })
+          }
+        >
+          <Icon name="plus" />
+          {t("이 기기에 코스 더하기")}
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            attempt(() => {
+              const c = build();
+              downloadText(
+                `뚝딱-코스-${c.title}.json`,
+                courseFile(c),
+                "application/json",
+              );
+              message(
+                t(
+                  "코스 파일을 내려받았어요. 학생은 내 작품 선반의 ‘파일 가져오기’로 더해요.",
+                ),
+              );
+            })
+          }
+        >
+          <Icon name="download" />
+          {t("코스 파일 내려받기")}
+        </button>
+      </div>
+      {saved.length ? (
+        <>
+          <h4>{t("이 기기의 코스 {n}개", { n: saved.length })}</h4>
+          <ul className="maker-list">
+            {saved.map((c) => (
+              <li key={c.id}>
+                <div>
+                  <b>{c.title}</b>{" "}
+                  <small>{t("미션 {n}개", { n: c.missionIds.length })}</small>
+                </div>
+                <div className="button-row">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      downloadText(
+                        `뚝딱-코스-${c.title}.json`,
+                        courseFile(c),
+                        "application/json",
+                      )
+                    }
+                  >
+                    {t("파일 다시 받기")}
+                  </button>
+                  <button
+                    type="button"
+                    className="danger-text"
+                    onClick={() => {
+                      removeCourse(c.id);
+                      refresh();
+                      message(
+                        t("코스 「{title}」을 이 기기에서 지웠어요.", {
+                          title: c.title,
+                        }),
+                      );
+                    }}
+                  >
+                    {t("지우기")}
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
+    </section>
   );
 }

@@ -1,5 +1,5 @@
-import { rubric, missions } from "./data";
-import { kindNames, stageDone } from "./model";
+import { rubric, missions, lessonMissionIds, lessons } from "./data";
+import { kindNames, stageDone, stageNames } from "./model";
 import type { Feedback, Work } from "./model";
 // 학급 작품 모으기: 학생이 낸 작품 파일을 교사 기기에서 읽어 요약·평가한다. 서버나 기기 저장소에 넣지 않는다.
 export const levelNames = ["미평가", "시작", "수행", "설명·적용"];
@@ -8,7 +8,13 @@ export const emptyFeedback = (at: string): Feedback => ({
   note: "",
   at,
 });
-export type Entry = { key: string; file: string; work: Work };
+// sourceId: 학생 기기에 있는 원래 작품 ID(가져올 때 새 ID를 붙이므로 따로 기억한다). QR로 평가를 돌려줄 때 쓴다.
+export type Entry = {
+  key: string;
+  file: string;
+  work: Work;
+  sourceId?: string;
+};
 export function summarize(w: Work) {
   const d = w.draft;
   const current = d.checks.filter((c) => c.revision === d.revision);
@@ -31,6 +37,31 @@ export function summarize(w: Work) {
 }
 export const graded = (f: Feedback | null) =>
   Boolean(f && f.levels.every((l) => l > 0));
+// 차시 진행: 8차시 계획의 미션별로 읽은 작품이 어디까지 왔는지 센다.
+// 같은 미션을 쓰는 차시(1·2·6차시 퀴즈 1)는 같은 작품을 보여 준다.
+export function lessonProgress(works: Work[]) {
+  return lessons.map((lesson, i) => {
+    const missionId = lessonMissionIds[i];
+    const mine = works.filter((w) => w.missionId === missionId);
+    const stages = mine.map((w) => stageDone(w.draft));
+    // 아직 기록하지 않은 첫 단계에 멈춘 학생 수
+    const waiting = stageNames.map(
+      (_, s) => stages.filter((st) => st.findIndex((x) => !x) === s).length,
+    );
+    const most = Math.max(0, ...waiting);
+    return {
+      number: i + 1,
+      title: lesson.title,
+      missionId,
+      mission: missions.find((m) => m.id === missionId)?.title ?? missionId,
+      works: mine.length,
+      done: stages.filter((st) => st.every(Boolean)).length,
+      graded: mine.filter((w) => graded(w.feedback)).length,
+      stuckAt: most > 0 ? waiting.indexOf(most) : -1,
+      stuckN: most,
+    };
+  });
+}
 // 엑셀이 '=' 등으로 시작하는 칸을 수식으로 실행하지 않도록 앞에 '를 붙인다.
 function cell(v: string | number) {
   let s = String(v);

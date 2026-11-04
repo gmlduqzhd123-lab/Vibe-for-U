@@ -97,6 +97,9 @@ export function Workspace({
     }
   };
   const [versionLabel, setVersionLabel] = useState("");
+  // 친구에게 물어볼 것(요청 파일·QR에 담긴다). 작품에는 저장하지 않는다.
+  const [peerQuestions, setPeerQuestions] = useState("");
+  const questionList = peerQuestions.split("\n");
   const [compareA, setCompareA] = useState(w.versions[0]?.id ?? "");
   const [compareB, setCompareB] = useState("current");
   const checks = d.checks.filter((c) => c.revision === d.revision);
@@ -555,6 +558,42 @@ export function Workspace({
                     </div>
                   ) : null}
                 </div>
+                {d.prediction.trim() && d.runRevision === d.revision ? (
+                  <fieldset className="prediction-check">
+                    <legend>{t("실제로 눌러 보니 예상과 어땠나요?")}</legend>
+                    <div className="button-row">
+                      {(
+                        [
+                          ["match", "예상대로였어요"],
+                          ["differ", "예상과 달랐어요"],
+                        ] as const
+                      ).map(([v, label]) => (
+                        <button
+                          key={v}
+                          type="button"
+                          className={d.predictionCheck === v ? "active" : ""}
+                          aria-pressed={d.predictionCheck === v}
+                          onClick={() => patch({ predictionCheck: v })}
+                        >
+                          {t(label)}
+                        </button>
+                      ))}
+                    </div>
+                    {d.predictionCheck ? (
+                      <Field
+                        area
+                        label={t(
+                          d.predictionCheck === "differ"
+                            ? "무엇이 달랐나요? 틀린 예상도 소중한 배움이에요"
+                            : "어떤 점이 맞았나요?",
+                        )}
+                        value={d.predictionNote ?? ""}
+                        max={500}
+                        onChange={(v) => patch({ predictionNote: v })}
+                      />
+                    ) : null}
+                  </fieldset>
+                ) : null}
                 <h3>{t("설정과 규칙")}</h3>
                 <p className="muted small">
                   {t(
@@ -631,12 +670,22 @@ export function Workspace({
                       "요청 파일에는 앱 설정과 검사 항목만 들어가요. 친구가 자기 기기의 ‘친구 작품 검사하기’에서 열어 결과 파일을 돌려주면, ‘파일 가져오기’로 열어 친구 의견 기록으로 더해요.",
                     )}
                   </p>
+                  <Field
+                    area
+                    label={t(
+                      "친구에게 물어볼 것 (선택 · 한 줄에 하나, 5개까지)",
+                    )}
+                    placeholder={t("예: 점수가 두 번 오르는지 확인해 줘")}
+                    value={peerQuestions}
+                    max={LIMITS.checkText * 5}
+                    onChange={setPeerQuestions}
+                  />
                   <button
                     onClick={() =>
                       guard([w], () =>
                         downloadText(
                           `친구검사요청-${d.title || "작품"}.json`,
-                          JSON.stringify(makePeerRequest(w)),
+                          JSON.stringify(makePeerRequest(w, questionList)),
                           "application/json",
                         ),
                       )
@@ -648,14 +697,16 @@ export function Workspace({
                   <ShareButton
                     works={[w]}
                     name={`친구검사요청-${d.title || "작품"}.json`}
-                    text={() => JSON.stringify(makePeerRequest(w))}
+                    text={() =>
+                      JSON.stringify(makePeerRequest(w, questionList))
+                    }
                     title={t("친구 검사 요청")}
                     message={message}
                     label={t("요청 파일 공유로 보내기")}
                   />
                   <QrSendButton
                     works={[w]}
-                    payload={() => peerPayload(w)}
+                    payload={() => peerPayload(w, questionList)}
                     label={t("요청을 QR로 보내기")}
                     message={message}
                   />

@@ -3100,6 +3100,31 @@ pre {
   background: #f5f2eb;
   font-weight: 700;
 }
+/* 차시별 진행표: 요약표와 같은 모양. 작품이 없는 차시는 흐리게, 완료 비율은 짧은 막대로 */
+.lesson-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.lesson-table th,
+.lesson-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+.lesson-table th {
+  background: #f5f2eb;
+}
+.lesson-table tr.lesson-empty td {
+  color: var(--muted);
+}
+.lesson-bar {
+  display: block;
+  width: 90px;
+  height: 6px;
+  margin-top: 4px;
+}
 .class-cards {
   display: grid;
   gap: 14px;
@@ -4000,6 +4025,47 @@ pre {
 .map-stop.done button {
   border-color: #1f8a5b;
 }
+.design-params {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.design-params .field {
+  flex: 1 1 140px;
+}
+.course-steps {
+  margin: 10px 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+.course-steps li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+}
+/* 우리 반 코스: 선생님이 묶어 준 순서. 다음에 할 미션은 테두리를 두껍게 보인다. */
+.map-row.course {
+  padding: 12px;
+  border: 1px dashed var(--line);
+  border-radius: 14px;
+  background: var(--paper, #faf7f2);
+}
+.map-row.course h2 small {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+}
+.map-stop.next button {
+  border-width: 2px;
+  border-color: #b8660f;
+}
 .map-name {
   font-size: 12px;
   line-height: 1.35;
@@ -4151,4 +4217,49 @@ pre {
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 10px 14px;
+}
+/* 실행 기록 되감기 */
+.run-history {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+}
+.run-history-bar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 8px 0;
+}
+.run-history-bar input[type="range"] {
+  flex: 1;
+  min-width: 80px;
+}
+.run-history-bar button {
+  min-height: 34px;
+  padding: 4px 10px;
+}
+.run-history-step {
+  margin: 4px 0;
+}
+/* 예상과 실제 나란히 */
+.prediction-check {
+  margin: 10px 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 14px;
+}
+.prediction-check button.active {
+  background: var(--purple-dark);
+  border-color: var(--purple-dark);
+  color: #fff;
+}
+.prediction-compare {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+.prediction-compare h3 {
+  margin: 0 0 4px;
+  font-size: 14px;
 }

@@ -134,7 +134,31 @@ export function Portfolio({
         </section>
         <section>
           <h2>{t("02. 실행 전 예상")}</h2>
-          <p className="preserve">{text(d.prediction)}</p>
+          <div className="prediction-compare">
+            <div>
+              <h3>{t("누르기 전에 예상한 것")}</h3>
+              <p className="preserve">{text(d.prediction)}</p>
+            </div>
+            <div>
+              <h3>{t("눌러 본 뒤")}</h3>
+              {d.predictionCheck ? (
+                <>
+                  <Pill
+                    tone={d.predictionCheck === "match" ? "green" : "orange"}
+                  >
+                    {t(
+                      d.predictionCheck === "match"
+                        ? "예상대로였어요"
+                        : "예상과 달랐어요",
+                    )}
+                  </Pill>
+                  <p className="preserve">{text(d.predictionNote ?? "")}</p>
+                </>
+              ) : (
+                <p className="muted">{t("아직 표시하지 않았어요.")}</p>
+              )}
+            </div>
+          </div>
           <p>
             {t("현재 설정 실행 기록:")}{" "}
             {t(
