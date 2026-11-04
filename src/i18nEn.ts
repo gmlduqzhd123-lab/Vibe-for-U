@@ -1972,4 +1972,139 @@ export const en: Record<string, string> = {
   "새 기능 보충 안내 영어판 (New features supplement in English)":
     "New features supplement in English",
   "6쪽 보충 안내의 영어판": "English edition of the 6-page supplement",
+  "코스 「{title}」을 받았어요. 나의 미션 지도에서 순서대로 열어요.":
+    "Received the course “{title}”. Open it in order from My mission map.",
+  "최근 되돌리기 기록도 함께 왔어요.": "Recent undo steps came along too.",
+  "선생님 평가를 받았어요.": "Received the teacher’s assessment.",
+  "차시별 진행": "Progress by lesson",
+  "8차시 계획의 미션별로 읽은 작품을 셌어요. 같은 미션을 쓰는 차시는 같은 작품이 보여요. ‘많이 멈춘 단계’는 아직 기록하지 않은 첫 단계가 가장 많은 곳이에요.":
+    "Works are counted by the mission of each lesson in the 8-lesson plan. Lessons that share a mission show the same works. ‘Most stuck at’ is the first unrecorded step that the most students are on.",
+  "차시별 진행표 · 좌우 방향키로 이동해 읽기":
+    "Progress by lesson table · use the left and right arrow keys to read",
+  차시: "Lesson",
+  "다섯 단계 완료": "All five steps done",
+  "많이 멈춘 단계": "Most stuck at",
+  "{stage} · {n}명": "{stage} · {n} students",
+  "평가를 QR로 돌려주기": "Return assessment by QR",
+  "내가 설계한 검사 · 앱에게 실험 시키기":
+    "My own test · let the app run the experiment",
+  "‘이렇게 누르면 이런 결과가 나올 거야’를 적어요. 앱이 대신 눌러 본 결과와 비교해 ‘학습자 직접 확인’ 카드로 남겨요.":
+    "Write ‘if I press it like this, this should happen’. The app presses for you, compares the result and saves a ‘Checked by learner’ card.",
+  "어떻게 눌러 볼까요?": "How should the app press?",
+  "예상 결과 (숫자나 문구)": "Expected result (a number or phrase)",
+  "예: 점수 2": "e.g. score 2",
+  "실험할 것: {label}": "Experiment: {label}",
+  "예상 결과를 먼저 적어 주세요.": "Write the expected result first.",
+  "예상대로였어요! 카드에 기록했어요.": "Just as expected! Saved to a card.",
+  "예상과 달랐어요. 왜 다른지 생각해 보고 카드에 적어요.":
+    "Not as expected. Think about why and write it on the card.",
+  "실험하고 기록하기": "Run and record",
+  "자동 검사 결과 듣기": "Listen to the automatic test results",
+  "힌트 듣기": "Listen to the hint",
+  "미션 묶음(코스) 만들기": "Make a mission course",
+  "기본 미션과 선생님 미션을 순서대로 묶어요. 학생이 코스 파일을 가져오면 나의 미션 지도에 ‘우리 반 코스’ 길이 생기고, 담긴 선생님 미션도 함께 더해져요.":
+    "Bundle built-in and teacher missions in order. When a student imports the course file, a ‘Our class course’ path appears on their mission map and the teacher missions inside are added too.",
+  "코스 이름": "Course name",
+  "넣을 미션": "Mission to add",
+  "코스에 더하기": "Add to course",
+  "코스 순서": "Course order",
+  "{n}번 미션을 앞으로": "Move mission {n} up",
+  "{n}번 미션 빼기": "Remove mission {n}",
+  빼기: "Remove",
+  "아직 넣은 미션이 없어요.": "No missions added yet.",
+  "코스 「{title}」을 이 기기에 더했어요.":
+    "Added the course “{title}” to this device.",
+  "이 기기에 코스 더하기": "Add course to this device",
+  "코스 파일을 내려받았어요. 학생은 내 작품 선반의 ‘파일 가져오기’로 더해요.":
+    "Course file downloaded. Students add it with ‘Import file’ on My shelf.",
+  "코스 파일 내려받기": "Download course file",
+  "이 기기의 코스 {n}개": "{n} courses on this device",
+  "미션 {n}개": "{n} missions",
+  "코스 「{title}」을 이 기기에서 지웠어요.":
+    "Removed the course “{title}” from this device.",
+  "우리 반 코스 · {title}": "Our class course · {title}",
+  "{n} / {m} 완료": "{n} / {m} done",
+  "다음에 할 미션": "Next mission",
+  "결과 듣기": "Listen to the result",
+  "친구가 물어본 것": "What your friend asked",
+  "질문 {n}: {q}": "Question {n}: {q}",
+  "누르기 전에 예상한 것": "Predicted before pressing",
+  "눌러 본 뒤": "After pressing",
+  예상대로였어요: "As I expected",
+  "예상과 달랐어요": "Different from my prediction",
+  "아직 표시하지 않았어요.": "Not marked yet.",
+  "선택 {n}": "Choice {n}",
+  "점수 {a} → {b}": "Score {a} → {b}",
+  "점수 {n}점": "Score {n}",
+  "문제 {i} · 점수 {n}": "Question {i} · score {n}",
+  "장면 듣기": "Listen to the scene",
+  "장면 {a} → {b}": "Scene {a} → {b}",
+  "처음 장면으로 돌아감": "Back to the first scene",
+  "남은 시간 {n}초": "{n} s left",
+  "시계가 흐르기 시작함": "Clock started",
+  "남은 시간을 기억하고 멈춤": "Paused, remembering the time left",
+  "설정 시간으로 돌아가 정지": "Reset to the set time and stopped",
+  "선생님 평가가 왔어요 · 「{title}」":
+    "A teacher assessment arrived · “{title}”",
+  "받으면 이 작품의 포트폴리오 ‘과정 평가 · 나와 선생님’에 선생님 평가가 들어가요.":
+    "If you accept, the teacher assessment goes into this work’s portfolio under ‘Process assessment · me and my teacher’.",
+  "이 기기에 「{title}」 작품이 없어요. 작품을 먼저 가져온 뒤 다시 비춰 주세요.":
+    "The work “{title}” is not on this device. Import the work first, then scan again.",
+  "평가 받기": "Accept assessment",
+  "실제로 눌러 보니 예상과 어땠나요?":
+    "After pressing, how did it compare with your prediction?",
+  "무엇이 달랐나요? 틀린 예상도 소중한 배움이에요":
+    "What was different? A wrong prediction is valuable learning too",
+  "어떤 점이 맞았나요?": "What did you get right?",
+  "친구에게 물어볼 것 (선택 · 한 줄에 하나, 5개까지)":
+    "Questions for your friend (optional · one per line, up to 5)",
+  "예: 점수가 두 번 오르는지 확인해 줘":
+    "e.g. Check whether the score goes up twice",
+  "문제 {a}에서 {b}번 답 고르기 → 점수":
+    "Pick answer {b} on question {a} → score",
+  "답 번호": "Answer number",
+  "문제 {a}에서 정답을 두 번 고르기 → 점수":
+    "Pick the correct answer twice on question {a} → score",
+  "모든 문제를 정답으로 풀기 → 최종 점수":
+    "Answer every question correctly → final score",
+  "{a}번 버튼을 {b}번 누르기 → 값과 문구":
+    "Press button {a} {b} times → value and message",
+  "버튼 번호": "Button number",
+  "누르는 횟수": "Number of presses",
+  "시작하고 {a}초 기다리기 → 남은 시간": "Start and wait {a} s → time left",
+  "기다리는 초": "Seconds to wait",
+  "명령을 모두 실행하기 → 칠한 칸 수": "Run all commands → painted cells",
+  "시작 장면에서 {a}번 선택하기 → 다음 장면":
+    "Pick choice {a} on the first scene → next scene",
+  "선택 번호": "Choice number",
+  "점수 {n}": "Score {n}",
+  "최종 점수 {n}": "Final score {n}",
+  "{name} {v} · 문구 「{m}」": "{name} {v} · message “{m}”",
+  "남은 시간 0초 · {end}": "0 s left · {end}",
+  "종료 안내 표시": "End message shown",
+  "종료 안내 없음": "No end message",
+  "칠한 칸 {n}개 · 목표와 다른 칸 {m}개":
+    "{n} cells painted · {m} cells differ from the target",
+  "장면 「{title}」": "Scene “{title}”",
+  "이어지는 장면이 없어요": "No scene follows",
+  "내가 설계한 검사": "My own test",
+  "앱이 대신 눌러 봤어요": "The app pressed for you",
+  "실행 기록 되감기 · {n}번 눌렀어요": "Rewind the run log · {n} presses",
+  "한 칸 앞으로 되감기": "Rewind one step",
+  "실행 기록 위치": "Run log position",
+  "한 칸 뒤로": "Forward one step",
+  "지난 기록을 보고 있어요. 실행 화면은 지금 값을 보여 줘요.":
+    "You are viewing a past step. The app view shows the current values.",
+  "예상 확인": "prediction check",
+  "예상 확인 메모": "prediction check note",
+  "되돌리기 기록": "undo history",
+  "되돌리기 단계": "undo step",
+  질문: "Question",
+  "질문 답": "question answer",
+  답: "answer",
+  "평가가 비어 있어요.": "The assessment is empty.",
+  "코스 파일 형식을 알 수 없어요.": "Unknown course file format.",
+  "코스에는 미션을 1~{n}개 넣어 주세요.": "A course needs 1 to {n} missions.",
+  "코스는 이 기기에 {n}개까지 둘 수 있어요.":
+    "This device can hold up to {n} courses.",
 };

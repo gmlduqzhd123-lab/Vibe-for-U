@@ -163,6 +163,91 @@ export function removeCustomMission(id: string) {
 // 이 앱의 데이터 전체 삭제 뒤에는 기본 미션만 남긴다.
 export function forgetCustomMissions() {
   register([]);
+  try {
+    localStorage.removeItem(COURSE_KEY);
+  } catch {
+    // 저장소를 쓸 수 없으면 지울 것도 없다.
+  }
+}
+// 미션 묶음(코스): 선생님이 미션 몇 개를 순서대로 묶어 한 파일로 나눠 준다.
+// 기본 미션과 선생님 미션을 섞을 수 있고, 선생님 미션은 파일에 함께 담긴다.
+export const COURSE_FORMAT = "ttukttak-vibe-course";
+export const COURSE_LIMIT = 10;
+export const COURSE_MISSIONS = 12;
+export type Course = { id: string; title: string; missionIds: string[] };
+const COURSE_KEY = `${APP_PREFIX}courses`;
+export function validateCourse(data: unknown): Course {
+  if (!data || typeof data !== "object")
+    throw new AppError("코스 파일 형식을 알 수 없어요.");
+  const c = data as Obj;
+  const ids = Array.isArray(c.missionIds) ? c.missionIds : [];
+  const missionIds = [
+    ...new Set(
+      ids.filter(
+        (v): v is string => typeof v === "string" && /^[\w-]{1,80}$/.test(v),
+      ),
+    ),
+  ];
+  if (missionIds.length < 1 || missionIds.length > COURSE_MISSIONS)
+    throw new AppError("코스에는 미션을 1~{n}개 넣어 주세요.", {
+      n: COURSE_MISSIONS,
+    });
+  return {
+    id:
+      typeof c.id === "string" && /^course-[\w-]{1,60}$/.test(c.id)
+        ? c.id
+        : `course-${uid()}`,
+    title: text(c.title, "코스 이름", LIMITS.short),
+    missionIds,
+  };
+}
+export const courseFile = (c: Course) =>
+  JSON.stringify({
+    format: COURSE_FORMAT,
+    version: 1,
+    course: c,
+    missions: missions.filter(
+      (m) => isCustom(m.id) && c.missionIds.includes(m.id),
+    ),
+  });
+// 코스와, 함께 담긴 선생님 미션(adoptMissions로 받아들인다)을 돌려준다.
+export function parseCourseFile(data: unknown) {
+  const o = (data ?? {}) as Obj;
+  if (o.format !== COURSE_FORMAT || o.version !== 1)
+    throw new AppError("코스 파일 형식을 알 수 없어요.");
+  return { course: validateCourse(o.course), missions: o.missions };
+}
+function readCourses(): Course[] {
+  try {
+    const raw = JSON.parse(localStorage.getItem(COURSE_KEY) ?? "[]");
+    if (!Array.isArray(raw)) return [];
+    return raw.flatMap((c) => {
+      try {
+        return [validateCourse(c)];
+      } catch {
+        return [];
+      }
+    });
+  } catch {
+    return [];
+  }
+}
+export const courses = () => readCourses();
+export function saveCourse(c: Course) {
+  const list = readCourses().filter((x) => x.id !== c.id);
+  if (list.length >= COURSE_LIMIT)
+    throw new AppError("코스는 이 기기에 {n}개까지 둘 수 있어요.", {
+      n: COURSE_LIMIT,
+    });
+  list.push(c);
+  localStorage.setItem(COURSE_KEY, JSON.stringify(list));
+  return c;
+}
+export function removeCourse(id: string) {
+  localStorage.setItem(
+    COURSE_KEY,
+    JSON.stringify(readCourses().filter((x) => x.id !== id)),
+  );
 }
 // 작품 파일·친구 검사 요청·QR에 함께 온 선생님 미션을 받아들인다.
 // save가 true면 이 기기에 남기고(작품을 더할 때), 아니면 이번에 열어 보는 동안만 쓴다(친구 검사).

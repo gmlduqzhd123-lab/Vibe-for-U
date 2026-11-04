@@ -2,10 +2,13 @@ import type { Config, Snapshot, Work } from "./model";
 import { dirNames } from "./engines";
 import { translate } from "./i18n";
 export function updatePrediction(d: Snapshot, prediction: string): Snapshot {
+  // 예상을 바꾸면 "눌러 봤다" 기록과 맞았는지 표시도 처음으로 돌아간다.
+  const changed = prediction !== d.prediction;
   return {
     ...d,
     prediction,
-    runRevision: prediction === d.prediction ? d.runRevision : "",
+    runRevision: changed ? "" : d.runRevision,
+    ...(changed ? { predictionCheck: "", predictionNote: "" } : {}),
   };
 }
 type Tr = (text: string, vars?: Record<string, string | number>) => string;

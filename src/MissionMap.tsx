@@ -1,4 +1,5 @@
 import { missions } from "./data";
+import { courses } from "./customMissions";
 import { kindNames, kinds, stageDone } from "./model";
 import type { Work } from "./model";
 import { Icon } from "./ui";
@@ -27,6 +28,7 @@ export function MissionMap({ works, go }: { works: Work[]; go: Navigate }) {
     state: missionState(works, m.id),
   }));
   const done = all.filter((x) => x.state === "done").length;
+  const courseList = courses();
   return (
     <>
       <div className="page-heading">
@@ -49,6 +51,47 @@ export function MissionMap({ works, go }: { works: Work[]; go: Navigate }) {
         ))}
       </ul>
       <div className="mission-map">
+        {courseList.map((c) => {
+          const stops = c.missionIds
+            .map((id) => all.find((x) => x.m.id === id))
+            .filter((x): x is (typeof all)[number] => Boolean(x));
+          const finished = stops.filter((x) => x.state === "done").length;
+          // 코스는 순서대로 걷는다. 아직 끝내지 않은 첫 미션이 다음 할 곳이다.
+          const nextStop = stops.find((x) => x.state !== "done");
+          return (
+            <section
+              key={c.id}
+              className="map-row course"
+              aria-labelledby={`map-${c.id}`}
+            >
+              <h2 id={`map-${c.id}`}>
+                <Icon name="book" />{" "}
+                {t("우리 반 코스 · {title}", { title: c.title })}
+                <small>
+                  {t("{n} / {m} 완료", { n: finished, m: stops.length })}
+                </small>
+              </h2>
+              <ol className="map-path">
+                {stops.map(({ m, state }, i) => (
+                  <li
+                    key={m.id}
+                    className={`map-stop ${state}${nextStop?.m.id === m.id ? " next" : ""}`}
+                  >
+                    <button
+                      onClick={() => go(`mission/${m.id}`)}
+                      aria-label={`${i + 1}. ${m.title} · ${t(label[state])}${nextStop?.m.id === m.id ? ` · ${t("다음에 할 미션")}` : ""}`}
+                    >
+                      <span className="map-dot-big" aria-hidden="true">
+                        {state === "new" ? i + 1 : mark[state]}
+                      </span>
+                      <span className="map-name">{m.title}</span>
+                    </button>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          );
+        })}
         {kinds.map((k) => (
           <section
             key={k}

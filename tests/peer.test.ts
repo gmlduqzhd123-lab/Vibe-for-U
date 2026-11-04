@@ -90,3 +90,53 @@ describe("친구 검사 파일", () => {
     ).toThrow("검사 결과가 없어요");
   });
 });
+describe("친구에게 물어볼 것", () => {
+  it("질문은 요청에 담기고, 친구의 답은 ‘질문’ 검사 기록으로 더해진다", async () => {
+    const { makeWork } = await import("../src/model");
+    const { missions } = await import("../src/data");
+    const {
+      makePeerRequest,
+      validatePeerRequest,
+      validatePeerResponse,
+      applyPeerResponse,
+    } = await import("../src/peer");
+    const w = makeWork(missions[0]);
+    const r = makePeerRequest(w, [
+      "  ",
+      "첫 질문",
+      "둘째 질문",
+      "",
+      "셋",
+      "넷",
+      "다섯",
+      "여섯",
+    ]);
+    expect(r.questions).toEqual(["첫 질문", "둘째 질문", "셋", "넷", "다섯"]);
+    expect(
+      validatePeerRequest(JSON.parse(JSON.stringify(r))).questions,
+    ).toEqual(r.questions);
+    expect(makePeerRequest(w).questions).toBeUndefined();
+    const response = validatePeerResponse({
+      format: "ttukttak-vibe-peer-response",
+      version: 1,
+      workId: w.id,
+      revision: w.draft.revision,
+      reviewer: "수아",
+      results: [],
+      comment: "",
+      at: new Date().toISOString(),
+      answers: [
+        { question: "첫 질문", answer: "응, 맞아" },
+        { question: "둘째 질문", answer: "   " },
+      ],
+    });
+    const applied = applyPeerResponse(w, response);
+    const added = applied.draft.checks.filter((c) => c.label === "질문 · 수아");
+    expect(added).toHaveLength(1);
+    expect(added[0]).toMatchObject({
+      expected: "첫 질문",
+      actual: "응, 맞아",
+      source: "peer",
+    });
+  });
+});

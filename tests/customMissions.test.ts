@@ -168,3 +168,36 @@ describe("선생님 미션의 영어 글", () => {
     );
   });
 });
+describe("미션 묶음(코스)", () => {
+  it("코스 파일로 내보냈다가 그대로 읽고, 담긴 선생님 미션도 함께 간다", async () => {
+    const {
+      courseFile,
+      parseCourseFile,
+      saveCourse,
+      courses,
+      removeCourse,
+      validateCourse,
+    } = await import("../src/customMissions");
+    store.clear();
+    loadCustomMissions();
+    const m = saveCustomMission(validateMission(sample()));
+    const c = validateCourse({
+      title: "우리 반 코스",
+      missionIds: ["quiz-1", m.id, "quiz-1"],
+    });
+    expect(c.missionIds).toEqual(["quiz-1", m.id]);
+    const parsed = parseCourseFile(JSON.parse(courseFile(c)));
+    expect(parsed.course).toEqual(c);
+    expect((parsed.missions as { id: string }[]).map((x) => x.id)).toEqual([
+      m.id,
+    ]);
+    saveCourse(c);
+    expect(courses()).toHaveLength(1);
+    removeCourse(c.id);
+    expect(courses()).toHaveLength(0);
+    expect(() =>
+      validateCourse({ title: "빈 코스", missionIds: [] }),
+    ).toThrow();
+    expect(() => parseCourseFile({ format: "x" })).toThrow();
+  });
+});

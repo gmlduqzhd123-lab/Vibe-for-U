@@ -16,6 +16,8 @@ export type PeerRequest = {
   tests: { label: string; expected: string }[];
   // 선생님 미션이면 미션도 담아, 그 미션이 없는 친구 기기에서도 연다.
   missions?: Mission[];
+  // 만든 학생이 친구에게 물어볼 것("이 부분이 헷갈려요, 확인해 줘"). 없을 수 있다.
+  questions?: string[];
 };
 export type PeerResult = {
   label: string;
@@ -35,10 +37,20 @@ export type PeerResponse = {
   // 요청한 작품을 찾지 못했을 때 비슷한 작품을 먼저 보여 주려고 담는다(이전 파일에는 없을 수 있음).
   missionId?: string;
   title?: string;
+  // 만든 학생의 질문에 친구가 적은 답(질문 순서대로)
+  answers?: { question: string; answer: string }[];
 };
-export function makePeerRequest(w: Work): PeerRequest {
+export function makePeerRequest(
+  w: Work,
+  questions: string[] = [],
+): PeerRequest {
   const m = missions.find((x) => x.id === w.missionId);
+  const asked = questions
+    .map((q) => q.trim())
+    .filter(Boolean)
+    .slice(0, 5);
   return {
+    ...(asked.length ? { questions: asked } : {}),
     format: "ttukttak-vibe-peer-request",
     version: 1,
     workId: w.id,
@@ -101,6 +113,13 @@ export function validatePeerRequest(data: unknown): PeerRequest {
       };
     }),
     ...(mission && isCustom(mission.id) ? { missions: [mission] } : {}),
+    ...(r.questions === undefined
+      ? {}
+      : {
+          questions: list(r.questions, "질문", 5).map((q) =>
+            str(q, "질문", LIMITS.checkText),
+          ),
+        }),
   };
 }
 export function validatePeerResponse(data: unknown): PeerResponse {
@@ -134,9 +153,21 @@ export function validatePeerResponse(data: unknown): PeerResponse {
     ...(r.title === undefined
       ? {}
       : { title: str(r.title, "작품 제목", LIMITS.short) }),
+    ...(r.answers === undefined
+      ? {}
+      : {
+          answers: list(r.answers, "질문 답", 5).map((a) => {
+            const o = obj(a, "질문 답");
+            return {
+              question: str(o.question, "질문", LIMITS.checkText),
+              answer: str(o.answer, "답", LIMITS.checkText),
+            };
+          }),
+        }),
   };
 }
 // 결과를 작품의 친구 의견 검사 기록으로 더한다. 검사한 설정 버전을 그대로 남긴다.
+const t_ = (s: string) => s;
 export function applyPeerResponse(w: Work, r: PeerResponse): Work {
   const who = r.reviewer.trim() || "친구";
   const rows: Check[] = [
@@ -149,6 +180,18 @@ export function applyPeerResponse(w: Work, r: PeerResponse): Work {
         actual: x.actual,
         source: "peer" as const,
         status: x.status,
+        revision: r.revision,
+        at: r.at,
+      })),
+    ...(r.answers ?? [])
+      .filter((a) => a.answer.trim())
+      .map((a) => ({
+        id: uid(),
+        label: `${t_("질문")} · ${who}`.slice(0, LIMITS.short),
+        expected: a.question,
+        actual: a.answer,
+        source: "peer" as const,
+        status: "pending" as const,
         revision: r.revision,
         at: r.at,
       })),

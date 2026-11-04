@@ -40,3 +40,48 @@ describe("되돌리기 기록", () => {
     expect(h.undo[0].editingLabel).toBe("5");
   });
 });
+describe("작품 파일에 담는 되돌리기 단계", () => {
+  it("최근 다섯 단계만 담고, 파일을 읽으면 새 ID에 붙는다", async () => {
+    const { recentSteps, saveHistory } = await import("../src/undoHistory");
+    const { exportJSON, parseImportWithUndo } = await import("../src/storage");
+    const { missions } = await import("../src/data");
+    const { makeWork } = await import("../src/model");
+    const w = makeWork(missions[0]);
+    const step = (title: string) => ({
+      draft: { ...w.draft, title },
+      versions: w.versions,
+      editingLabel: w.editingLabel,
+    });
+    saveHistory(w.id, {
+      undo: ["a", "b", "c", "d", "e", "f", "g"].map(step),
+      redo: [],
+      at: 0,
+    });
+    expect(recentSteps(w.id).map((s) => s.draft.title)).toEqual([
+      "c",
+      "d",
+      "e",
+      "f",
+      "g",
+    ]);
+    const text = exportJSON([w]);
+    expect(JSON.parse(text).undo[w.id]).toHaveLength(5);
+    expect(JSON.parse(exportJSON([w], false)).undo).toBeUndefined();
+    const { works, undo } = parseImportWithUndo(text);
+    expect(works).toHaveLength(1);
+    expect(works[0].id).not.toBe(w.id);
+    expect(undo.get(works[0].id)?.map((s) => s.draft.title)).toEqual([
+      "c",
+      "d",
+      "e",
+      "f",
+      "g",
+    ]);
+    // 손상된 되돌리기 기록은 작품만 가져온다.
+    const broken = JSON.parse(text);
+    broken.undo[w.id] = [{ draft: 1 }];
+    const again = parseImportWithUndo(JSON.stringify(broken));
+    expect(again.works).toHaveLength(1);
+    expect(again.undo.size).toBe(0);
+  });
+});

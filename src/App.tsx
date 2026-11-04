@@ -1,17 +1,20 @@
 import { SendGuardContext } from "./sendGuard";
 import { scanWorks } from "./privacy";
 import {
+  COURSE_FORMAT,
   MISSION_FORMAT,
   adoptMissions,
   forgetCustomMissions,
   isNewerMission,
   loadCustomMissions,
+  parseCourseFile,
   parseMissionFile,
   replaceCustomMission,
+  saveCourse,
   saveCustomMission,
 } from "./customMissions";
 import type { MissionUpdate } from "./customMissions";
-import { errorText } from "./appError";
+import { AppError, errorText } from "./appError";
 import {
   lazy,
   Suspense,
@@ -41,7 +44,7 @@ import {
   importWorks,
   readAllWorks,
   downloadText,
-  parseImport,
+  parseImportWithUndo,
   saveWork,
   jsonBytes,
 } from "./storage";
@@ -812,6 +815,32 @@ export default function App() {
         go(`mission/${m.id}`);
         return;
       }
+      // 선생님이 나눠 준 미션 묶음(코스): 담긴 선생님 미션을 먼저 더하고, 코스를 이 기기에 둔다.
+      if ((data as { format?: unknown } | null)?.format === COURSE_FORMAT) {
+        const { course, missions: list } = parseCourseFile(data);
+        const updates: MissionUpdate[] = [];
+        adoptMissions(list, true, updates);
+        const missing = course.missionIds.filter(
+          (id) => !missions.some((m) => m.id === id),
+        );
+        if (missing.length)
+          throw new AppError(
+            "코스에 적힌 미션 {n}개가 이 기기에 없어요. 미션 파일을 먼저 가져와 주세요.",
+            { n: missing.length },
+          );
+        saveCourse(course);
+        message(
+          t(
+            "코스 「{title}」을 받았어요. 나의 미션 지도에서 순서대로 열어요.",
+            {
+              title: course.title,
+            },
+          ),
+        );
+        go("map");
+        if (updates.length) askMissionUpdate(updates);
+        return;
+      }
       const peer = peerFileKind(data);
       if (peer === "request") {
         setPeerRequest(validatePeerRequest(data));
@@ -841,15 +870,22 @@ export default function App() {
         true,
         updates,
       );
-      const imported = parseImport(text);
+      const { works: imported, undo } = parseImportWithUndo(text);
       await flush();
       await importWorks(imported);
       announceChange();
       setAll([...worksRef.current, ...imported]);
+      // 파일에 함께 온 최근 되돌리기 단계를 새 작품에 붙인다.
+      for (const [id, steps] of undo) {
+        const h = historyOf(id);
+        h.undo = steps;
+        h.redo = [];
+        saveHistory(id, h);
+      }
       message(
         t("작품 {n}개를 새 ID의 복사본으로 가져왔어요.", {
           n: imported.length,
-        }),
+        }) + (undo.size ? ` ${t("최근 되돌리기 기록도 함께 왔어요.")}` : ""),
       );
       go("library");
       if (updates.length) askMissionUpdate(updates);
@@ -1243,6 +1279,16 @@ export default function App() {
                       key={parts[1]}
                       code={parts[1]}
                       receiveWork={receiveWork}
+                      receiveFeedback={(p) => {
+                        const target = worksRef.current.find(
+                          (w) => w.id === p.workId,
+                        );
+                        if (!target) return false;
+                        persist({ ...target, feedback: p.feedback });
+                        go(`portfolio/${target.id}`);
+                        message(t("선생님 평가를 받았어요."));
+                        return true;
+                      }}
                       receivePeer={(p) => {
                         setPeerRequest(p.request);
                         go("peer");

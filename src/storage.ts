@@ -1,6 +1,8 @@
 import { AppError } from "./appError";
 import { APP_PREFIX, LIMITS, SCHEMA_VERSION, kinds, uid } from "./model";
 import { missions } from "./data";
+import { EXPORT_STEPS, recentSteps } from "./undoHistory";
+import type { Step } from "./undoHistory";
 import type {
   AIData,
   Check,
@@ -97,14 +99,36 @@ export const usedCustomMissions = (works: Work[]) =>
     (m) =>
       m.id.startsWith("custom-") && works.some((w) => w.missionId === m.id),
   );
-export function exportJSON(works: Work[]) {
+// 되돌리기 기록은 파일을 많이 키우지 않는 만큼만 담는다(바이트).
+const UNDO_BYTES = 300_000;
+export function exportJSON(works: Work[], withUndo = true) {
   const used = usedCustomMissions(works);
-  return JSON.stringify({
+  const body = {
     format: "ttukttak-vibe-backup",
     schemaVersion: SCHEMA_VERSION,
     works,
     ...(used.length ? { missions: used } : {}),
-  });
+  };
+  if (!withUndo) return JSON.stringify(body);
+  // 최근 되돌리기 단계를 작품 ID별로 함께 담아, 다른 기기에서 열어도 몇 단계는 되돌릴 수 있게 한다.
+  const undo: Record<string, Step[]> = {};
+  for (const w of works) {
+    const steps = recentSteps(w.id);
+    if (steps.length) undo[w.id] = steps;
+  }
+  const ids = Object.keys(undo);
+  if (!ids.length) return JSON.stringify(body);
+  while (jsonBytes(undo) > UNDO_BYTES) {
+    const id = ids.find((k) => undo[k].length);
+    if (!id) break;
+    undo[id].shift();
+    if (!undo[id].length) delete undo[id];
+  }
+  const text = JSON.stringify({ ...body, undo });
+  // 되돌리기 기록 때문에 파일 한도를 넘으면 기록은 빼고 작품만 담는다.
+  return new TextEncoder().encode(text).length > LIMITS.bytes
+    ? JSON.stringify(body)
+    : text;
 }
 export const jsonBytes = (data: unknown) =>
   new TextEncoder().encode(JSON.stringify(data)).length;
@@ -414,6 +438,24 @@ function validateSnapshot(v: unknown, kind: Kind): Snapshot {
     arrangedPrompt: str(d.arrangedPrompt, "정리 요청문"),
     prediction: str(d.prediction, "예상"),
     runRevision: str(d.runRevision, "실행 설정 버전", 80),
+    ...(d.predictionCheck === undefined
+      ? {}
+      : {
+          predictionCheck: one(
+            d.predictionCheck,
+            ["match", "differ", ""] as const,
+            "예상 확인",
+          ),
+        }),
+    ...(d.predictionNote === undefined
+      ? {}
+      : {
+          predictionNote: str(
+            d.predictionNote,
+            "예상 확인 메모",
+            LIMITS.promise,
+          ),
+        }),
     checks,
     change,
     reflection: str(d.reflection, "성찰"),
@@ -453,7 +495,10 @@ export function migrateWork(v: unknown): unknown {
   }
   return w;
 }
-function validateFeedback(v: unknown, what = "교사 평가"): Feedback | null {
+export function validateFeedback(
+  v: unknown,
+  what = "교사 평가",
+): Feedback | null {
   if (v === null) return null;
   const f = obj(v, what);
   return {
@@ -464,13 +509,8 @@ function validateFeedback(v: unknown, what = "교사 평가"): Feedback | null {
     at: stamp(f.at, "평가 시각"),
   };
 }
-export function validateWork(v: unknown): Work {
-  const w = obj(migrateWork(v), "작품");
-  const kind = one(w.kind, kinds, "프로젝트 종류");
-  const missionId = str(w.missionId, "미션", 80);
-  if (!missions.some((m) => m.id === missionId && m.kind === kind))
-    throw new AppError("지원하지 않는 미션이에요.");
-  const versions = arr(w.versions, "버전", 1, LIMITS.versions).map((v) => {
+function validateVersions(value: unknown, kind: Kind) {
+  const versions = arr(value, "버전", 1, LIMITS.versions).map((v) => {
     const b = obj(v, "버전");
     return {
       id: str(b.id, "버전 ID", 80),
@@ -488,6 +528,26 @@ export function validateWork(v: unknown): Work {
     throw new AppError(
       "수정 버전 묶음은 600KB까지예요. 필요한 버전만 남긴 파일을 선택해 주세요.",
     );
+  return versions;
+}
+// 작품 파일에 담긴 되돌리기 단계. 한 단계는 편집본·버전 묶음·편집본 이름이다.
+function validateSteps(value: unknown, kind: Kind): Step[] {
+  return arr(value, "되돌리기 기록", 0, EXPORT_STEPS).map((v) => {
+    const s = obj(v, "되돌리기 단계");
+    return {
+      draft: validateSnapshot(s.draft, kind),
+      versions: validateVersions(s.versions, kind),
+      editingLabel: str(s.editingLabel, "편집본 이름", LIMITS.short),
+    };
+  });
+}
+export function validateWork(v: unknown): Work {
+  const w = obj(migrateWork(v), "작품");
+  const kind = one(w.kind, kinds, "프로젝트 종류");
+  const missionId = str(w.missionId, "미션", 80);
+  if (!missions.some((m) => m.id === missionId && m.kind === kind))
+    throw new AppError("지원하지 않는 미션이에요.");
+  const versions = validateVersions(w.versions, kind);
   return {
     schemaVersion: SCHEMA_VERSION,
     id: str(w.id, "작품 ID", 80),
@@ -503,7 +563,11 @@ export function validateWork(v: unknown): Work {
     selfAssessment: validateFeedback(w.selfAssessment, "자기 평가"),
   };
 }
-export function parseImport(text: string): Work[] {
+// 작품 파일을 읽어 새 ID의 작품과, 새 ID별 되돌리기 단계(함께 담겨 온 경우)를 돌려준다.
+export function parseImportWithUndo(text: string): {
+  works: Work[];
+  undo: Map<string, Step[]>;
+} {
   if (new TextEncoder().encode(text).length > LIMITS.bytes)
     throw new AppError(
       "파일은 2MB 이하여야 해요. 작품을 나누어 내보내 주세요.",
@@ -522,10 +586,27 @@ export function parseImport(text: string): Work[] {
       supported,
     });
   checkVersion(root.schemaVersion, "백업 파일");
-  return arr(root.works, "작품 목록", 1, 50).map((v) => {
+  const undoRoot =
+    root.undo === undefined ? {} : obj(root.undo, "되돌리기 기록");
+  const undo = new Map<string, Step[]>();
+  const works = arr(root.works, "작품 목록", 1, 50).map((v) => {
     const work = validateWork(v);
-    return { ...work, id: uid(), editingLabel: "가져온 복사본 · 현재 편집본" };
+    const id = uid();
+    // 함께 온 되돌리기 기록은 새 ID에 붙인다. 읽을 수 없는 기록은 작품만 가져온다.
+    const raw = undoRoot[work.id];
+    if (raw !== undefined)
+      try {
+        const steps = validateSteps(raw, work.kind);
+        if (steps.length) undo.set(id, steps);
+      } catch {
+        // 되돌리기 기록은 있으면 좋은 것이라 작품을 막지 않는다.
+      }
+    return { ...work, id, editingLabel: "가져온 복사본 · 현재 편집본" };
   });
+  return { works, undo };
+}
+export function parseImport(text: string): Work[] {
+  return parseImportWithUndo(text).works;
 }
 // 학급 작품 모으기에서 평가 중인 목록. 학생 작품 저장소와 섞이지 않게 따로 둔다.
 const CLASS_DB = APP_PREFIX + "class-v1";

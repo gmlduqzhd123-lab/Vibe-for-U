@@ -1,3 +1,5 @@
+import { SpeakButton } from "./Speak";
+import { RunHistory, useRunHistory } from "./runHistory";
 import { useState } from "react";
 import {
   cell,
@@ -57,6 +59,7 @@ export function PatternPreview({
   const t = useT();
   const [s, setS] = useState(() => initialPattern(t));
   const [showTarget, setShowTarget] = useState(true);
+  const history = useRunHistory();
   const total = patternMoves(config).length;
   const finished = s.step >= total;
   const { missing, extra } = patternMatch(config, s.painted);
@@ -87,7 +90,18 @@ export function PatternPreview({
           disabled={finished}
           onClick={() => {
             onRun();
-            setS((p) => runPattern(config, p, t));
+            setS((p) => {
+              const next = runPattern(config, p, t);
+              history.record({
+                label: t("모두 그리기"),
+                state: t("칠한 칸 {p}개 · 위치 {at}", {
+                  p: next.painted.length,
+                  at: cell(next.x, next.y),
+                }),
+                event: next.event,
+              });
+              return next;
+            });
           }}
         >
           <Icon name="play" />
@@ -97,7 +111,18 @@ export function PatternPreview({
           disabled={finished}
           onClick={() => {
             onRun();
-            setS((p) => stepPattern(config, p, t));
+            setS((p) => {
+              const next = stepPattern(config, p, t);
+              history.record({
+                label: t("한 칸씩 그리기"),
+                state: t("칠한 칸 {p}개 · 위치 {at}", {
+                  p: next.painted.length,
+                  at: cell(next.x, next.y),
+                }),
+                event: next.event,
+              });
+              return next;
+            });
           }}
         >
           {t("한 칸씩 그리기")}
@@ -105,12 +130,18 @@ export function PatternPreview({
         <button
           onClick={() => {
             onRun();
+            history.record({
+              label: t("↺ 처음으로"),
+              state: t("칠한 칸 {p}개 · 위치 {at}", { p: 1, at: "0,0" }),
+              event: t("첫 칸(0,0)에서 시작해요."),
+            });
             setS(initialPattern(t));
           }}
         >
           {t("↺ 처음으로")}
         </button>
       </div>
+      <RunHistory history={history} />
       <p className="timer-end" role="status">
         {finished
           ? missing.length || extra.length
@@ -121,6 +152,19 @@ export function PatternPreview({
             : t("다 그렸어요. 목표 모양과 같아요!")
           : t("그리기 전에 어떤 모양이 나올지 예상해 보세요.")}
       </p>
+      {finished ? (
+        <SpeakButton
+          text={
+            missing.length || extra.length
+              ? t(
+                  "다 그렸어요. 목표와 달라요: 빠진 칸 {m}개, 더 칠한 칸 {e}개",
+                  { m: missing.length, e: extra.length },
+                )
+              : t("다 그렸어요. 목표 모양과 같아요!")
+          }
+          label={t("결과 듣기")}
+        />
+      ) : null}
       <details className="trace" open>
         <summary>{t("동작 설명 · 지금 앱이 기억하는 값")}</summary>
         <p>
