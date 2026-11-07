@@ -60,14 +60,58 @@ describe("내가 설계한 검사", () => {
     )!;
     expect(story.actual).toContain("장면");
   });
-  it("예상에 숫자가 있으면 숫자로, 없으면 문구 포함으로 비교한다", () => {
-    expect(designMatches("점수 2", "점수 2")).toBe(true);
-    expect(designMatches("2", "점수 2")).toBe(true);
-    expect(designMatches("1", "점수 2")).toBe(false);
-    expect(designMatches("종료 안내", "남은 시간 0초 · 종료 안내 표시")).toBe(
+  it("예상에 숫자가 있으면 비교 값으로, 없으면 문구 포함으로 비교한다", () => {
+    const r = (actual: string, values: number[]) => ({ actual, values });
+    expect(designMatches("점수 2", r("점수 2", [2]))).toBe(true);
+    expect(designMatches("2", r("점수 2", [2]))).toBe(true);
+    expect(designMatches("1", r("점수 2", [2]))).toBe(false);
+    expect(
+      designMatches("종료 안내", r("남은 시간 0초 · 종료 안내 표시", [0])),
+    ).toBe(true);
+    expect(designMatches("", r("점수 2", [2]))).toBe(false);
+    // 문구 속 숫자는 비교하지 않는다: 값 10, 문구 "10점 이상!"이어도 예상 10은 맞다.
+    expect(designMatches("10", r("점수 10 · 문구 「10점 이상!」", [10]))).toBe(
       true,
     );
-    expect(designMatches("", "점수 2")).toBe(false);
+    // 앞에서부터 차례로: 칠한 칸 9개만 적어도 되고, 다른 칸 수까지 적으면 둘 다 맞아야 한다.
+    expect(designMatches("9칸", r("칠한 칸 9개 · 다른 칸 0개", [9, 0]))).toBe(
+      true,
+    );
+    expect(designMatches("9 1", r("칠한 칸 9개 · 다른 칸 0개", [9, 0]))).toBe(
+      false,
+    );
+  });
+  it("만약 규칙: 문구에 숫자가 있어도 값으로 판정한다", () => {
+    const c = starter("rule-1");
+    if (c.kind !== "rule") throw new Error("rule");
+    const cfg = {
+      ...c,
+      start: 0,
+      floor: null,
+      buttons: [{ label: "더하기", change: 5 }],
+      rules: [{ when: "gte" as const, value: 10, message: "10점 이상!" }],
+    };
+    const card = designedCheck(
+      cfg,
+      { action: "rule-press", a: 1, b: 2, expected: "10" },
+      "r",
+      t,
+    )!;
+    expect(card.actual).toContain("10점 이상!");
+    expect(card.status).toBe("pass");
+  });
+  it("퀴즈: 그 문제에서 얻은 점수만 비교한다(앞 문제 점수는 빼고)", () => {
+    const c = starter("quiz-3");
+    if (c.kind !== "quiz") throw new Error("quiz");
+    const wrong = c.questions[1].correct === 0 ? 2 : 1;
+    const run = runDesign(
+      c,
+      { action: "quiz-answer", a: 2, b: wrong, expected: "" },
+      t,
+    )!;
+    expect(run.values).toEqual([0]);
+    expect(run.actual).toContain("이 문제에서 얻은 점수 0");
+    expect(run.actual).toContain(`전체 점수 ${c.points}`);
   });
   it("카드는 학습자 직접 확인으로 들어가고 상태를 앱이 비교해 넣는다", () => {
     const c = designedCheck(

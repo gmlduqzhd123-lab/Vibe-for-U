@@ -5,6 +5,7 @@ import {
   QR_MAX,
   decodeShare,
   encodeShare,
+  feedbackPayload,
   peerPayload,
   qrPath,
   workPayload,
@@ -53,5 +54,22 @@ describe("QR로 주고받기", () => {
       config: { kind: "quiz" } as never,
     });
     await expect(decodeShare(bad)).rejects.toThrow();
+  });
+  it("평가 QR은 원래 작품 ID로 되살리고, ID가 없거나 이상하면 받지 않는다", async () => {
+    const w = makeWork(missions[0]);
+    w.feedback = { levels: [2, 2, 3, 1], note: "잘했어요", at: w.createdAt };
+    const ok = await decodeShare(
+      await encodeShare(feedbackPayload(w, "원래-id")),
+    );
+    expect(ok).toMatchObject({ k: "feedback", workId: "원래-id" });
+    for (const workId of [undefined, "", "   ", "x".repeat(81), 12]) {
+      const code = await encodeShare({
+        ...feedbackPayload(w),
+        workId,
+      } as never);
+      await expect(decodeShare(code)).rejects.toThrow(
+        "평가를 돌려줄 작품을 알 수 없어요",
+      );
+    }
   });
 });

@@ -12,9 +12,9 @@ test("내가 설계한 검사: 누르는 방법과 예상을 적으면 앱이 �
   await page.goto(`#/work/${id}/3`);
   const design = page.locator(".design-check");
   await design.locator("summary").click();
-  await design
-    .getByLabel("어떻게 눌러 볼까요?")
-    .selectOption({ label: "문제 □에서 정답을 두 번 고르기 → 점수" });
+  await design.getByLabel("어떻게 눌러 볼까요?").selectOption({
+    label: "문제 □에서 정답을 두 번 고르기 → 그 문제에서 얻은 점수",
+  });
   await expect(design).toContainText(
     "실험할 것: 문제 1에서 정답을 두 번 고르기",
   );
@@ -35,7 +35,9 @@ test("내가 설계한 검사: 누르는 방법과 예상을 적으면 앱이 �
   });
   await expect(card).toContainText("문제 1에서 정답을 두 번 고르기");
   await expect(card).toContainText("점수 1");
-  await expect(card).toContainText("앱이 대신 눌러 봤어요: 점수 2");
+  await expect(card).toContainText(
+    "앱이 대신 눌러 봤어요: 이 문제에서 얻은 점수 2",
+  );
   await expect(card.locator("select")).toHaveValue("fail");
 
   // 규칙을 고치면(한 번만 채점) 같은 실험이 예상대로 된다.
@@ -45,9 +47,9 @@ test("내가 설계한 검사: 누르는 방법과 예상을 적으면 앱이 �
     .selectOption("once");
   await page.goto(`#/work/${id}/3`);
   await design.locator("summary").click();
-  await design
-    .getByLabel("어떻게 눌러 볼까요?")
-    .selectOption({ label: "문제 □에서 정답을 두 번 고르기 → 점수" });
+  await design.getByLabel("어떻게 눌러 볼까요?").selectOption({
+    label: "문제 □에서 정답을 두 번 고르기 → 그 문제에서 얻은 점수",
+  });
   await design.getByLabel("예상 결과 (숫자나 문구)").fill("1");
   await design.getByRole("button", { name: "실험하고 기록하기" }).click();
   await expect(page.locator(".toast")).toContainText("예상대로였어요");

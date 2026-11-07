@@ -90,17 +90,16 @@ export function PatternPreview({
           disabled={finished}
           onClick={() => {
             onRun();
-            setS((p) => {
-              const next = runPattern(config, p, t);
-              history.record({
-                label: t("모두 그리기"),
-                state: t("칠한 칸 {p}개 · 위치 {at}", {
-                  p: next.painted.length,
-                  at: cell(next.x, next.y),
-                }),
-                event: next.event,
-              });
-              return next;
+            const p = s;
+            const next = runPattern(config, p, t);
+            setS(next);
+            history.record({
+              label: t("모두 그리기"),
+              state: t("칠한 칸 {p}개 · 위치 {at}", {
+                p: next.painted.length,
+                at: cell(next.x, next.y),
+              }),
+              event: next.event,
             });
           }}
         >
@@ -111,17 +110,16 @@ export function PatternPreview({
           disabled={finished}
           onClick={() => {
             onRun();
-            setS((p) => {
-              const next = stepPattern(config, p, t);
-              history.record({
-                label: t("한 칸씩 그리기"),
-                state: t("칠한 칸 {p}개 · 위치 {at}", {
-                  p: next.painted.length,
-                  at: cell(next.x, next.y),
-                }),
-                event: next.event,
-              });
-              return next;
+            const p = s;
+            const next = stepPattern(config, p, t);
+            setS(next);
+            history.record({
+              label: t("한 칸씩 그리기"),
+              state: t("칠한 칸 {p}개 · 위치 {at}", {
+                p: next.painted.length,
+                at: cell(next.x, next.y),
+              }),
+              event: next.event,
             });
           }}
         >

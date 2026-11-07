@@ -2060,11 +2060,7 @@ export const en: Record<string, string> = {
     "Questions for your friend (optional · one per line, up to 5)",
   "예: 점수가 두 번 오르는지 확인해 줘":
     "e.g. Check whether the score goes up twice",
-  "문제 {a}에서 {b}번 답 고르기 → 점수":
-    "Pick answer {b} on question {a} → score",
   "답 번호": "Answer number",
-  "문제 {a}에서 정답을 두 번 고르기 → 점수":
-    "Pick the correct answer twice on question {a} → score",
   "모든 문제를 정답으로 풀기 → 최종 점수":
     "Answer every question correctly → final score",
   "{a}번 버튼을 {b}번 누르기 → 값과 문구":
@@ -2107,4 +2103,14 @@ export const en: Record<string, string> = {
   "코스에는 미션을 1~{n}개 넣어 주세요.": "A course needs 1 to {n} missions.",
   "코스는 이 기기에 {n}개까지 둘 수 있어요.":
     "This device can hold up to {n} courses.",
+  "문제 {a}에서 {b}번 답 고르기 → 그 문제에서 얻은 점수":
+    "Pick answer {b} on question {a} → points from that question",
+  "문제 {a}에서 정답을 두 번 고르기 → 그 문제에서 얻은 점수":
+    "Pick the correct answer twice on question {a} → points from that question",
+  "이 문제에서 얻은 점수 {g} · 전체 점수 {n}":
+    "Points from this question {g} · total score {n}",
+  "평가를 돌려줄 작품을 알 수 없어요.":
+    "Can't tell which work this assessment belongs to.",
+  "코스에 적힌 미션 {n}개가 이 기기에 없어요. 미션 파일을 먼저 가져와 주세요.":
+    "{n} missions in this course are not on this device. Import the mission files first.",
 };

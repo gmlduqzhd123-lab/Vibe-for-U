@@ -201,3 +201,31 @@ describe("미션 묶음(코스)", () => {
     expect(() => parseCourseFile({ format: "x" })).toThrow();
   });
 });
+describe("코스 가져오기 검사", () => {
+  it("코스의 미션이 기기에도 파일에도 없으면 아무것도 저장하기 전에 알린다", async () => {
+    const { COURSE_FORMAT, parseCourseFile } =
+      await import("../src/customMissions");
+    store.clear();
+    loadCustomMissions();
+    const m = validateMission({ ...sample(), id: "custom-bundled" });
+    const file = (ids: string[], list: unknown[]) => ({
+      format: COURSE_FORMAT,
+      version: 1,
+      course: { title: "코스", missionIds: ids },
+      missions: list,
+    });
+    // 파일에 담긴 선생님 미션은 기기에 없어도 된다.
+    expect(
+      parseCourseFile(file(["quiz-1", m.id], [m])).missions.map((x) => x.id),
+    ).toEqual([m.id]);
+    // 어디에도 없는 미션이 있으면 실패하고, 담긴 미션은 저장되지 않는다.
+    expect(() =>
+      parseCourseFile(file(["quiz-1", m.id, "custom-nowhere"], [m])),
+    ).toThrow(/이 기기에 없어요/);
+    // 담긴 미션 하나가 잘못돼도 실패한다.
+    expect(() =>
+      parseCourseFile(file(["quiz-1"], [m, { title: "" }])),
+    ).toThrow();
+    expect(customMissions()).toHaveLength(0);
+  });
+});

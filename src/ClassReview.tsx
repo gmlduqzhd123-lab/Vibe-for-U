@@ -13,7 +13,8 @@ import {
   downloadText,
   exportJSON,
   loadClassSession,
-  parseImport,
+  parseBackup,
+  readBackupText,
   saveClassSession,
 } from "./storage";
 import {
@@ -162,23 +163,16 @@ export function ClassReview({ message }: { message: (s: string) => void }) {
       try {
         if (file.size > LIMITS.bytes)
           throw new Error(t("파일은 2MB 이하여야 해요."));
-        const text = await file.text();
+        // 파일은 한 번만 읽는다. 학급 모으기에는 되돌리기 기록이 필요 없어 검사하지 않는다.
+        const data = readBackupText(await file.text());
         // 학생 작품에 담긴 선생님 미션은 교사 기기에도 더해 둔다.
         try {
-          adoptMissions(JSON.parse(text)?.missions);
+          adoptMissions((data as { missions?: unknown } | null)?.missions);
         } catch {
           // 미션을 읽지 못하면 아래 작품 검사가 이유를 알린다.
         }
-        const works = parseImport(text);
-        // 원래 작품 ID는 파일에서 읽어 둔다(parseImport가 새 ID를 붙이기 때문).
-        let sourceIds: string[] = [];
-        try {
-          const raw = JSON.parse(text)?.works;
-          if (Array.isArray(raw))
-            sourceIds = raw.map((w) => String(w?.id ?? ""));
-        } catch {
-          // 위에서 이미 읽었으므로 여기서는 비어 있을 때만 넘어간다.
-        }
+        // 원래 작품 ID는 파서가 함께 돌려준다(가져오며 새 ID를 붙이기 때문).
+        const { works, sourceIds } = parseBackup(data, false);
         works.forEach((work, i) =>
           added.push({
             key: `${file.name}#${i}:${work.id}`,

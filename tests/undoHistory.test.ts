@@ -85,3 +85,52 @@ describe("작품 파일에 담는 되돌리기 단계", () => {
     expect(again.undo.size).toBe(0);
   });
 });
+describe("되돌리기 기록이 큰 작품 여러 개 백업", () => {
+  it("한 작품을 다 비워도 한도를 넘으면 다른 작품에서 이어서 줄이고 멈추지 않는다", async () => {
+    const { saveHistory } = await import("../src/undoHistory");
+    const { exportJSON } = await import("../src/storage");
+    const { missions } = await import("../src/data");
+    const { makeWork } = await import("../src/model");
+    const make = (size: number) => {
+      const w = makeWork(missions[0]);
+      const step = (i: number) => ({
+        draft: { ...w.draft, reflection: `${i}`.padEnd(size, "가") },
+        versions: w.versions,
+        editingLabel: w.editingLabel,
+      });
+      saveHistory(w.id, { undo: [0, 1, 2, 3, 4].map(step), redo: [], at: 0 });
+      return w;
+    };
+    // 작은 작품(5 × 약 10KB)과 큰 작품(5 × 약 70KB): 작은 작품을 다 비워도 300KB를 넘는다.
+    const small = make(3_000);
+    const big = make(23_000);
+    const data = JSON.parse(exportJSON([small, big]));
+    const undo = data.undo as Record<string, unknown[]>;
+    expect(
+      new TextEncoder().encode(JSON.stringify(undo)).length,
+    ).toBeLessThanOrEqual(300_000);
+    // 고르게 줄여 두 작품 모두 몇 단계는 남는다.
+    expect(undo[small.id]?.length).toBeGreaterThan(0);
+    expect(undo[big.id]?.length).toBeGreaterThan(0);
+  });
+});
+describe("학급 모으기용 파일 읽기", () => {
+  it("원래 작품 ID를 함께 돌려주고, 되돌리기 기록은 건너뛸 수 있다", async () => {
+    const { saveHistory, stepOf } = await import("../src/undoHistory");
+    const { exportJSON, parseBackup, readBackupText } =
+      await import("../src/storage");
+    const { missions } = await import("../src/data");
+    const { makeWork } = await import("../src/model");
+    const a = makeWork(missions[0]);
+    const b = makeWork(missions[1]);
+    saveHistory(a.id, { undo: [stepOf(a)], redo: [], at: 0 });
+    const data = readBackupText(exportJSON([a, b]));
+    const full = parseBackup(data);
+    expect(full.sourceIds).toEqual([a.id, b.id]);
+    expect(full.works.map((w) => w.id)).not.toContain(a.id);
+    expect(full.undo.size).toBe(1);
+    const light = parseBackup(data, false);
+    expect(light.sourceIds).toEqual([a.id, b.id]);
+    expect(light.undo.size).toBe(0);
+  });
+});

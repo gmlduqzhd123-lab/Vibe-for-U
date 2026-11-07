@@ -1,13 +1,17 @@
 import { useSendGuard } from "./sendGuard";
 import { useEffect, useRef, useState } from "react";
 import { Inspection } from "./Inspection";
-import { compareSnapshots, configSummary, updatePrediction } from "./learning";
+import {
+  compareSnapshots,
+  configSummary,
+  updateConfig,
+  updatePrediction,
+} from "./learning";
 import {
   arrangePrompt,
   correctionPrompt,
   stageDone,
   aiStatus,
-  uid,
   LIMITS,
 } from "./model";
 import type { Work, Snapshot, Mode, Mission, Version } from "./model";
@@ -602,9 +606,7 @@ export function Workspace({
                 </p>
                 <Settings
                   config={d.config}
-                  onChange={(config) =>
-                    edit((s) => ({ ...s, config, revision: uid() }))
-                  }
+                  onChange={(config) => edit((s) => updateConfig(s, config))}
                 />
                 <Hint hints={m.hints} onOpen={hintOpened} />
               </>

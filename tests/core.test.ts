@@ -27,6 +27,7 @@ import {
   jsonBytes,
 } from "../src/storage";
 import {
+  updateConfig,
   updatePrediction,
   configSummary,
   revisionLabel,
@@ -52,6 +53,19 @@ describe("학생·교사 UX 회귀", () => {
     expect(next.checks).toEqual(d.checks);
     expect(stageDone(next)[2]).toBe(false);
     expect(updatePrediction(d, d.prediction).runRevision).toBe(d.revision);
+  });
+  it("설정을 바꾸면 새 판이 되고 예상 확인 표시·메모는 비우되 예상 글은 남긴다", () => {
+    const d = makeWork(missions[0]).draft;
+    d.prediction = "1점일 것";
+    d.runRevision = d.revision;
+    d.predictionCheck = "match";
+    d.predictionNote = "맞았어요";
+    const next = updateConfig(d, { ...d.config });
+    expect(next.revision).not.toBe(d.revision);
+    expect(next.prediction).toBe("1점일 것");
+    expect(next.predictionCheck).toBe("");
+    expect(next.predictionNote).toBe("");
+    expect(stageDone(next)[2]).toBe(false);
   });
   it("검사 한 번으로 자동·직접 카드가 생기고 재검사에서 관찰을 보존하며 중복하지 않는다", () => {
     const d = makeWork(missions[2]).draft;
