@@ -33,7 +33,7 @@ test("학급 모으기에서 평가를 QR로 돌려주면 학생이 비춰 바�
       { name: "12-수아.json", mimeType: "application/json", buffer: work },
     ]);
   const card = page.locator(".review-card").first();
-  await card.locator("summary").click();
+  await card.locator("summary").first().click();
   await expect(
     card.getByRole("button", { name: "평가를 QR로 돌려주기" }),
   ).toHaveCount(0);

@@ -72,3 +72,23 @@ describe("차시별 진행", () => {
     expect(rows[2].stuckAt).toBe(-1);
   });
 });
+describe("우리 반이 많이 만난 버그", () => {
+  it("버전과 편집본에서 만난 버그와 지금 고친 학생 수를 센다", async () => {
+    const { classBugs } = await import("../src/classSummary");
+    const bugged = missions.find((m) => m.id === "quiz-3")!;
+    // 1번 학생: 학습용 오류 그대로(만남, 안 고침)
+    const a = makeWork(bugged);
+    // 2번 학생: 처음 버전은 오류, 지금은 고침
+    const b = makeWork(bugged);
+    if (b.draft.config.kind === "quiz") b.draft.config.scoring = "once";
+    // 3번 학생: 정상 규칙으로 시작(만나지 않음)
+    const c = makeWork(missions[0], true);
+    const rows = classBugs([a, b, c]);
+    expect(rows[0]).toMatchObject({
+      id: "quiz-score-once",
+      met: 2,
+      fixed: 1,
+    });
+    expect(rows[0].name).toBe("같은 정답에 점수가 또 올라요");
+  });
+});

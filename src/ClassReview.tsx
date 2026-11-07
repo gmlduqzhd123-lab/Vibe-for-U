@@ -1,4 +1,5 @@
 import { QrSendButton } from "./QrShare";
+import { PhraseBank } from "./Phrases";
 import { feedbackPayload } from "./qrTransfer";
 import { dateLocale, translate, useLang, useT } from "./i18n";
 import { localizeMission } from "./missionText";
@@ -19,6 +20,7 @@ import {
 } from "./storage";
 import {
   emptyFeedback,
+  classBugs,
   graded,
   lessonProgress,
   levelNames,
@@ -31,6 +33,45 @@ import { RubricChoices } from "./Rubric";
 import { missions, rubric } from "./data";
 import { stageNames } from "./model";
 const fileBase = (name: string) => name.replace(/\.json$/i, "");
+// 우리 반이 많이 만난 버그: 다음 차시에 함께 다룰 버그를 고르는 근거로 쓴다.
+function BugBoard({ works }: { works: Work[] }) {
+  const t = useT();
+  const rows = classBugs(works);
+  return (
+    <div className="panel bug-board">
+      <h3>{t("우리 반이 많이 만난 버그")}</h3>
+      <p className="small muted">
+        {t(
+          "저장한 버전과 지금 편집본을 맞춤 힌트 규칙으로 살펴 셌어요. ‘지금은 고침’은 지금 편집본에서는 그 버그가 없는 학생 수예요.",
+        )}
+      </p>
+      {rows.length ? (
+        <table className="lesson-table">
+          <thead>
+            <tr>
+              <th>{t("버그 종류")}</th>
+              <th>{t("만난 학생")}</th>
+              <th>{t("지금은 고침")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.id}>
+                <td>{t(r.name)}</td>
+                <td>{t("{n}명", { n: r.met })}</td>
+                <td>
+                  {r.fixed} / {r.met}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <p>{t("읽은 작품에서 맞춤 힌트가 찾는 버그가 없었어요.")}</p>
+      )}
+    </div>
+  );
+}
 // 차시 진행 대시보드: 8차시 계획의 미션마다 읽은 작품이 어디까지 왔는지 한 표로 본다.
 function LessonBoard({ works }: { works: Work[] }) {
   const t = useT();
@@ -423,6 +464,7 @@ export function ClassReview({ message }: { message: (s: string) => void }) {
           </div>
           <ClassCharts works={entries.map((e) => e.work)} />
           <LessonBoard works={entries.map((e) => e.work)} />
+          <BugBoard works={entries.map((e) => e.work)} />
           <div className="class-cards">
             {entries.map((e) => (
               <ReviewCard
@@ -530,6 +572,7 @@ function ReviewCard({
         value={f.note}
         onChange={(note) => onChange({ note })}
       />
+      <PhraseBank note={f.note} onChange={(note) => onChange({ note })} />
       <div className="button-row">
         <button onClick={download}>
           <Icon name="download" />

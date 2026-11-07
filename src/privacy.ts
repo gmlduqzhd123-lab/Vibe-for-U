@@ -48,6 +48,18 @@ function texts(d: Snapshot): [string, string][] {
     ["정리한 요청문", d.arrangedPrompt],
     ["실행 전 예상", d.prediction],
     ["작동 원리와 배운 점", d.reflection],
+    ...(d.predictionNote
+      ? [["예상 확인 메모", d.predictionNote] as [string, string]]
+      : []),
+    ...(d.pair
+      ? ([
+          ["짝 이름", d.pair.a],
+          ["짝 이름", d.pair.b],
+        ] as [string, string][])
+      : []),
+    ...Object.values(d.debugLog ?? {}).map(
+      (v) => ["버그 탐정 일지", v] as [string, string],
+    ),
     ["도움받은 내용", d.help],
     ...Object.values(d.change).map((v) => ["수정 기록", v] as [string, string]),
     ...Object.values(d.ai)
@@ -86,6 +98,13 @@ function configTexts(c: Config): [string, string][] {
         ] as [string, string][],
     );
   if (c.kind === "timer") return [["종료 안내", c.endMessage]];
+  if (c.kind === "sort")
+    return [
+      ["분류 특징", c.property],
+      ["바구니 이름", c.otherwise],
+      ...c.bins.map((b) => ["바구니 이름", b.name] as [string, string]),
+      ...c.cards.map((k) => ["카드 이름", k.label] as [string, string]),
+    ];
   if (c.kind === "rule")
     return [
       ["조건 문구", c.otherwise],

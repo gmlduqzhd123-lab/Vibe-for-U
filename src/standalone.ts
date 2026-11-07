@@ -178,7 +178,48 @@ const PLAYER = String.raw`
     root.appendChild(face); root.appendChild(msg); root.appendChild(row);
     update();
   }
-  ({ quiz: quiz, story: story, timer: timer, pattern: pattern, rule: rule })[c.kind]();
+  function sort() {
+    var placed = [];
+    function matches(b, v) {
+      return b.when === "gte" ? v >= b.value : b.when === "lte" ? v <= b.value : v === b.value;
+    }
+    var next = el("p", "note"), list = el("ul", "bins");
+    next.setAttribute("role", "status");
+    function binOf(v) {
+      for (var i = 0; i < c.bins.length; i++) if (matches(c.bins[i], v)) return i;
+      return -1;
+    }
+    function update() {
+      var card = c.cards[placed.length];
+      next.textContent = card ? fill(T.nextCard, { card: card.label, name: c.property, v: card.value }) : T.sorted;
+      while (list.firstChild) list.removeChild(list.firstChild);
+      c.bins.map(function (b, i) { return { i: i, name: b.name }; })
+        .concat([{ i: -1, name: c.otherwise }])
+        .forEach(function (b) {
+          var li = el("li");
+          li.appendChild(el("b", null, b.name));
+          var names = [];
+          placed.forEach(function (p, k) { if (p === b.i) names.push(c.cards[k].label); });
+          li.appendChild(el("span", null, names.length ? names.join(", ") : T.empty));
+          list.appendChild(li);
+        });
+      one.disabled = all.disabled = !card;
+    }
+    var one = button(T.putOne, function () {
+      if (placed.length < c.cards.length) placed.push(binOf(c.cards[placed.length].value));
+      update();
+    }, "primary");
+    var all = button(T.putAll, function () {
+      while (placed.length < c.cards.length) placed.push(binOf(c.cards[placed.length].value));
+      update();
+    });
+    var row = el("div", "choices");
+    row.appendChild(one); row.appendChild(all);
+    row.appendChild(button(T.restart, function () { placed = []; update(); }));
+    root.appendChild(next); root.appendChild(row); root.appendChild(list);
+    update();
+  }
+  ({ quiz: quiz, story: story, timer: timer, pattern: pattern, rule: rule, sort: sort })[c.kind]();
 })();
 `;
 const STYLE = `
@@ -192,6 +233,7 @@ button.primary{background:var(--accent);border-color:var(--accent);color:#fff}bu
 .note{min-height:1.6em;font-weight:600}.story-text{white-space:pre-wrap}
 .board{display:grid;gap:3px;max-width:360px;aspect-ratio:1}.board span{border:1px solid var(--line);border-radius:4px}
 .board span.target{outline:2px dashed var(--muted);outline-offset:-4px}.board span.painted{background:var(--accent)}
+.bins{list-style:none;padding:0;display:grid;gap:8px}.bins li{border:1px solid var(--line);border-radius:10px;padding:8px 12px;display:grid;gap:2px}
 footer{margin-top:32px;border-top:1px solid var(--line);padding-top:12px}
 `;
 // </script> 같은 글자가 학생 글에 있어도 스크립트 밖으로 나가지 않게 바꾼다.
@@ -245,6 +287,11 @@ export function standaloneHtml(w: Work, t: Tr, lang: string) {
     board: t("{n}×{n} 판 · 칠한 칸 {p}개"),
     match: t("다 그렸어요. 목표 모양과 같아요!"),
     differ: t("다 그렸어요. 목표 모양과 달라요."),
+    nextCard: t("다음 카드: 「{card}」 {name} {v}"),
+    sorted: t("카드를 모두 넣었어요."),
+    empty: t("비어 있어요"),
+    putOne: t("한 장 넣기"),
+    putAll: t("모두 넣기"),
   };
   const data = { config: c, texts, ...extra };
   return `<!doctype html>

@@ -7,7 +7,9 @@ import type {
   Direction,
   PatternConfig,
   QuizConfig,
+  RuleCondition,
   RuleConfig,
+  SortConfig,
   StoryConfig,
   TimerConfig,
   Mission,
@@ -86,7 +88,7 @@ export function resetQuiz(c: QuizConfig, s: QuizState, t: Tr = ko): QuizState {
 // 만약 규칙 앱
 export type RuleState = { value: number; presses: number; event: string };
 export const ruleMatches = (
-  r: RuleConfig["rules"][number],
+  r: { when: RuleCondition; value: number },
   v: number,
 ): boolean =>
   r.when === "gte"
@@ -134,15 +136,72 @@ export const resetRule = (c: RuleConfig, t: Tr = ko): RuleState => ({
   ...initialRule(c, t),
   event: t("처음으로 → {name} {v}", { name: c.variable, v: c.start }),
 });
-// 앞 조건에 가려 절대 나올 수 없는 조건(예: '3 이상'이 '5 이상'보다 먼저 있음)을 찾는다.
-export function shadowedRules(c: RuleConfig) {
-  const lo = Math.min(c.start, ...c.rules.map((r) => r.value)) - 50;
-  const hi = Math.max(c.start, ...c.rules.map((r) => r.value)) + 50;
-  return c.rules.flatMap((r, i) => {
+// 앞 조건에 가려 절대 맞을 수 없는 조건(예: '3 이상'이 '5 이상'보다 먼저 있음)을 찾는다.
+// 만약 규칙의 조건과 분류 앱의 바구니가 함께 쓴다.
+export function shadowedConditions(
+  list: { when: RuleCondition; value: number }[],
+  extra: number[] = [],
+) {
+  const values = [...extra, ...list.map((r) => r.value)];
+  const lo = Math.min(...values) - 50;
+  const hi = Math.max(...values) + 50;
+  return list.flatMap((r, i) => {
     let reachable = false;
     for (let v = lo; v <= hi && !reachable; v++)
-      if (ruleMatches(r, v) && ruleMessage(c, v).index === i) reachable = true;
+      if (ruleMatches(r, v) && list.findIndex((x) => ruleMatches(x, v)) === i)
+        reachable = true;
     return reachable ? [] : [i];
+  });
+}
+export const shadowedRules = (c: RuleConfig) =>
+  shadowedConditions(c.rules, [c.start]);
+// 분류 앱: 카드를 위에서부터 처음 맞는 바구니에 넣는다. 맞는 바구니가 없으면 나머지(-1)다.
+export type SortState = { placed: number[]; event: string };
+export const sortBin = (c: SortConfig, v: number) =>
+  c.bins.findIndex((b) => ruleMatches(b, v));
+export const binName = (c: SortConfig, i: number) =>
+  i < 0 ? c.otherwise : c.bins[i].name;
+export const initialSort = (t: Tr = ko): SortState => ({
+  placed: [],
+  event: t("아직 카드를 넣지 않았어요."),
+});
+export function stepSort(c: SortConfig, s: SortState, t: Tr = ko): SortState {
+  const card = c.cards[s.placed.length];
+  if (!card) return s;
+  const i = sortBin(c, card.value);
+  return {
+    placed: [...s.placed, i],
+    event: t("「{card}」 {name} {v} → {rule} → 「{bin}」", {
+      card: card.label,
+      name: c.property,
+      v: card.value,
+      rule:
+        i < 0
+          ? t("맞는 조건 없음 → 나머지 바구니")
+          : t("조건 {n}번이 처음으로 맞음", { n: i + 1 }),
+      bin: binName(c, i),
+    }),
+  };
+}
+export function runSort(c: SortConfig, s = initialSort(), t: Tr = ko) {
+  let state = s;
+  while (state.placed.length < c.cards.length) state = stepSort(c, state, t);
+  return {
+    ...state,
+    event: t("카드 {n}장을 모두 넣었어요.", { n: c.cards.length }),
+  };
+}
+export const resetSort = (t: Tr = ko): SortState => ({
+  placed: [],
+  event: t("처음으로 → 카드를 모두 꺼냈어요."),
+});
+// 기대한 바구니와 다른 곳에 들어간 카드(카드 번호, 들어간 곳, 기대한 곳)
+export function sortMismatches(c: SortConfig) {
+  return c.cards.flatMap((card, i) => {
+    const got = binName(c, sortBin(c, card.value));
+    return got.trim() === card.expect.trim()
+      ? []
+      : [{ index: i, got, want: card.expect.trim() }];
   });
 }
 export function reachable(c: StoryConfig) {
@@ -466,6 +525,52 @@ export function autoChecks(c: Config, revision: string, t: Tr = ko): Check[] {
           at: cell(reset.x, reset.y),
         }),
         pass: reset.painted.length === 1 && reset.x === 0 && reset.y === 0,
+      },
+    );
+  } else if (c.kind === "sort") {
+    const hidden = shadowedConditions(
+      c.bins,
+      c.cards.map((x) => x.value),
+    );
+    const wrong = sortMismatches(c);
+    const done = runSort(c, initialSort(t), t);
+    const reset = resetSort(t);
+    rows.push(
+      {
+        label: "바구니마다 카드가 들어갈 수 있음",
+        expected: t("모든 바구니 조건이 어떤 값에서는 맞는다"),
+        actual: hidden.length
+          ? t("앞 조건에 가려 쓰이지 않는 바구니 {n}개", { n: hidden.length })
+          : t("모든 바구니가 쓰일 수 있음"),
+        pass: hidden.length === 0,
+      },
+      {
+        label: "카드가 기대한 바구니로",
+        expected: t("카드 {n}장 모두 기대한 바구니에 들어간다", {
+          n: c.cards.length,
+        }),
+        actual: wrong.length
+          ? t("「{card}」이 「{got}」에 들어감 · 다른 곳에 간 카드 {n}장", {
+              card: c.cards[wrong[0].index].label,
+              got: wrong[0].got,
+              n: wrong.length,
+            })
+          : t("모두 기대한 바구니에 들어감"),
+        pass: wrong.length === 0,
+      },
+      {
+        label: "모두 넣기",
+        expected: t("카드 {n}장이 하나씩 바구니에 들어간다", {
+          n: c.cards.length,
+        }),
+        actual: t("넣은 카드 {n}장", { n: done.placed.length }),
+        pass: done.placed.length === c.cards.length,
+      },
+      {
+        label: "처음으로 다시",
+        expected: t("바구니를 비우고 첫 카드부터"),
+        actual: t("넣은 카드 {n}장", { n: reset.placed.length }),
+        pass: reset.placed.length === 0,
       },
     );
   } else if (c.kind === "rule") {

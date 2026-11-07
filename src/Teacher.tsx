@@ -6,6 +6,7 @@ import { kindNames } from "./model";
 import type { Kind, Mission } from "./model";
 import { Icon, Pill } from "./ui";
 import { ClassReview } from "./ClassReview";
+import { TranslationFix } from "./TranslationFix";
 import type { Navigate } from "./Pages";
 import { useLang, useT } from "./i18n";
 import { localizeMission } from "./missionText";
@@ -196,6 +197,7 @@ export function Teacher({
           ["class", "학급 작품 모으기"],
           ["examples", "시범 작품"],
           ["maker", "미션 만들기"],
+          ["english", "영어 번역 고치기"],
         ].map(([k, label]) => (
           <button
             key={k}
@@ -532,6 +534,7 @@ export function Teacher({
           open={(id) => go(`mission/${id}`)}
         />
       ) : null}
+      {tab === "english" ? <TranslationFix message={message} /> : null}
       {tab === "examples" ? (
         <div className="project-grid">
           {["quiz-3", "story-3", "timer-3"].map((id) => {

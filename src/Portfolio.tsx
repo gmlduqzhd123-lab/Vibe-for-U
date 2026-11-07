@@ -10,6 +10,8 @@ import { backupFiles, downloadText } from "./storage";
 import { standaloneHtml } from "./standalone";
 import { levelNames } from "./classSummary";
 import { dateLocale, useLang, useT } from "./i18n";
+import { PairRecord } from "./Pair";
+import { FamilyCard } from "./FamilyCard";
 const hasAssessment = (f: Feedback | null) =>
   Boolean(f && (f.levels.some((l) => l > 0) || f.note.trim()));
 export function Portfolio({
@@ -73,11 +75,31 @@ export function Portfolio({
             <Icon name="download" />
             {t("작품 파일")}
           </button>
+          <button
+            onClick={() =>
+              guard([w], () => {
+                // 보호자용 한 장만 인쇄한다(인쇄가 끝나면 원래대로).
+                document.documentElement.dataset.print = "family";
+                addEventListener(
+                  "afterprint",
+                  () => delete document.documentElement.dataset.print,
+                  { once: true },
+                );
+                window.print();
+              })
+            }
+          >
+            <Icon name="print" />
+            {t("보호자용 소개 한 장")}
+          </button>
           <button className="primary" onClick={() => window.print()}>
             <Icon name="print" />
             {t("인쇄 / PDF 저장")}
           </button>
         </div>
+      </div>
+      <div className="family-sheet">
+        <FamilyCard w={w} />
       </div>
       <article className="portfolio panel">
         <header>
@@ -159,6 +181,23 @@ export function Portfolio({
               )}
             </div>
           </div>
+          {d.runLog ? (
+            <div className="run-log">
+              <h3>{t("이렇게 눌러 봤어요")}</h3>
+              {d.runLog.revision !== d.revision ? (
+                <p className="small muted">
+                  {t("지난 설정에서 남긴 기록이에요.")}
+                </p>
+              ) : null}
+              <ol>
+                {d.runLog.steps.map((x, i) => (
+                  <li key={i}>
+                    <b>{x.label}</b> → {x.state}
+                  </li>
+                ))}
+              </ol>
+            </div>
+          ) : null}
           <p>
             {t("현재 설정 실행 기록:")}{" "}
             {t(
@@ -269,6 +308,7 @@ export function Portfolio({
               ? t("{n}번째 힌트까지 열어 봄", { n: w.hintsUsed })
               : t("열어 보지 않음")}
           </p>
+          {d.pair ? <PairRecord pair={d.pair} time={when} /> : null}
         </section>
         <section>
           <h2>{t("06. 실제 AI 제작 활동 (별도 기록)")}</h2>

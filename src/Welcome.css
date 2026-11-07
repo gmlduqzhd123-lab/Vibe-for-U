@@ -18,7 +18,7 @@
 }
 .welcome-lead {
   color: #51465f;
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 .entry-grid {
   display: grid;
@@ -41,10 +41,10 @@
   display: block;
 }
 .entry-button b {
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 .entry-button small {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 400;
   margin-top: 3px;
 }
@@ -64,7 +64,7 @@
   gap: 10px;
 }
 .welcome-secondary > span {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: #60506f;
 }
 .welcome-mascot {
@@ -79,7 +79,7 @@
   height: auto;
 }
 .welcome-mascot > span {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: #5d478f;
 }
 .demo-lab .section-heading p {
@@ -111,7 +111,7 @@
   display: block;
 }
 .demo-choices small {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 400;
   color: var(--muted);
   margin-top: 4px;
@@ -127,7 +127,7 @@
   min-width: 0;
 }
 .demo-screen .question {
-  font-size: 19px;
+  font-size: 1.1875rem;
 }
 .quick-invite,
 .share-invite {
@@ -177,7 +177,7 @@
   margin-bottom: 10px;
 }
 .path-cards h3 {
-  font-size: 17px;
+  font-size: 1.0625rem;
   margin-bottom: 4px;
 }
 .path-cards img {
@@ -193,10 +193,10 @@
   background: #faf8fd;
 }
 .path-cards b {
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 .speech {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: #61526e;
   margin: 12px 0 0;
   padding: 10px;
@@ -215,14 +215,14 @@
   display: block;
   margin: 9px 0;
   color: var(--purple-dark);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 .subject-card p {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 .subject-card button {
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 .compare-grid {
   display: grid;
@@ -242,12 +242,12 @@
 }
 .compare-grid strong {
   display: block;
-  font-size: 36px;
+  font-size: 2.25rem;
   color: var(--purple-dark);
 }
 .compare-grid p {
   margin-bottom: 0;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--muted);
 }
 .comparison-reason {
@@ -269,14 +269,14 @@
   margin: 18px 0;
 }
 .starter-timeline p {
-  font-size: 13px;
+  font-size: 0.8125rem;
   margin: 7px 0 0;
 }
 .teacher-starter > h3:not(:first-child) {
   margin-top: 20px;
 }
 .learning-words summary {
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 .word-grid {
   display: grid;
@@ -289,7 +289,7 @@
   font-weight: 750;
 }
 .word-grid dd {
-  font-size: 13px;
+  font-size: 0.8125rem;
   margin: 6px 0 0;
   color: var(--muted);
 }
@@ -298,7 +298,7 @@
   margin: 12px 0;
 }
 .learning-words.compact summary {
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 .support-badges {
   display: flex;
@@ -311,7 +311,7 @@
   border-radius: 20px;
   color: #5d478f;
   background: #faf8fd;
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 .try-page {
   max-width: 930px;
@@ -329,7 +329,7 @@
   border-radius: 9px;
   border: 1px solid var(--line);
   padding: 13px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   background: white;
 }
 .try-progress > li.active {
@@ -378,7 +378,7 @@
 }
 .trial-score strong {
   color: var(--purple-dark);
-  font-size: 28px;
+  font-size: 1.75rem;
   margin-left: 8px;
 }
 .trial-observation,
@@ -401,7 +401,7 @@
 }
 .try-results b {
   color: var(--purple-dark);
-  font-size: 22px;
+  font-size: 1.375rem;
   margin-left: 6px;
 }
 .share-controls {
@@ -454,7 +454,7 @@
     padding: 25px 20px;
   }
   .welcome-hero h1 {
-    font-size: 29px;
+    font-size: 1.8125rem;
   }
   .demo-screen {
     padding: 14px;
@@ -487,10 +487,10 @@
     grid-template-columns: 1fr;
   }
   .welcome-lead {
-    font-size: 14px;
+    font-size: 0.875rem;
   }
   .entry-button b {
-    font-size: 17px;
+    font-size: 1.0625rem;
   }
   .welcome-home {
     gap: 22px;

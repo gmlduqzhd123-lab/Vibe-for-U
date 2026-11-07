@@ -1,4 +1,11 @@
-import type { Config, Kind, Mission, PatternConfig, RuleConfig } from "./model";
+import type {
+  Config,
+  Kind,
+  Mission,
+  PatternConfig,
+  RuleConfig,
+  SortConfig,
+} from "./model";
 import { kinds } from "./model";
 export const quiz: Config = {
   kind: "quiz",
@@ -183,6 +190,70 @@ const ruleStarters: RuleConfig[] = [
     otherwise: "보물을 향해 걷는 중이에요.",
   },
 ];
+// 분류 앱의 시작 설정: 카드를 특징 값으로 바구니에 나눠 담는다.
+const sortStarters: SortConfig[] = [
+  {
+    kind: "sort",
+    property: "다리 수",
+    cards: [
+      { label: "고양이", value: 4, expect: "네 발 동물" },
+      { label: "닭", value: 2, expect: "두 발 동물" },
+      { label: "강아지", value: 4, expect: "네 발 동물" },
+      { label: "뱀", value: 0, expect: "그 밖의 동물" },
+      { label: "참새", value: 2, expect: "두 발 동물" },
+    ],
+    bins: [
+      { name: "네 발 동물", when: "eq", value: 4 },
+      { name: "두 발 동물", when: "eq", value: 2 },
+    ],
+    otherwise: "그 밖의 동물",
+  },
+  {
+    kind: "sort",
+    property: "키(cm)",
+    cards: [
+      { label: "민트", value: 119, expect: "다음에 타요" },
+      { label: "하늘", value: 120, expect: "탈 수 있어요" },
+      { label: "바다", value: 135, expect: "탈 수 있어요" },
+      { label: "별이", value: 104, expect: "다음에 타요" },
+    ],
+    bins: [{ name: "탈 수 있어요", when: "gte", value: 120 }],
+    otherwise: "다음에 타요",
+  },
+  // 학습용 오류: 넓은 조건(2 이상)이 먼저 있어 '6 이상' 바구니에 카드가 들어가지 않는다.
+  {
+    kind: "sort",
+    property: "다리 수",
+    cards: [
+      { label: "닭", value: 2, expect: "다리가 있어요" },
+      { label: "개미", value: 6, expect: "다리가 많아요" },
+      { label: "고양이", value: 4, expect: "다리가 있어요" },
+      { label: "거미", value: 8, expect: "다리가 많아요" },
+      { label: "뱀", value: 0, expect: "다리가 없어요" },
+    ],
+    bins: [
+      { name: "다리가 있어요", when: "gte", value: 2 },
+      { name: "다리가 많아요", when: "gte", value: 6 },
+    ],
+    otherwise: "다리가 없어요",
+  },
+  {
+    kind: "sort",
+    property: "무게(g)",
+    cards: [
+      { label: "연필", value: 10, expect: "가벼워요" },
+      { label: "책", value: 500, expect: "보통이에요" },
+      { label: "수박", value: 3000, expect: "무거워요" },
+      { label: "지우개", value: 20, expect: "가벼워요" },
+      { label: "물병", value: 1000, expect: "무거워요" },
+    ],
+    bins: [
+      { name: "무거워요", when: "gte", value: 1000 },
+      { name: "가벼워요", when: "lte", value: 100 },
+    ],
+    otherwise: "보통이에요",
+  },
+];
 const specifications: Record<
   Kind,
   {
@@ -195,6 +266,8 @@ const specifications: Record<
     closing: string;
   }[]
 > = {
+  // 분류 앱의 미션은 아래에서 채운다(시작 설정과 나란히 읽히도록).
+  sort: [],
   quiz: [
     {
       title: "선택이 정답을 만났을 때",
@@ -633,6 +706,100 @@ const specifications: Record<
     },
   ],
 };
+specifications.sort.push(
+  {
+    title: "다리 수로 나누기",
+    goal: "동물 카드를 다리 수에 따라 알맞은 바구니에 나눠 담아요.",
+    prediction:
+      "뱀 카드는 어느 바구니에 들어갈까요? 어떤 바구니 조건에도 맞지 않으면 어떻게 될까요?",
+    tests: [
+      {
+        label: "모두 넣기",
+        expected:
+          "고양이·강아지는 네 발, 닭·참새는 두 발, 뱀은 그 밖의 동물에 들어간다.",
+      },
+      {
+        label: "처음으로",
+        expected: "처음으로를 누르면 바구니가 비고 첫 카드부터 다시 넣는다.",
+      },
+    ],
+    task: "여섯 발 동물(개미) 카드와 그 바구니를 더하고 다시 넣어 확인하세요.",
+    hints: [
+      "앱은 카드의 ‘다리 수’ 값만 보고 바구니를 골라요.",
+      "‘4와 같으면’은 딱 4일 때만 맞아요.",
+      "어떤 조건에도 맞지 않는 카드는 나머지 바구니로 가요.",
+    ],
+    closing:
+      "바구니 조건이 없다면 앱은 카드를 어디에 넣어야 할지 알 수 있을까요?",
+  },
+  {
+    title: "딱 120cm도 탈 수 있어요",
+    goal: "놀이기구 키 기준에 딱 맞는 친구가 어느 쪽으로 가는지 확인해요.",
+    prediction: "키가 딱 120cm인 하늘이는 어느 바구니에 들어갈까요?",
+    tests: [
+      {
+        label: "기준 값 그대로",
+        expected: "120cm인 하늘이는 ‘탈 수 있어요’에 들어간다.",
+      },
+      {
+        label: "기준보다 1 작게",
+        expected: "119cm인 민트는 ‘다음에 타요’에 들어간다.",
+      },
+    ],
+    task: "조건을 ‘120 이상’에서 ‘121 이상’으로 바꿔 보고 누가 달라지는지 확인한 뒤 원래대로 돌려 이유를 적으세요.",
+    hints: [
+      "‘이상’은 그 값도 포함해요.",
+      "기준 값과 똑같은 카드를 꼭 하나 넣어 시험해 봐요.",
+      "121 이상으로 바꾸면 120인 카드는 조건에 맞지 않아요.",
+    ],
+    closing: "‘이상’과 ‘보다 크면’은 기준 값에서 어떻게 다를까요?",
+  },
+  {
+    title: "다리가 많아요 바구니가 비어 있어요",
+    goal: "개미와 거미가 ‘다리가 많아요’에 들어가도록 바구니 순서를 고쳐요.",
+    prediction: "개미(다리 6개)는 지금 어느 바구니에 들어갈까요?",
+    tests: [
+      {
+        label: "많은 다리",
+        expected: "개미·거미가 ‘다리가 많아요’에 들어간다.",
+      },
+      {
+        label: "보통 다리",
+        expected: "닭·고양이는 ‘다리가 있어요’에 그대로 들어간다.",
+      },
+    ],
+    task: "바구니 순서를 바꿔 좁은 조건을 먼저 확인하게 하고 다시 넣어 보세요.",
+    hints: [
+      "개미의 다리 6개는 ‘2 이상’에도 맞아요.",
+      "앱은 위에서부터 처음 맞는 바구니 하나에만 넣어요.",
+      "‘6 이상’ 바구니를 ‘2 이상’보다 위로 올려요.",
+    ],
+    closing:
+      "넓은 조건과 좁은 조건이 함께 있을 때 어느 것을 먼저 확인해야 할까요?",
+  },
+  {
+    title: "보통은 나머지 바구니로",
+    goal: "가벼운 것과 무거운 것만 조건으로 정하고 나머지는 ‘보통이에요’로 보내요.",
+    prediction: "500g인 책은 어느 바구니에 들어갈까요? 딱 1000g인 물병은요?",
+    tests: [
+      {
+        label: "가운데 무게",
+        expected: "책은 어떤 조건에도 맞지 않아 ‘보통이에요’에 들어간다.",
+      },
+      {
+        label: "양 끝",
+        expected: "물병·수박은 무거워요, 연필·지우개는 가벼워요에 들어간다.",
+      },
+    ],
+    task: "나머지 바구니 이름을 바꿔 보고, 가벼운 기준을 200g으로 바꿔 누가 달라지는지 확인하세요.",
+    hints: [
+      "나머지 바구니는 조건이 없어요. 위의 바구니에 모두 맞지 않을 때 써요.",
+      "‘100 이하’는 100g도 포함해요.",
+      "기준 값을 바꾸면 그 근처 카드부터 확인해 봐요.",
+    ],
+    closing: "모든 경우를 조건으로 적지 않아도 되는 까닭은 무엇일까요?",
+  },
+);
 export const missions: Mission[] = kinds.flatMap((kind) =>
   specifications[kind].map((s, i) => {
     const starter = structuredClone(
@@ -644,7 +811,9 @@ export const missions: Mission[] = kinds.flatMap((kind) =>
             ? timer
             : kind === "rule"
               ? ruleStarters[i]
-              : patternStarters[i],
+              : kind === "sort"
+                ? sortStarters[i]
+                : patternStarters[i],
     );
     if (kind === "quiz" && starter.kind === "quiz") {
       if (i === 2) starter.scoring = "attempt";

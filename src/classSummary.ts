@@ -1,5 +1,6 @@
 import { rubric, missions, lessonMissionIds, lessons } from "./data";
 import { kindNames, stageDone, stageNames } from "./model";
+import { diagnose } from "./diagnose";
 import type { Feedback, Work } from "./model";
 // 학급 작품 모으기: 학생이 낸 작품 파일을 교사 기기에서 읽어 요약·평가한다. 서버나 기기 저장소에 넣지 않는다.
 export const levelNames = ["미평가", "시작", "수행", "설명·적용"];
@@ -112,4 +113,40 @@ export function toCSV(entries: Entry[]) {
     String.fromCharCode(0xfeff) +
     [head, ...rows].map((r) => r.map(cell).join(",")).join("\r\n")
   );
+}
+
+// 우리 반이 많이 만난 버그: 작품의 저장한 버전과 지금 편집본을 맞춤 힌트 규칙으로 살펴,
+// 어떤 종류의 버그를 만난 학생이 몇 명이고 그 가운데 지금은 고친 학생이 몇 명인지 센다.
+export const bugNames: Record<string, string> = {
+  "quiz-score-once": "같은 정답에 점수가 또 올라요",
+  "quiz-reset": "다시 시작해도 점수가 남아요",
+  "story-broken": "없는 장면으로 가는 선택지",
+  "story-unreachable": "갈 수 없는 결말",
+  "timer-end": "0초가 돼도 안내가 없어요",
+  "rule-shadowed": "앞 조건에 가린 조건",
+  "sort-shadowed": "앞 조건에 가린 바구니",
+  "sort-unknown": "없는 바구니 이름",
+  "sort-order": "바구니 순서 때문에 다른 곳으로",
+  "sort-boundary": "기준 값에서 다른 곳으로",
+  "pattern-wrap": "판 밖으로 넘어가요",
+  "pattern-missing": "목표에서 빠진 칸",
+  "pattern-extra": "목표 밖 칸을 칠해요",
+};
+export function classBugs(works: Work[]) {
+  const rows = new Map<string, { met: number; fixed: number }>();
+  for (const w of works) {
+    const now = new Set(diagnose(w.draft.config).map((f) => f.id));
+    const seen = new Set(now);
+    for (const v of w.versions)
+      for (const f of diagnose(v.data.config)) seen.add(f.id);
+    for (const id of seen) {
+      const r = rows.get(id) ?? { met: 0, fixed: 0 };
+      r.met++;
+      if (!now.has(id)) r.fixed++;
+      rows.set(id, r);
+    }
+  }
+  return [...rows]
+    .map(([id, r]) => ({ id, name: bugNames[id] ?? id, ...r }))
+    .sort((a, b) => b.met - a.met || a.name.localeCompare(b.name));
 }

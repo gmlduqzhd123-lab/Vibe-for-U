@@ -1,5 +1,6 @@
 import { rubric, missions } from "./data";
-import { kindNames, stageDone } from "./model";
+import { debugFields, debugFilled, kindNames, stageDone } from "./model";
+import { bugSolved } from "./bugChallenge";
 import type { Feedback, Work } from "./model";
 import { Icon } from "./ui";
 import { dateLocale, useLang, useT } from "./i18n";
@@ -20,6 +21,7 @@ export function Growth({ works, go }: { works: Work[]; go: Navigate }) {
   const first = self[0];
   const last = self.length > 1 ? self[self.length - 1] : undefined;
   const text = (v: string) => v.trim() || t("아직 기록하지 않았어요.");
+  const journals = list.filter((w) => debugFilled(w.draft.debugLog));
   return (
     <article className="growth">
       <div className="button-row no-print">
@@ -95,6 +97,28 @@ export function Growth({ works, go }: { works: Work[]; go: Navigate }) {
               )}
             </p>
           ) : null}
+        </section>
+      ) : null}
+      {journals.length ? (
+        <section className="growth-journal">
+          <h2>{t("버그 탐정 일지 {n}편", { n: journals.length })}</h2>
+          {journals.map((w) => (
+            <dl className="record-list" key={w.id}>
+              <div>
+                <dt>{t("도전")}</dt>
+                <dd>
+                  {w.draft.title} · {day(w.createdAt)} ·{" "}
+                  {t(bugSolved(w) ? "고쳤어요" : "버그가 숨어 있어요")}
+                </dd>
+              </div>
+              {debugFields.map(([key, label]) => (
+                <div key={key}>
+                  <dt>{t(label)}</dt>
+                  <dd className="preserve">{w.draft.debugLog![key]}</dd>
+                </div>
+              ))}
+            </dl>
+          ))}
         </section>
       ) : null}
       {list.map((w, k) => {

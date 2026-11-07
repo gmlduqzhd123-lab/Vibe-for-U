@@ -1,5 +1,12 @@
-export type Kind = "quiz" | "story" | "timer" | "pattern" | "rule";
-export const kinds: Kind[] = ["quiz", "story", "timer", "pattern", "rule"];
+export type Kind = "quiz" | "story" | "timer" | "pattern" | "rule" | "sort";
+export const kinds: Kind[] = [
+  "quiz",
+  "story",
+  "timer",
+  "pattern",
+  "rule",
+  "sort",
+];
 // easy: 3~4학년용. 어린이 모드 안내에 낱말 블록·읽어 주기·큰 글씨를 더한다.
 export type Mode = "child" | "adult" | "easy";
 export const modes: Mode[] = ["child", "easy", "adult"];
@@ -63,8 +70,22 @@ export type RuleConfig = {
   // 어떤 조건에도 맞지 않을 때 보여 줄 문구
   otherwise: string;
 };
+// 분류 앱: 카드마다 특징 값(예: 다리 수)이 있고, 위에서부터 처음 맞는 바구니 조건에 카드를 넣는다.
+// 어떤 조건에도 맞지 않는 카드는 나머지 바구니로 간다. expect는 카드가 들어가야 할 바구니 이름이다.
+export type SortConfig = {
+  kind: "sort";
+  property: string;
+  cards: { label: string; value: number; expect: string }[];
+  bins: { name: string; when: RuleCondition; value: number }[];
+  otherwise: string;
+};
 export type Config =
-  QuizConfig | StoryConfig | TimerConfig | PatternConfig | RuleConfig;
+  | QuizConfig
+  | StoryConfig
+  | TimerConfig
+  | PatternConfig
+  | RuleConfig
+  | SortConfig;
 export type Check = {
   id: string;
   label: string;
@@ -92,6 +113,35 @@ export type AIData = {
   result: "unobserved" | "pass" | "revise";
   revisionPrompt: string;
 };
+export type PairLog = {
+  a: string;
+  b: string;
+  swaps: { at: string; driver: "a" | "b"; stage: number }[];
+};
+export type DebugLog = {
+  suspect: string;
+  experiment: string;
+  result: string;
+  fix: string;
+};
+export const debugFields = [
+  [
+    "suspect",
+    "의심한 곳",
+    "예: 점수가 두 번 오르는 것 같아요. 채점 규칙이 의심돼요.",
+  ],
+  ["experiment", "해 본 실험", "예: 같은 정답을 세 번 눌러 봤어요."],
+  ["result", "실험 결과", "예: 3점이 됐어요. 누를 때마다 점수가 올랐어요."],
+  ["fix", "고친 것", "예: 채점 규칙을 ‘문제당 한 번’으로 바꿨어요."],
+] as const;
+export const debugFilled = (l?: DebugLog) =>
+  Boolean(l && debugFields.every(([k]) => l[k].trim()));
+export const RUN_LOG_LIMIT = 20;
+export type RunLog = {
+  revision: string;
+  at: string;
+  steps: { label: string; state: string }[];
+};
 export type Snapshot = {
   title: string;
   config: Config;
@@ -105,6 +155,12 @@ export type Snapshot = {
   // 예상이 실제와 맞았는지 학생이 표시한 것(없으면 아직 표시 전). 틀린 예상도 배움의 근거라 남긴다.
   predictionCheck?: "match" | "differ" | "";
   predictionNote?: string;
+  // 학생이 증거로 남긴 실행 기록(어느 설정 판에서 무엇을 눌러 어떻게 됐는지). 최근 20개까지.
+  runLog?: RunLog;
+  // 버그 탐정 일지: 의심한 곳 → 해 본 실험 → 결과 → 고친 것
+  debugLog?: DebugLog;
+  // 짝 활동: 두 사람의 이름(별명)과 역할을 바꾼 기록
+  pair?: PairLog;
   checks: Check[];
   change: {
     situation: string;
@@ -215,6 +271,7 @@ export const kindNames: Record<Kind, string> = {
   timer: "타이머",
   pattern: "패턴 그리기",
   rule: "만약 규칙",
+  sort: "분류하기",
 };
 const promiseText: Record<
   Kind,
@@ -236,6 +293,12 @@ const promiseText: Record<
     input: "값을 늘리거나 줄이는 버튼 누르기",
     exceptions:
       "조건은 위에서부터 처음 맞는 것 하나만 쓰고, 값이 가장 작은 값보다 작아지지 않기",
+  },
+  sort: {
+    features: "카드를 특징 값에 따라 알맞은 바구니에 나눠 담기",
+    input: "한 장씩 넣기나 모두 넣기 버튼 누르기",
+    exceptions:
+      "바구니 조건은 위에서부터 처음 맞는 것 하나만 쓰고, 어떤 조건에도 맞지 않으면 나머지 바구니에 넣기",
   },
   timer: {
     features: "시간을 정하고 시작·일시정지·초기화하기",
@@ -299,6 +362,17 @@ export function aiStatus(ai: AIData) {
     ? "관찰 기록 있음"
     : "실제 결과 미기록";
 }
+// 조건을 좁은 것부터 놓는다: 같으면 → 큰 값 이상 → 작은 값 이하. 앞 조건이 뒤 조건을 가리지 않게 한다.
+export function narrowFirst<T extends { when: RuleCondition; value: number }>(
+  list: T[],
+): T[] {
+  const rank = (r: T) =>
+    r.when === "eq" ? [0, 0] : r.when === "gte" ? [1, -r.value] : [2, r.value];
+  return [...list].sort((a, b) => {
+    const [x, y] = [rank(a), rank(b)];
+    return x[0] - y[0] || x[1] - y[1];
+  });
+}
 export function makeWork(mission: Mission, normal = false): Work {
   const config = clone(mission.starter);
   if (normal) {
@@ -309,18 +383,8 @@ export function makeWork(mission: Mission, normal = false): Work {
     if (config.kind === "timer") config.showEnd = true;
     if (config.kind === "pattern") config.edge = "stop";
     // 정상 규칙: 좁은 조건(같으면 → 큰 값 이상 → 작은 값 이하)을 먼저 확인한다.
-    if (config.kind === "rule") {
-      const rank = (r: RuleConfig["rules"][number]) =>
-        r.when === "eq"
-          ? [0, 0]
-          : r.when === "gte"
-            ? [1, -r.value]
-            : [2, r.value];
-      config.rules = [...config.rules].sort((a, b) => {
-        const [x, y] = [rank(a), rank(b)];
-        return x[0] - y[0] || x[1] - y[1];
-      });
-    }
+    if (config.kind === "rule") config.rules = narrowFirst(config.rules);
+    if (config.kind === "sort") config.bins = narrowFirst(config.bins);
     if (config.kind === "story") {
       const start = config.scenes.find((s) => s.id === config.start)!;
       if (start.choices[1]) start.choices[1].to = "sun";

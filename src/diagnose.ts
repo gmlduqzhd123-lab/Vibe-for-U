@@ -9,7 +9,10 @@ import {
   resetQuiz,
   ruleMatches,
   runPattern,
+  shadowedConditions,
   shadowedRules,
+  sortBin,
+  sortMismatches,
 } from "./engines";
 // 맞춤 힌트: 자동 검사와 같은 규칙으로 설정을 실행해 보고, 실패한 까닭에 맞는 힌트를 고른다.
 // AI 없이 규칙으로만 찾는다. 문장은 한국어 열쇠이며 화면에서 t()로 바꾼다.
@@ -67,6 +70,61 @@ export function diagnose(c: Config): Finding[] {
         problem: "0초가 돼도 끝났다는 안내가 나오지 않아요.",
         hint: "설정의 ‘0초가 되면 종료 안내 표시’를 켜 보세요.",
       });
+  } else if (c.kind === "sort") {
+    const hidden = shadowedConditions(
+      c.bins,
+      c.cards.map((x) => x.value),
+    );
+    const wrong = sortMismatches(c);
+    if (hidden.length) {
+      const i = hidden[0];
+      const cover = c.bins.findIndex(
+        (b, k) => k < i && ruleMatches(b, c.bins[i].value),
+      );
+      out.push({
+        id: "sort-shadowed",
+        problem: "「{bin}」 바구니는 앞 조건에 가려서 카드가 들어갈 수 없어요.",
+        hint: "앱은 바구니 조건을 위에서부터 확인하고 처음 맞는 바구니에 넣어요. 바구니 {n}번을 바구니 {k}번보다 위로 올려 보세요.",
+        vars: { bin: c.bins[i].name, n: i + 1, k: Math.max(cover, 0) + 1 },
+      });
+    } else if (wrong.length) {
+      const w = wrong[0];
+      const card = c.cards[w.index];
+      const want = c.bins.findIndex((b) => b.name.trim() === w.want);
+      const vars = {
+        card: card.label,
+        name: c.property,
+        v: card.value,
+        got: w.got,
+        want: w.want,
+      };
+      const problem =
+        "「{card}」({name} {v})이 「{got}」에 들어갔어요. 기대한 곳은 「{want}」이에요.";
+      if (want < 0 && w.want !== c.otherwise.trim())
+        out.push({
+          id: "sort-unknown",
+          problem,
+          hint: "「{want}」이라는 바구니가 없어요. 카드의 ‘들어갈 바구니’를 바구니 이름과 똑같이 적어 주세요.",
+          vars,
+        });
+      else if (want >= 0 && ruleMatches(c.bins[want], card.value))
+        out.push({
+          id: "sort-order",
+          problem,
+          hint: "「{want}」 바구니 조건도 맞지만 앞의 바구니 {k}번이 먼저 맞았어요. 바구니 순서를 바꿔 보세요.",
+          vars: { ...vars, k: sortBin(c, card.value) + 1 },
+        });
+      else
+        out.push({
+          id: "sort-boundary",
+          problem,
+          hint:
+            want < 0
+              ? "나머지 바구니로 가려면 어떤 바구니 조건에도 맞지 않아야 해요. 바구니 {k}번의 조건 값과 ‘이상·이하·같으면’을 확인해 보세요."
+              : "「{want}」 바구니 조건이 {v}에서 맞지 않아요. 기준 값과 ‘이상·이하·같으면’을 확인해 보세요. 딱 기준 값인 카드가 어디로 가야 하는지 생각해 봐요.",
+          vars: { ...vars, k: sortBin(c, card.value) + 1 },
+        });
+    }
   } else if (c.kind === "rule") {
     const hidden = shadowedRules(c);
     if (hidden.length) {
