@@ -264,7 +264,8 @@ a {
   margin-left: 230px;
 }
 .topbar {
-  height: 77px;
+  min-height: 77px;
+  gap: 12px;
   border-bottom: 1px solid var(--line);
   display: flex;
   align-items: center;
@@ -291,6 +292,11 @@ a {
   display: flex;
   gap: 20px;
   align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  row-gap: 6px;
+  min-width: 0;
+  padding: 6px 0;
 }
 .save-state {
   display: flex;
@@ -313,8 +319,9 @@ a {
 .save-state.error .status-dot {
   background: #a74437;
 }
-/* 언어 선택 상자는 줄어들지 않게 해 "English"·"한국어"가 잘리지 않게 한다(짧아서 자리를 많이 쓰지 않는다). */
-.lang-select {
+/* 모드·언어 선택 상자는 줄어들지 않게 해(가장 긴 선택지만큼 넓다) 글꼴이 달라도 글자가 잘리지 않게 한다.
+   자리가 모자라면 오른쪽 묶음이 두 줄로 접힌다. */
+.mode-select {
   flex-shrink: 0;
 }
 .mode-select select {
@@ -2232,7 +2239,7 @@ pre {
   }
   .topbar {
     padding: 0 22px;
-    height: 65px;
+    min-height: 65px;
   }
   .save-state {
     font-size: 0.5625rem;
@@ -2423,7 +2430,7 @@ pre {
     margin: 0;
   }
   .topbar {
-    height: 54px;
+    min-height: 54px;
     padding: 0 18px;
   }
   .breadcrumbs {
