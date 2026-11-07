@@ -8,8 +8,11 @@ import {
   nextQuiz,
   patternMatch,
   pressRule,
+  binName,
   ruleMessage,
   runPattern,
+  runSort,
+  sortBin,
   startTimer,
   tickTimer,
 } from "./engines";
@@ -83,6 +86,28 @@ export function designActions(c: Config, t: Tr): Action[] {
           id: "pattern-run",
           label: t("명령을 모두 실행하기 → 칠한 칸 수"),
           params: [],
+        },
+      ];
+    case "sort":
+      return [
+        {
+          id: "sort-card",
+          label: t("{a}번 카드를 넣기 → 들어간 바구니"),
+          params: [
+            { key: "a", label: t("카드 번호"), min: 1, max: c.cards.length },
+          ],
+        },
+        {
+          id: "sort-count",
+          label: t("모두 넣기 → {a}번 바구니에 든 카드 수"),
+          params: [
+            {
+              key: "a",
+              label: t("바구니 번호 (마지막은 나머지)"),
+              min: 1,
+              max: c.bins.length + 1,
+            },
+          ],
         },
       ];
     case "story":
@@ -199,6 +224,26 @@ export function runDesign(c: Config, d: Design, t: Tr): DesignRun | null {
           m: m.missing.length + m.extra.length,
         }),
         values: [s.painted.length, m.missing.length + m.extra.length],
+      };
+    }
+    case "sort-card": {
+      if (c.kind !== "sort") return null;
+      const card = c.cards[a - 1];
+      const bin = binName(c, sortBin(c, card.value));
+      return {
+        label,
+        actual: t("「{card}」 → 「{bin}」 바구니", { card: card.label, bin }),
+        values: [],
+      };
+    }
+    case "sort-count": {
+      if (c.kind !== "sort") return null;
+      const i = a > c.bins.length ? -1 : a - 1;
+      const n = runSort(c, undefined, t).placed.filter((x) => x === i).length;
+      return {
+        label,
+        actual: t("「{bin}」에 카드 {n}장", { bin: binName(c, i), n }),
+        values: [n],
       };
     }
     case "story-choose": {

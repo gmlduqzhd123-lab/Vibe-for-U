@@ -1,7 +1,15 @@
 import { AppError } from "./appError";
-import { APP_PREFIX, LIMITS, SCHEMA_VERSION, kinds, uid } from "./model";
+import {
+  APP_PREFIX,
+  LIMITS,
+  RUN_LOG_LIMIT,
+  SCHEMA_VERSION,
+  kinds,
+  uid,
+} from "./model";
 import { missions } from "./data";
 import { EXPORT_STEPS, recentSteps } from "./undoHistory";
+import { markBackedUp } from "./backupReminder";
 import type { Step } from "./undoHistory";
 import type {
   AIData,
@@ -153,6 +161,8 @@ export function backupFiles(works: Work[]) {
     group.push(work);
   }
   if (group.length) files.push(exportJSON(group));
+  // 백업 파일을 만들었으면(내려받기·공유) 백업 알림이 이 작품들을 다시 세지 않게 기억한다.
+  markBackedUp(works);
   return files;
 }
 export function downloadText(name: string, text: string, type: string) {
@@ -338,6 +348,30 @@ export function validateConfig(value: unknown): Config {
       );
     return { kind, start, scenes, intendedEndings: endings };
   }
+  if (kind === "sort") {
+    const when = ["gte", "lte", "eq"] as const;
+    return {
+      kind,
+      property: str(c.property, "비교하는 특징 이름", 40),
+      cards: arr(c.cards, "카드", 1, 12).map((v) => {
+        const k = obj(v, "카드");
+        return {
+          label: str(k.label, "카드 이름", LIMITS.short),
+          value: num(k.value, "카드 값", -10000, 10000),
+          expect: str(k.expect, "들어갈 바구니", LIMITS.short),
+        };
+      }),
+      bins: arr(c.bins, "바구니", 1, LIMITS.choices).map((v) => {
+        const b = obj(v, "바구니");
+        return {
+          name: str(b.name, "바구니 이름", LIMITS.short),
+          when: one(b.when, when, "바구니 조건 종류"),
+          value: num(b.value, "바구니 조건 값", -10000, 10000),
+        };
+      }),
+      otherwise: str(c.otherwise, "나머지 바구니 이름", LIMITS.short),
+    };
+  }
   if (kind === "rule") {
     const when = ["gte", "lte", "eq"] as const;
     return {
@@ -457,6 +491,56 @@ function validateSnapshot(v: unknown, kind: Kind): Snapshot {
             "예상 확인 메모",
             LIMITS.promise,
           ),
+        }),
+    ...(d.pair === undefined
+      ? {}
+      : {
+          pair: (() => {
+            const p = obj(d.pair, "짝 활동");
+            return {
+              a: str(p.a, "짝 1 이름", 40),
+              b: str(p.b, "짝 2 이름", 40),
+              swaps: arr(p.swaps, "역할 바꾼 기록", 1, 50).map((v) => {
+                const x = obj(v, "역할 바꾼 기록");
+                return {
+                  at: stamp(x.at, "역할 바꾼 시각"),
+                  driver: one(x.driver, ["a", "b"] as const, "조종사"),
+                  stage: num(x.stage, "단계", 0, 4),
+                };
+              }),
+            };
+          })(),
+        }),
+    ...(d.debugLog === undefined
+      ? {}
+      : {
+          debugLog: (() => {
+            const l = obj(d.debugLog, "버그 탐정 일지");
+            return {
+              suspect: str(l.suspect, "의심한 곳", LIMITS.promise),
+              experiment: str(l.experiment, "해 본 실험", LIMITS.promise),
+              result: str(l.result, "실험 결과", LIMITS.promise),
+              fix: str(l.fix, "고친 것", LIMITS.promise),
+            };
+          })(),
+        }),
+    ...(d.runLog === undefined
+      ? {}
+      : {
+          runLog: (() => {
+            const r = obj(d.runLog, "실행 기록");
+            return {
+              revision: str(r.revision, "실행 기록 설정 판", 80),
+              at: stamp(r.at, "실행 기록 시각"),
+              steps: arr(r.steps, "실행 기록", 1, RUN_LOG_LIMIT).map((v) => {
+                const x = obj(v, "실행 기록 한 줄");
+                return {
+                  label: str(x.label, "누른 것", LIMITS.short),
+                  state: str(x.state, "바뀐 값", LIMITS.checkText),
+                };
+              }),
+            };
+          })(),
         }),
     checks,
     change,

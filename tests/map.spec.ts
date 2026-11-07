@@ -15,7 +15,7 @@ test("나의 미션 지도: 시작한 미션과 아직 안 한 미션을 글자�
     "나의 미션 지도",
   );
   await expect(
-    page.getByText("다섯 단계를 모두 기록한 미션 0개 / 전체 21개"),
+    page.getByText("다섯 단계를 모두 기록한 미션 0개 / 전체 25개"),
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: /이야기 1 · .* · 진행 중/ }),

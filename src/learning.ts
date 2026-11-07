@@ -84,6 +84,35 @@ export function configSummary(c: Config, t: Tr = ko): string[] {
         : []),
       t("목표 칸 {n}개", { n: c.target.length }),
     ];
+  if (c.kind === "sort") {
+    const when = {
+      gte: "{v} 이상이면",
+      lte: "{v} 이하이면",
+      eq: "{v}과 같으면",
+    };
+    return [
+      t("비교하는 특징: {name} · 카드 {n}장", {
+        name: c.property,
+        n: c.cards.length,
+      }),
+      ...c.bins.map((b, i) =>
+        t("바구니 {n}: 만약 {cond} 「{bin}」", {
+          n: i + 1,
+          cond: t(when[b.when], { v: b.value }),
+          bin: b.name,
+        }),
+      ),
+      t("나머지 바구니: 「{bin}」", { bin: c.otherwise }),
+      ...c.cards.map((k) =>
+        t("카드 「{card}」 {name} {v} → 기대 「{bin}」", {
+          card: k.label,
+          name: c.property,
+          v: k.value,
+          bin: k.expect,
+        }),
+      ),
+    ];
+  }
   if (c.kind === "rule") {
     const when = {
       gte: "{v} 이상이면",

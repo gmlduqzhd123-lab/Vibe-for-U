@@ -1,6 +1,8 @@
 import { useSendGuard } from "./sendGuard";
 import { useEffect, useRef, useState } from "react";
 import { Inspection } from "./Inspection";
+import { RunEvidenceContext } from "./runHistory";
+import { PairPanel } from "./Pair";
 import {
   compareSnapshots,
   configSummary,
@@ -13,10 +15,12 @@ import {
   stageDone,
   aiStatus,
   LIMITS,
+  RUN_LOG_LIMIT,
 } from "./model";
 import type { Work, Snapshot, Mode, Mission, Version } from "./model";
 import type { Navigate } from "./Pages";
-import { stageNames } from "./model";
+import { debugFields, stageNames } from "./model";
+import { isBugChallenge } from "./bugChallenge";
 import { Field, Hint, Icon, Pill } from "./ui";
 import { Settings } from "./Settings";
 import { Preview } from "./Preview";
@@ -205,6 +209,13 @@ export function Workspace({
           </button>
         </div>
       </div>
+      <PairPanel
+        pair={d.pair}
+        step={step}
+        readOnly={readOnly}
+        message={message}
+        onChange={(pair) => patch({ pair })}
+      />
       <nav className="stage-nav" aria-label={t("학습 단계")}>
         {stageNames.map((name, i) => (
           <button
@@ -624,6 +635,38 @@ export function Workspace({
                   message={message}
                   deleteChecks={deleteChecks}
                 />
+                {isBugChallenge(w) ? (
+                  <fieldset className="debug-log">
+                    <legend>{t("버그 탐정 일지")}</legend>
+                    <p className="small muted">
+                      {t(
+                        "탐정처럼 차례로 적어요. 틀린 의심도 괜찮아요. 다 적으면 성장 포트폴리오에 모여요.",
+                      )}
+                    </p>
+                    {debugFields.map(([key, label, hint]) => (
+                      <Field
+                        key={key}
+                        area
+                        max={LIMITS.promise}
+                        label={t(label)}
+                        placeholder={t(hint)}
+                        value={d.debugLog?.[key] ?? ""}
+                        onChange={(v) =>
+                          patch({
+                            debugLog: {
+                              suspect: "",
+                              experiment: "",
+                              result: "",
+                              fix: "",
+                              ...d.debugLog,
+                              [key]: v,
+                            },
+                          })
+                        }
+                      />
+                    ))}
+                  </fieldset>
+                ) : null}
                 <h3>{t("바꾼 내용과 이유를 남겨요")}</h3>
                 <Field
                   label={t("바꾸려는 동작")}
@@ -859,14 +902,40 @@ export function Workspace({
               </button>
             </div>
           ) : null}
-          <Preview
-            key={`${w.id}:${d.revision}:${d.config.kind === "timer" ? step : "stable"}`}
-            config={d.config}
-            onRun={() => {
-              if (d.prediction.trim() && d.runRevision !== d.revision)
-                patch({ runRevision: d.revision }, false);
-            }}
-          />
+          <RunEvidenceContext.Provider
+            value={
+              readOnly
+                ? null
+                : (steps) => {
+                    const kept = steps.slice(-RUN_LOG_LIMIT);
+                    patch({
+                      runLog: {
+                        revision: d.revision,
+                        at: new Date().toISOString(),
+                        steps: kept.map(({ label, state }) => ({
+                          label,
+                          state,
+                        })),
+                      },
+                    });
+                    message(
+                      t(
+                        "실행 기록 {n}개를 증거로 남겼어요. 포트폴리오에 나와요.",
+                        { n: kept.length },
+                      ),
+                    );
+                  }
+            }
+          >
+            <Preview
+              key={`${w.id}:${d.revision}:${d.config.kind === "timer" ? step : "stable"}`}
+              config={d.config}
+              onRun={() => {
+                if (d.prediction.trim() && d.runRevision !== d.revision)
+                  patch({ runRevision: d.revision }, false);
+              }}
+            />
+          </RunEvidenceContext.Provider>
           <div className="preview-advice">
             <Icon name="help" size={18} />
             <p>

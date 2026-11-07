@@ -1,6 +1,7 @@
 import { RunHistory, useRunHistory } from "./runHistory";
 import { SpeakButton } from "./Speak";
 import { RulePreview } from "./RulePreview";
+import { SortPreview } from "./SortPreview";
 import { useEffect, useState } from "react";
 import {
   answerQuiz,
@@ -53,6 +54,8 @@ export function Preview({
     return <PatternPreview config={config} onRun={onRun} />;
   if (config.kind === "rule")
     return <RulePreview config={config} onRun={onRun} />;
+  if (config.kind === "sort")
+    return <SortPreview config={config} onRun={onRun} />;
   if (config.kind === "quiz") {
     const question = config.questions[q.index];
     return (

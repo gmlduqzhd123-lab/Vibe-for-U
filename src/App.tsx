@@ -1104,7 +1104,7 @@ export default function App() {
                     </label>
                   </div>
                 </details>
-                <label className="mode-select">
+                <label className="mode-select lang-select">
                   <span className="sr-only">언어 · Language</span>
                   <select
                     aria-label="언어 · Language"

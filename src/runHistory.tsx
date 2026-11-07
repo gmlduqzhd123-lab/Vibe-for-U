@@ -1,8 +1,13 @@
-import { useState } from "react";
+import { createContext, useContext, useState } from "react";
 import { useT } from "./i18n";
+import { RUN_LOG_LIMIT } from "./model";
 // 실행 기록 되감기: 실행 화면에서 누른 것과 그때 앱이 기억한 값을 순서대로 남기고 한 칸씩 되감아 본다.
 // 기록은 화면에만 두고 작품에는 저장하지 않는다(실행은 학생이 고친 것이 아니라서 되돌리기에도 넣지 않는다).
 export type RunStep = { label: string; state: string; event: string };
+// 작업실의 실행 화면에서만 "증거로 남기기"를 보인다(교사 미리보기·버전 보기에서는 없음).
+export const RunEvidenceContext = createContext<
+  ((steps: RunStep[]) => void) | null
+>(null);
 const LIMIT = 60;
 export function useRunHistory() {
   const [steps, setSteps] = useState<RunStep[]>([]);
@@ -24,6 +29,7 @@ export function RunHistory({
   history: ReturnType<typeof useRunHistory>;
 }) {
   const t = useT();
+  const save = useContext(RunEvidenceContext);
   const { steps, at, setAt } = history;
   if (!steps.length) return null;
   const i = at ?? steps.length - 1;
@@ -74,6 +80,13 @@ export function RunHistory({
         <p className="small muted">
           {t("지난 기록을 보고 있어요. 실행 화면은 지금 값을 보여 줘요.")}
         </p>
+      ) : null}
+      {save ? (
+        <button type="button" onClick={() => save(steps)}>
+          {t("이 기록을 증거로 남기기 (최근 {n}개)", {
+            n: Math.min(steps.length, RUN_LOG_LIMIT),
+          })}
+        </button>
       ) : null}
     </details>
   );

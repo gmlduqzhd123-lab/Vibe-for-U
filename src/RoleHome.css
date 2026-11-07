@@ -65,7 +65,7 @@
   gap: 11px;
   color: #382e49;
   font-weight: 750;
-  font-size: 19px;
+  font-size: 1.1875rem;
   letter-spacing: -0.05em;
 }
 .role-home-brand img {
@@ -81,7 +81,7 @@
   gap: 12px;
   min-height: 44px;
   padding: 10px 13px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 400;
   color: #605967;
   cursor: pointer;
@@ -116,7 +116,7 @@
   border: 0;
   border-radius: 7px;
   text-align: left;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 400;
   color: #5d478f;
   background: white;
@@ -130,12 +130,12 @@
   border-top: 1px solid #e7e0ed;
   margin: 6px 4px 3px;
   padding: 12px 8px 3px;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: #696270;
 }
 .role-home-mode select {
   margin-top: 6px;
-  font-size: 12px;
+  font-size: 0.75rem;
   padding: 8px;
 }
 .role-home-content {
@@ -150,17 +150,17 @@
 .role-home-eyebrow {
   display: block;
   color: #75638a;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 650;
   letter-spacing: 0.02em;
   margin-bottom: 15px;
 }
 .role-home-intro h1 {
-  font-size: 42px;
+  font-size: 2.625rem;
 }
 .role-home-intro p {
   color: #696270;
-  font-size: 16px;
+  font-size: 1rem;
   margin-top: 17px;
 }
 .role-home-cards {
@@ -208,16 +208,16 @@
   background: #f4f1f8;
 }
 .role-home-overline {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: #736183;
 }
 .role-home-copy h2 {
   margin-top: 5px;
-  font-size: 28px;
+  font-size: 1.75rem;
   color: #392d4b;
 }
 .role-home-copy p {
-  font-size: 14px;
+  font-size: 0.875rem;
   color: #6c6178;
   margin-top: 10px;
 }
@@ -227,7 +227,7 @@
   justify-content: space-between;
   width: 100%;
   margin-top: 29px;
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 700;
   border-top: 1px solid #ded3eb;
   padding-top: 18px;
@@ -237,7 +237,7 @@
   gap: 12px;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: #706777;
   margin: 28px auto 0;
 }
@@ -254,7 +254,7 @@
   justify-content: center;
   gap: 9px;
   color: #706777;
-  font-size: 12px;
+  font-size: 0.75rem;
   width: 100%;
   padding: 26px 20px 24px;
   margin-top: 35px;
@@ -280,7 +280,7 @@
     gap: 10px;
   }
   .role-home-brand {
-    font-size: 15px;
+    font-size: 0.9375rem;
     gap: 8px;
   }
   .role-home-brand img {
@@ -303,14 +303,14 @@
     padding-top: 32px;
   }
   .role-home-intro h1 {
-    font-size: 31px;
+    font-size: 1.9375rem;
   }
   .role-home-eyebrow {
-    font-size: 11px;
+    font-size: 0.6875rem;
     margin-bottom: 12px;
   }
   .role-home-intro p {
-    font-size: 13px;
+    font-size: 0.8125rem;
     margin-top: 12px;
   }
   .role-home-cards {
@@ -337,28 +337,28 @@
     height: 23px;
   }
   .role-home-copy h2 {
-    font-size: 25px;
+    font-size: 1.5625rem;
     margin-top: 2px;
   }
   .role-home-overline {
-    font-size: 11px;
+    font-size: 0.6875rem;
   }
   .role-home-copy p {
-    font-size: 12px;
+    font-size: 0.75rem;
     margin-top: 7px;
   }
   .role-home-card-action {
     grid-column: 2;
     margin-top: 15px;
     padding-top: 10px;
-    font-size: 13px;
+    font-size: 0.8125rem;
   }
   .role-home-card-action svg {
     width: 18px;
   }
   .role-home-returning {
     gap: 4px;
-    font-size: 12px;
+    font-size: 0.75rem;
     flex-direction: column;
     margin-top: 19px;
   }
@@ -366,7 +366,7 @@
     min-height: 35px;
   }
   .role-home-footer {
-    font-size: 10px;
+    font-size: 0.625rem;
     gap: 6px;
     padding: 22px 10px;
     margin-top: 22px;
@@ -389,7 +389,7 @@
   background: #fff;
   color: #382e49;
   font: inherit;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 750;
   white-space: nowrap;
   cursor: pointer;
@@ -417,7 +417,7 @@
   .ys-chip {
     min-height: 36px;
     padding: 6px 9px;
-    font-size: 12.5px;
+    font-size: 0.7812rem;
   }
   .ys-wide {
     display: none;

@@ -47,6 +47,26 @@ const mutations: Record<Kind, Mutation[]> = {
           }
         : null,
   ],
+  sort: [
+    // 바구니 순서를 거꾸로 놓아 좁은 조건이 넓은 조건에 가리게 한다.
+    (c) =>
+      c.kind === "sort" && c.bins.length > 1
+        ? { ...c, bins: [...c.bins].reverse() }
+        : null,
+    // 첫 '이상' 바구니의 기준 값을 하나 올려, 딱 기준 값인 카드가 빠지게 한다.
+    (c) => {
+      if (c.kind !== "sort") return null;
+      const i = c.bins.findIndex((b) => b.when === "gte");
+      return i < 0
+        ? null
+        : {
+            ...c,
+            bins: c.bins.map((b, k) =>
+              k === i ? { ...b, value: b.value + 1 } : b,
+            ),
+          };
+    },
+  ],
   pattern: [
     (c) => (c.kind === "pattern" ? { ...c, edge: "wrap" } : null),
     // 마지막 명령을 빼서 빠진 칸을 만든다.

@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from "react";
 import { missions } from "./data";
 import { kindNames, kinds, stageDone } from "./model";
 import type { Kind, Mission, Work } from "./model";
@@ -6,6 +7,7 @@ import { StoragePanel } from "./storageHealth";
 import { SpeakButton } from "./Speak";
 import { dateLocale, useLang, useT } from "./i18n";
 import { localizeMission } from "./missionText";
+import { BACKUP_EVENT, backupDue, snoozeBackup } from "./backupReminder";
 export type Navigate = (path: string) => void;
 export { RoleHome as Home } from "./RoleHome";
 export function Missions({
@@ -217,6 +219,15 @@ export function Library({
 }) {
   const t = useT();
   const lang = useLang();
+  // 백업하거나(BACKUP_EVENT) 작품이 바뀌면 다시 센다.
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const bump = () => setTick((n) => n + 1);
+    addEventListener(BACKUP_EVENT, bump);
+    return () => removeEventListener(BACKUP_EVENT, bump);
+  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const reminder = useMemo(() => backupDue(works), [works, tick]);
   return (
     <>
       <div className="page-heading">
@@ -247,6 +258,29 @@ export function Library({
           "현재 기기와 브라우저에 저장돼요. 다른 기기에서 이어 하려면 파일로 내보내세요. 공용 기기의 기록은 개인별로 비밀 보호되지 않아요.",
         )}
       </div>
+      {reminder.due ? (
+        <div className="warning backup-reminder" role="status">
+          <p>
+            <b>
+              {t("작품 {n}개가 마지막 백업 뒤에 바뀌었어요.", {
+                n: reminder.changed,
+              })}
+            </b>{" "}
+            {t(
+              "기기에 따라 오래 열지 않으면 기록이 지워질 수 있어요(예: iPad Safari는 7일). 목록 백업으로 파일을 받아 두세요.",
+            )}
+          </p>
+          <div className="button-row">
+            <button className="primary" onClick={exportAll}>
+              <Icon name="download" />
+              {t("지금 목록 백업")}
+            </button>
+            <button className="text-button" onClick={() => snoozeBackup()}>
+              {t("오늘은 그만 보기")}
+            </button>
+          </div>
+        </div>
+      ) : null}
       {hiddenCount ? (
         <div className="warning">
           {t("이전 사용자의 작품 {n}개는 이어서 학습에 연결하지 않았어요.", {

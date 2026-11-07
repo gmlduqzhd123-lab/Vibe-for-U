@@ -57,7 +57,7 @@ test("교사가 학생 파일을 모아 단계 표를 보고 평가를 학생에
   await expect(table).toContainText("평가 전");
 
   const card = page.locator(".review-card").first();
-  await card.locator("summary").click();
+  await card.locator("summary").first().click();
   for (const legend of [
     "문제와 요구사항",
     "작동 원리 이해",
@@ -130,7 +130,7 @@ test("평가하던 학급 목록은 새로고침해도 이어서 열리고, 목�
     buffer: student,
   });
   const card = page.locator(".review-card").first();
-  await card.locator("summary").click();
+  await card.locator("summary").first().click();
   await card
     .getByRole("group", { name: "검사와 수정" })
     .getByRole("radio", { name: /^설명·적용/ })
@@ -145,7 +145,7 @@ test("평가하던 학급 목록은 새로고침해도 이어서 열리고, 목�
     page.getByRole("status").filter({ hasText: "이어서 열었어요" }),
   ).toBeVisible();
   const again = page.locator(".review-card").first();
-  await again.locator("summary").click();
+  await again.locator("summary").first().click();
   await expect(
     again
       .getByRole("group", { name: "검사와 수정" })

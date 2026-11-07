@@ -1,4 +1,4 @@
-import { kinds, kindNames } from "./model";
+import { debugFilled, kinds, kindNames } from "./model";
 import type { Kind, Work } from "./model";
 import { Icon, Pill } from "./ui";
 import { useT } from "./i18n";
@@ -70,6 +70,9 @@ export function BugHunt({
                       {t(done ? "고쳤어요" : "버그가 숨어 있어요")}
                     </Pill>{" "}
                     {w.draft.title}
+                    {debugFilled(w.draft.debugLog) ? (
+                      <small> · {t("일지 다 적음")}</small>
+                    ) : null}
                   </span>
                   <button onClick={() => go(`work/${w.id}/2`)}>
                     {t(done ? "다시 보기" : "이어서 찾기")}

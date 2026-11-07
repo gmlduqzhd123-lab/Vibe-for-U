@@ -72,7 +72,7 @@ test("영어로 바꾸면 화면 틀·문서 언어·제목이 바뀌고 기록�
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "미션 공작대",
   );
-  await expect(page.getByRole("button", { name: "전체 21개" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "전체 25개" })).toBeVisible();
 });
 
 test.describe("느린 인터넷", () => {

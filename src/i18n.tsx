@@ -117,6 +117,57 @@ const tables: Record<Lang, Record<string, string>> = { ko: {}, en };
 export function addTranslations(lang: Lang, table: Record<string, string>) {
   Object.assign(tables[lang], table);
 }
+// 교사가 앱 안에서 고친 영어 문장(이 기기에만). 원래 번역은 되돌릴 수 있게 따로 기억한다.
+const FIX_KEY = "ttukttak-vibe:en-fixes";
+const originals: Record<string, string> = {};
+export function readEnglishFixes(): Record<string, string> {
+  try {
+    const raw = JSON.parse(localStorage.getItem(FIX_KEY) ?? "{}");
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+    return Object.fromEntries(
+      Object.entries(raw).filter(
+        (e): e is [string, string] => typeof e[1] === "string",
+      ),
+    );
+  } catch {
+    return {};
+  }
+}
+// 번역표를 더 불러온 뒤에도 고친 문장이 이기도록 마지막에 덮어쓴다.
+export function applyEnglishFixes() {
+  for (const [ko, fix] of Object.entries(readEnglishFixes())) {
+    if (!(ko in originals) && ko in tables.en) originals[ko] = tables.en[ko];
+    tables.en[ko] = fix;
+  }
+}
+// fix가 null이면 원래 번역으로 되돌린다.
+export function saveEnglishFix(ko: string, fix: string | null) {
+  const all = readEnglishFixes();
+  if (fix === null) {
+    delete all[ko];
+    if (ko in originals) tables.en[ko] = originals[ko];
+  } else {
+    if (!(ko in originals) && ko in tables.en) originals[ko] = tables.en[ko];
+    all[ko] = fix;
+    tables.en[ko] = fix;
+  }
+  try {
+    localStorage.setItem(FIX_KEY, JSON.stringify(all));
+  } catch {
+    // 저장할 수 없으면 이번 화면에서만 바뀐다.
+  }
+}
+export const englishEntries = () => Object.entries(tables.en);
+export const originalEnglish = (ko: string) => originals[ko] ?? tables.en[ko];
+// 번역에 한국어와 같은 {값} 자리가 있는지
+export const sameSlots = (a: string, b: string) => {
+  const slots = (s: string) =>
+    [...s.matchAll(/\{(\w+)\}/g)]
+      .map((m) => m[1])
+      .sort()
+      .join();
+  return slots(a) === slots(b);
+};
 // {이름} 자리에 값을 넣는다. 예: t("문항 {n} 내용", { n: 2 })
 export function translate(
   lang: Lang,

@@ -1,5 +1,5 @@
 import type { Config, Mission } from "./model";
-import { addTranslations, translate } from "./i18n";
+import { addTranslations, applyEnglishFixes, translate } from "./i18n";
 import type { Lang } from "./i18n";
 import type { MissionText } from "./missionsEn";
 // 영어 미션 글은 영어 화면을 고를 때만 불러온다(한국어 사용자의 첫 화면을 가볍게).
@@ -11,6 +11,7 @@ export async function loadEnglishMissions() {
       import("./i18nEn"),
     ]);
     addTranslations("en", more.en);
+    applyEnglishFixes();
     english = m.missionsEn;
   }
   return english;
@@ -43,6 +44,18 @@ export function localizeConfig(c: Config, lang: Lang): Config {
       })),
     };
   if (c.kind === "timer") return { ...c, endMessage: t(c.endMessage) };
+  if (c.kind === "sort")
+    return {
+      ...c,
+      property: t(c.property),
+      cards: c.cards.map((k) => ({
+        ...k,
+        label: t(k.label),
+        expect: t(k.expect),
+      })),
+      bins: c.bins.map((b) => ({ ...b, name: t(b.name) })),
+      otherwise: t(c.otherwise),
+    };
   if (c.kind === "rule")
     return {
       ...c,
@@ -68,6 +81,13 @@ export function configStrings(c: Config): string[] {
       ...s.choices.map((ch) => ch.label),
     ]);
   if (c.kind === "timer") return [c.endMessage];
+  if (c.kind === "sort")
+    return [
+      c.property,
+      ...c.cards.flatMap((k) => [k.label, k.expect]),
+      ...c.bins.map((b) => b.name),
+      c.otherwise,
+    ];
   if (c.kind === "rule")
     return [
       c.variable,

@@ -476,4 +476,99 @@ export const missionsEn: Record<string, MissionText> = {
     closing:
       "For a treasure-hunt game, which condition fits better, “equals” or “or more”, and why?",
   },
+  "sort-1": {
+    title: "Sort by number of legs",
+    goal: "Put animal cards into the right baskets by their number of legs.",
+    prediction:
+      "Which basket will the snake card go into? What happens if no basket condition matches?",
+    tests: [
+      {
+        label: "Put all",
+        expected:
+          "Cat and dog go to four-legged, chicken and sparrow to two-legged, and the snake to other animals.",
+      },
+      {
+        label: "Start over",
+        expected:
+          "Start over empties the baskets and puts cards again from the first one.",
+      },
+    ],
+    task: "Add a six-legged animal (ant) card and a basket for it, then put the cards again to check.",
+    hints: [
+      "The app looks only at each card's number of legs to pick a basket.",
+      "“Equals 4” matches only when it is exactly 4.",
+      "A card that matches no condition goes to the leftover basket.",
+    ],
+    closing:
+      "Without basket conditions, could the app know where to put each card?",
+  },
+  "sort-2": {
+    title: "Exactly 120 cm can ride too",
+    goal: "Check where a friend who is exactly at the ride's height limit goes.",
+    prediction: "Haneul is exactly 120 cm tall. Which basket will she go into?",
+    tests: [
+      {
+        label: "Exactly the limit",
+        expected: "Haneul at 120 cm goes into “Can ride”.",
+      },
+      {
+        label: "One below the limit",
+        expected: "Mint at 119 cm goes into “Ride next time”.",
+      },
+    ],
+    task: "Change the condition from “120 or more” to “121 or more”, see who changes, then change it back and write why.",
+    hints: [
+      "“Or more” includes the value itself.",
+      "Always test with one card that is exactly the limit.",
+      "With “121 or more”, the 120 card no longer matches.",
+    ],
+    closing: "How are “or more” and “more than” different at the limit?",
+  },
+  "sort-3": {
+    title: "The “many legs” basket is empty",
+    goal: "Fix the basket order so ants and spiders go into “Many legs”.",
+    prediction: "Which basket does the ant (6 legs) go into right now?",
+    tests: [
+      {
+        label: "Many legs",
+        expected: "The ant and spider go into “Many legs”.",
+      },
+      {
+        label: "Some legs",
+        expected: "The chicken and cat still go into “Has legs”.",
+      },
+    ],
+    task: "Change the basket order so the narrow condition is checked first, then put the cards again.",
+    hints: [
+      "The ant's 6 legs also match “2 or more”.",
+      "The app puts a card only into the first basket that matches, from the top.",
+      "Move the “6 or more” basket above “2 or more”.",
+    ],
+    closing:
+      "When a broad and a narrow condition are both there, which should be checked first?",
+  },
+  "sort-4": {
+    title: "Medium goes to the leftover basket",
+    goal: "Give conditions only for light and heavy things, and send the rest to “Medium”.",
+    prediction:
+      "Which basket will the 500 g book go into? What about the bottle that is exactly 1000 g?",
+    tests: [
+      {
+        label: "Middle weight",
+        expected: "The book matches no condition and goes into “Medium”.",
+      },
+      {
+        label: "Both ends",
+        expected:
+          "The bottle and watermelon go to heavy, the pencil and eraser to light.",
+      },
+    ],
+    task: "Rename the leftover basket, then change the light limit to 200 g and see who changes.",
+    hints: [
+      "The leftover basket has no condition. It is used when no basket above matches.",
+      "“100 or less” includes 100 g.",
+      "After changing a limit, check the cards near it first.",
+    ],
+    closing: "Why don't you have to write a condition for every case?",
+  },
 };

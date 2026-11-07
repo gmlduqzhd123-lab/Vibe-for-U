@@ -4,7 +4,9 @@ import { en } from "../src/i18nEn";
 import { stageNames, kindNames, aiStatus, makeWork } from "../src/model";
 import { dirNames, autoChecks } from "../src/engines";
 import { lessons, missions, quiz, rubric, story, timer } from "../src/data";
-import { levelNames } from "../src/classSummary";
+import { bugNames, levelNames } from "../src/classSummary";
+import { debugFields } from "../src/model";
+import { builtInPhrases } from "../src/Phrases";
 import { stageGuides } from "../src/Workspace";
 import { blockGroups, predictionStarters } from "../src/BlockPrompt";
 import { codeKeys, listedKeys } from "./i18nKeys";
@@ -30,6 +32,10 @@ describe("학생 화면 전체 번역", () => {
       ...Object.values(kindNames),
       ...rubric.flat(),
       ...levelNames,
+      // 화면에서 t()로 바꾸는 표: 버그 종류, 버그 탐정 일지 칸, 의견 문장 모음
+      ...Object.values(bugNames),
+      ...debugFields.flatMap(([, label, hint]) => [label, hint]),
+      ...builtInPhrases.flat(),
       ...predictionStarters,
       "시작 작품 · 현재 편집본",
       "가져온 복사본 · 현재 편집본",
