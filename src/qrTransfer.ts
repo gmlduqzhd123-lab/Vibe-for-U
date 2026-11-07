@@ -67,9 +67,16 @@ export async function decodeShare(code: string): Promise<SharePayload> {
   if (o.k === "feedback") {
     const f = validateFeedback(o.feedback);
     if (!f) throw new AppError("평가가 비어 있어요.");
+    // 작품 ID는 작품 파일과 같은 규칙(빈칸 없이 80자 이내)으로 본다.
+    if (
+      typeof o.workId !== "string" ||
+      !o.workId.trim() ||
+      o.workId.length > 80
+    )
+      throw new AppError("평가를 돌려줄 작품을 알 수 없어요.");
     return {
       k: "feedback",
-      workId: String(o.workId).slice(0, 80),
+      workId: o.workId,
       title: typeof o.title === "string" ? o.title.slice(0, LIMITS.short) : "",
       feedback: f,
     };

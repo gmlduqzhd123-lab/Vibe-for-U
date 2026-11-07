@@ -1,4 +1,5 @@
 import type { Config, Snapshot, Work } from "./model";
+import { uid } from "./model";
 import { dirNames } from "./engines";
 import { translate } from "./i18n";
 export function updatePrediction(d: Snapshot, prediction: string): Snapshot {
@@ -9,6 +10,17 @@ export function updatePrediction(d: Snapshot, prediction: string): Snapshot {
     prediction,
     runRevision: changed ? "" : d.runRevision,
     ...(changed ? { predictionCheck: "", predictionNote: "" } : {}),
+  };
+}
+// 앱 설정을 바꾸면 새 판이 된다. 지난 판에서 남긴 "예상대로였어요" 표시와 메모는
+// 새 설정으로 다시 눌러 본 뒤에 다시 고르도록 비운다(예상 글은 그대로 둔다).
+export function updateConfig(d: Snapshot, config: Config): Snapshot {
+  return {
+    ...d,
+    config,
+    revision: uid(),
+    predictionCheck: "",
+    predictionNote: "",
   };
 }
 type Tr = (text: string, vars?: Record<string, string | number>) => string;

@@ -94,17 +94,16 @@ export function Preview({
                   key={i}
                   onClick={() => {
                     run();
-                    setQ((s) => {
-                      const next = answerQuiz(config, s, i, t);
-                      history.record({
-                        label: t("선택 {n}", { n: i + 1 }),
-                        state: t("점수 {a} → {b}", {
-                          a: s.score,
-                          b: next.score,
-                        }),
-                        event: next.event,
-                      });
-                      return next;
+                    const s = q;
+                    const next = answerQuiz(config, s, i, t);
+                    setQ(next);
+                    history.record({
+                      label: t("선택 {n}", { n: i + 1 }),
+                      state: t("점수 {a} → {b}", {
+                        a: s.score,
+                        b: next.score,
+                      }),
+                      event: next.event,
                     });
                   }}
                 >
@@ -133,17 +132,16 @@ export function Preview({
                   className="primary full"
                   onClick={() => {
                     run();
-                    setQ((s) => {
-                      const next = nextQuiz(config, s, t);
-                      history.record({
-                        label: t(next.finished ? "결과 보기" : "다음 문제"),
-                        state: t("문제 {i} · 점수 {n}", {
-                          i: next.index + 1,
-                          n: next.score,
-                        }),
-                        event: next.event,
-                      });
-                      return next;
+                    const s = q;
+                    const next = nextQuiz(config, s, t);
+                    setQ(next);
+                    history.record({
+                      label: t(next.finished ? "결과 보기" : "다음 문제"),
+                      state: t("문제 {i} · 점수 {n}", {
+                        i: next.index + 1,
+                        n: next.score,
+                      }),
+                      event: next.event,
                     });
                   }}
                 >
@@ -164,14 +162,13 @@ export function Preview({
           className="text-button"
           onClick={() => {
             run();
-            setQ((s) => {
-              const next = resetQuiz(config, s, t);
-              history.record({
-                label: t("↺ 다시 시작"),
-                state: t("점수 {a} → {b}", { a: s.score, b: next.score }),
-                event: next.event,
-              });
-              return next;
+            const s = q;
+            const next = resetQuiz(config, s, t);
+            setQ(next);
+            history.record({
+              label: t("↺ 다시 시작"),
+              state: t("점수 {a} → {b}", { a: s.score, b: next.score }),
+              event: next.event,
             });
           }}
         >
@@ -309,18 +306,15 @@ export function Preview({
           disabled={clock.running || clock.remaining === 0}
           onClick={() => {
             run();
-            setClock((s) => {
-              const next = startTimer(s, Date.now());
-              history.record({
-                label: t(
-                  s.remaining === config.seconds * 1000 ? "시작" : "재개",
-                ),
-                state: t("남은 시간 {n}초", {
-                  n: Math.ceil(next.remaining / 1000),
-                }),
-                event: t("시계가 흐르기 시작함"),
-              });
-              return next;
+            const s = clock;
+            const next = startTimer(s, Date.now());
+            setClock(next);
+            history.record({
+              label: t(s.remaining === config.seconds * 1000 ? "시작" : "재개"),
+              state: t("남은 시간 {n}초", {
+                n: Math.ceil(next.remaining / 1000),
+              }),
+              event: t("시계가 흐르기 시작함"),
             });
           }}
         >
@@ -331,16 +325,15 @@ export function Preview({
           disabled={!clock.running}
           onClick={() => {
             run();
-            setClock((s) => {
-              const next = pauseTimer(s, Date.now(), config);
-              history.record({
-                label: t("일시정지"),
-                state: t("남은 시간 {n}초", {
-                  n: Math.ceil(next.remaining / 1000),
-                }),
-                event: t("남은 시간을 기억하고 멈춤"),
-              });
-              return next;
+            const s = clock;
+            const next = pauseTimer(s, Date.now(), config);
+            setClock(next);
+            history.record({
+              label: t("일시정지"),
+              state: t("남은 시간 {n}초", {
+                n: Math.ceil(next.remaining / 1000),
+              }),
+              event: t("남은 시간을 기억하고 멈춤"),
             });
           }}
         >

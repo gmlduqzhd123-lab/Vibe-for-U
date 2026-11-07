@@ -116,14 +116,16 @@ export function exportJSON(works: Work[], withUndo = true) {
     const steps = recentSteps(w.id);
     if (steps.length) undo[w.id] = steps;
   }
-  const ids = Object.keys(undo);
-  if (!ids.length) return JSON.stringify(body);
+  if (!Object.keys(undo).length) return JSON.stringify(body);
+  // 너무 크면 단계가 가장 많은 작품부터 가장 오래된 단계를 하나씩 빼서 고르게 줄인다.
   while (jsonBytes(undo) > UNDO_BYTES) {
-    const id = ids.find((k) => undo[k].length);
-    if (!id) break;
+    const ids = Object.keys(undo);
+    if (!ids.length) break;
+    const id = ids.reduce((a, b) => (undo[b].length > undo[a].length ? b : a));
     undo[id].shift();
     if (!undo[id].length) delete undo[id];
   }
+  if (!Object.keys(undo).length) return JSON.stringify(body);
   const text = JSON.stringify({ ...body, undo });
   // 되돌리기 기록 때문에 파일 한도를 넘으면 기록은 빼고 작품만 담는다.
   return new TextEncoder().encode(text).length > LIMITS.bytes
@@ -563,23 +565,26 @@ export function validateWork(v: unknown): Work {
     selfAssessment: validateFeedback(w.selfAssessment, "자기 평가"),
   };
 }
-// 작품 파일을 읽어 새 ID의 작품과, 새 ID별 되돌리기 단계(함께 담겨 온 경우)를 돌려준다.
-export function parseImportWithUndo(text: string): {
-  works: Work[];
-  undo: Map<string, Step[]>;
-} {
+// 작품 파일 글을 읽는다(크기·JSON 검사). 파일을 한 번만 읽고 parseBackup에 넘긴다.
+export function readBackupText(text: string): unknown {
   if (new TextEncoder().encode(text).length > LIMITS.bytes)
     throw new AppError(
       "파일은 2MB 이하여야 해요. 작품을 나누어 내보내 주세요.",
     );
-  let data: unknown;
   try {
-    data = JSON.parse(text);
+    return JSON.parse(text);
   } catch {
     throw new AppError(
       "JSON 파일을 읽을 수 없어요. 원래 내보낸 .json 파일을 선택해 주세요.",
     );
   }
+}
+// 읽은 작품 파일을 검사해 새 ID의 작품, 새 ID별 되돌리기 단계(withUndo일 때만 검사),
+// 파일에 적힌 원래 작품 ID(sourceIds, works와 같은 순서)를 돌려준다.
+export function parseBackup(
+  data: unknown,
+  withUndo = true,
+): { works: Work[]; undo: Map<string, Step[]>; sourceIds: string[] } {
   const root = obj(data, "파일");
   if (root.format !== "ttukttak-vibe-backup")
     throw new AppError("뚝딱 백업 파일({supported})을 선택해 주세요.", {
@@ -587,10 +592,12 @@ export function parseImportWithUndo(text: string): {
     });
   checkVersion(root.schemaVersion, "백업 파일");
   const undoRoot =
-    root.undo === undefined ? {} : obj(root.undo, "되돌리기 기록");
+    !withUndo || root.undo === undefined ? {} : obj(root.undo, "되돌리기 기록");
   const undo = new Map<string, Step[]>();
+  const sourceIds: string[] = [];
   const works = arr(root.works, "작품 목록", 1, 50).map((v) => {
     const work = validateWork(v);
+    sourceIds.push(work.id);
     const id = uid();
     // 함께 온 되돌리기 기록은 새 ID에 붙인다. 읽을 수 없는 기록은 작품만 가져온다.
     const raw = undoRoot[work.id];
@@ -603,8 +610,10 @@ export function parseImportWithUndo(text: string): {
       }
     return { ...work, id, editingLabel: "가져온 복사본 · 현재 편집본" };
   });
-  return { works, undo };
+  return { works, undo, sourceIds };
 }
+export const parseImportWithUndo = (text: string) =>
+  parseBackup(readBackupText(text));
 export function parseImport(text: string): Work[] {
   return parseImportWithUndo(text).works;
 }

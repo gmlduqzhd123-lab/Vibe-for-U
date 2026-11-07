@@ -8,6 +8,7 @@ import {
   nextQuiz,
   patternMatch,
   pressRule,
+  ruleMessage,
   runPattern,
   startTimer,
   tickTimer,
@@ -25,7 +26,7 @@ export function designActions(c: Config, t: Tr): Action[] {
       return [
         {
           id: "quiz-answer",
-          label: t("문제 {a}에서 {b}번 답 고르기 → 점수"),
+          label: t("문제 {a}에서 {b}번 답 고르기 → 그 문제에서 얻은 점수"),
           params: [
             {
               key: "a",
@@ -38,7 +39,7 @@ export function designActions(c: Config, t: Tr): Action[] {
         },
         {
           id: "quiz-twice",
-          label: t("문제 {a}에서 정답을 두 번 고르기 → 점수"),
+          label: t("문제 {a}에서 정답을 두 번 고르기 → 그 문제에서 얻은 점수"),
           params: [
             {
               key: "a",
@@ -107,7 +108,9 @@ export function designActions(c: Config, t: Tr): Action[] {
 const clamp = (v: number, p?: Param) =>
   p ? Math.min(p.max, Math.max(p.min, Math.round(v) || p.min)) : 0;
 // 설계대로 앱을 실행해 실제 결과를 문장으로 돌려준다.
-export function runDesign(c: Config, d: Design, t: Tr) {
+// values는 예상과 비교할 숫자(점수·값·남은 초 등)만 차례로 담는다. 문구 속 숫자는 넣지 않는다.
+export type DesignRun = { label: string; actual: string; values: number[] };
+export function runDesign(c: Config, d: Design, t: Tr): DesignRun | null {
   const action = designActions(c, t).find((x) => x.id === d.action);
   if (!action) return null;
   const a = clamp(
@@ -128,11 +131,21 @@ export function runDesign(c: Config, d: Design, t: Tr) {
         s = answerQuiz(c, s, c.questions[s.index].correct, t);
         s = nextQuiz(c, s, t);
       }
+      // 앞 문제는 정답으로 풀어 두고, 이 문제에서 얻은 점수만 비교한다.
+      const before = s.score;
       const choice =
         d.action === "quiz-twice" ? c.questions[s.index].correct : b - 1;
       s = answerQuiz(c, s, choice, t);
       if (d.action === "quiz-twice") s = answerQuiz(c, s, choice, t);
-      return { label, actual: t("점수 {n}", { n: s.score }) };
+      const gained = s.score - before;
+      return {
+        label,
+        actual: t("이 문제에서 얻은 점수 {g} · 전체 점수 {n}", {
+          g: gained,
+          n: s.score,
+        }),
+        values: [gained],
+      };
     }
     case "quiz-all": {
       if (c.kind !== "quiz") return null;
@@ -141,26 +154,24 @@ export function runDesign(c: Config, d: Design, t: Tr) {
         s = answerQuiz(c, s, c.questions[s.index].correct, t);
         s = nextQuiz(c, s, t);
       }
-      return { label, actual: t("최종 점수 {n}", { n: s.score }) };
+      return {
+        label,
+        actual: t("최종 점수 {n}", { n: s.score }),
+        values: [s.score],
+      };
     }
     case "rule-press": {
       if (c.kind !== "rule") return null;
       let s = initialRule(c, t);
       for (let i = 0; i < b; i++) s = pressRule(c, s, a - 1, t);
-      const hit = c.rules.find((r) =>
-        r.when === "gte"
-          ? s.value >= r.value
-          : r.when === "lte"
-            ? s.value <= r.value
-            : s.value === r.value,
-      );
       return {
         label,
         actual: t("{name} {v} · 문구 「{m}」", {
           name: c.variable,
           v: s.value,
-          m: hit ? hit.message : c.otherwise,
+          m: ruleMessage(c, s.value).message,
         }),
+        values: [s.value],
       };
     }
     case "timer-wait": {
@@ -174,6 +185,7 @@ export function runDesign(c: Config, d: Design, t: Tr) {
               end: c.showEnd ? t("종료 안내 표시") : t("종료 안내 없음"),
             })
           : t("남은 시간 {n}초", { n: left }),
+        values: [left],
       };
     }
     case "pattern-run": {
@@ -186,6 +198,7 @@ export function runDesign(c: Config, d: Design, t: Tr) {
           n: s.painted.length,
           m: m.missing.length + m.extra.length,
         }),
+        values: [s.painted.length, m.missing.length + m.extra.length],
       };
     }
     case "story-choose": {
@@ -198,19 +211,26 @@ export function runDesign(c: Config, d: Design, t: Tr) {
         actual: scene
           ? t("장면 「{title}」", { title: scene.title })
           : t("이어지는 장면이 없어요"),
+        values: [],
       };
     }
   }
   return null;
 }
-// 예상과 실제 비교: 예상에 숫자가 있으면 숫자들이 차례로 같아야 하고, 없으면 예상 문구가 실제에 들어 있어야 한다.
-export function designMatches(expected: string, actual: string) {
-  const nums = (s: string) => s.match(/-?\d+/g) ?? [];
+// 예상과 실제 비교: 예상에 숫자가 있으면 결과의 비교 값(values)과 앞에서부터 차례로 같아야 하고,
+// 숫자가 없으면 예상 문구가 결과 문장에 들어 있어야 한다. 문구 속 숫자(예: "10점 이상!")는 비교하지 않는다.
+export function designMatches(
+  expected: string,
+  run: Pick<DesignRun, "actual" | "values">,
+) {
   const e = expected.trim();
   if (!e) return false;
-  const en = nums(e);
-  if (en.length) return en.join(",") === nums(actual).join(",");
-  return actual.replace(/\s/g, "").includes(e.replace(/\s/g, ""));
+  const en = (e.match(/-?\d+/g) ?? []).map(Number);
+  if (en.length && run.values.length)
+    return (
+      en.length <= run.values.length && en.every((n, i) => n === run.values[i])
+    );
+  return run.actual.replace(/\s/g, "").includes(e.replace(/\s/g, ""));
 }
 // 설계·실행 결과를 '학습자 직접 확인' 카드로 만든다. 상태는 앱이 비교해 넣고, 학생은 바꿀 수 있다.
 export function designedCheck(
@@ -227,7 +247,7 @@ export function designedCheck(
     expected: d.expected.trim(),
     actual: `${t("앱이 대신 눌러 봤어요")}: ${run.actual}`,
     source: "self",
-    status: designMatches(d.expected, run.actual) ? "pass" : "fail",
+    status: designMatches(d.expected, run) ? "pass" : "fail",
     revision,
     at: now(),
   };

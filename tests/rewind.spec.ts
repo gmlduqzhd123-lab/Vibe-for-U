@@ -66,6 +66,22 @@ test("예상과 실제: 눌러 본 뒤 예상이 맞았는지 표시하면 포�
   await expect(compare).toContainText("세 번 눌러도 1점일 것 같아요");
   await expect(compare).toContainText("예상과 달랐어요");
   await expect(compare).toContainText("3점이 됐어요");
+  // 앱 설정을 바꾸면(새 판) 지난 판의 표시는 비워지고, 다시 눌러 본 뒤 새로 고른다.
+  await page.goto(`#/work/${id}/2`);
+  await page
+    .getByRole("combobox", { name: "채점 규칙", exact: true })
+    .selectOption("once");
+  await expect(page.locator(".prediction-check")).toHaveCount(0);
+  await page.locator(".preview-panel .answers button").first().click();
+  await expect(
+    page
+      .locator(".prediction-check")
+      .getByRole("button", { name: "예상과 달랐어요" }),
+  ).toHaveAttribute("aria-pressed", "false");
+  await expect(page.getByText("기기에 저장됨", { exact: true })).toBeVisible();
+  await page.goto(`#/portfolio/${id}`);
+  await expect(compare).toContainText("아직 표시하지 않았어요.");
+  await expect(compare).not.toContainText("3점이 됐어요");
   // 예상을 고치면 표시가 처음으로 돌아간다.
   await page.goto(`#/work/${id}/2`);
   await page.getByLabel("실행 전 나의 예상").fill("다시 예상");

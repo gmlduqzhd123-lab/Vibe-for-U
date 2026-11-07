@@ -46,14 +46,13 @@ export function RulePreview({
             className={b.change > 0 ? "primary" : ""}
             onClick={() => {
               onRun();
-              setS((p) => {
-                const next = pressRule(config, p, i, t);
-                history.record({
-                  label: b.label,
-                  state: `${config.variable} ${p.value} → ${next.value}`,
-                  event: next.event,
-                });
-                return next;
+              const p = s;
+              const next = pressRule(config, p, i, t);
+              setS(next);
+              history.record({
+                label: b.label,
+                state: `${config.variable} ${p.value} → ${next.value}`,
+                event: next.event,
               });
             }}
           >

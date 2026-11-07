@@ -14,7 +14,7 @@ import {
   saveCustomMission,
 } from "./customMissions";
 import type { MissionUpdate } from "./customMissions";
-import { AppError, errorText } from "./appError";
+import { errorText } from "./appError";
 import {
   lazy,
   Suspense,
@@ -819,15 +819,8 @@ export default function App() {
       if ((data as { format?: unknown } | null)?.format === COURSE_FORMAT) {
         const { course, missions: list } = parseCourseFile(data);
         const updates: MissionUpdate[] = [];
+        // parseCourseFile이 모두 검사했으므로 여기서부터 기기에 남긴다.
         adoptMissions(list, true, updates);
-        const missing = course.missionIds.filter(
-          (id) => !missions.some((m) => m.id === id),
-        );
-        if (missing.length)
-          throw new AppError(
-            "코스에 적힌 미션 {n}개가 이 기기에 없어요. 미션 파일을 먼저 가져와 주세요.",
-            { n: missing.length },
-          );
         saveCourse(course);
         message(
           t(

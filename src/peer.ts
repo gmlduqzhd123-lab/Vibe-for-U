@@ -167,7 +167,6 @@ export function validatePeerResponse(data: unknown): PeerResponse {
   };
 }
 // 결과를 작품의 친구 의견 검사 기록으로 더한다. 검사한 설정 버전을 그대로 남긴다.
-const t_ = (s: string) => s;
 export function applyPeerResponse(w: Work, r: PeerResponse): Work {
   const who = r.reviewer.trim() || "친구";
   const rows: Check[] = [
@@ -187,7 +186,7 @@ export function applyPeerResponse(w: Work, r: PeerResponse): Work {
       .filter((a) => a.answer.trim())
       .map((a) => ({
         id: uid(),
-        label: `${t_("질문")} · ${who}`.slice(0, LIMITS.short),
+        label: `질문 · ${who}`.slice(0, LIMITS.short),
         expected: a.question,
         actual: a.answer,
         source: "peer" as const,

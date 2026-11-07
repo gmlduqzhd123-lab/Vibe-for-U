@@ -211,11 +211,31 @@ export const courseFile = (c: Course) =>
     ),
   });
 // 코스와, 함께 담긴 선생님 미션(adoptMissions로 받아들인다)을 돌려준다.
+// 이 기기에 아무것도 남기기 전에 모두 검사한다: 담긴 미션이 하나라도 잘못됐거나,
+// 코스의 미션이 기기에도 파일에도 없으면 저장하지 않고 알린다.
 export function parseCourseFile(data: unknown) {
   const o = (data ?? {}) as Obj;
   if (o.format !== COURSE_FORMAT || o.version !== 1)
     throw new AppError("코스 파일 형식을 알 수 없어요.");
-  return { course: validateCourse(o.course), missions: o.missions };
+  const course = validateCourse(o.course);
+  if (
+    o.missions !== undefined &&
+    (!Array.isArray(o.missions) || o.missions.length > CUSTOM_LIMIT)
+  )
+    throw new AppError("미션 파일 형식을 알 수 없어요.");
+  const bundled = ((o.missions as unknown[] | undefined) ?? []).map(
+    validateMission,
+  );
+  const missing = course.missionIds.filter(
+    (id) =>
+      !missions.some((m) => m.id === id) && !bundled.some((m) => m.id === id),
+  );
+  if (missing.length)
+    throw new AppError(
+      "코스에 적힌 미션 {n}개가 이 기기에 없어요. 미션 파일을 먼저 가져와 주세요.",
+      { n: missing.length },
+    );
+  return { course, missions: bundled };
 }
 function readCourses(): Course[] {
   try {
