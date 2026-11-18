@@ -140,3 +140,40 @@ describe("친구에게 물어볼 것", () => {
     });
   });
 });
+describe("친구가 눌러 본 순서", () => {
+  it("결과 파일의 실행 기록을 검사해 받고, 작품에 친구 기록으로 더한다", async () => {
+    const { applyPeerResponse, makePeerRequest, validatePeerResponse } =
+      await import("../src/peer");
+    const { missions } = await import("../src/data");
+    const { makeWork } = await import("../src/model");
+    const w = makeWork(missions[0]);
+    const req = makePeerRequest(w);
+    const raw = {
+      format: "ttukttak-vibe-peer-response",
+      version: 1,
+      workId: req.workId,
+      revision: req.revision,
+      reviewer: "달",
+      results: [],
+      comment: "",
+      at: new Date().toISOString(),
+      runLog: [
+        { label: "선택 1", state: "점수 0 → 1" },
+        { label: "다음 문제", state: "문제 2 · 점수 1" },
+      ],
+    };
+    const r = validatePeerResponse(raw);
+    expect(r.runLog).toHaveLength(2);
+    const check = applyPeerResponse(w, r).draft.checks.at(-1)!;
+    expect(check.label).toBe("친구가 눌러 본 순서 · 달");
+    expect(check.actual).toBe(
+      "1. 선택 1 → 점수 0 → 1\n2. 다음 문제 → 문제 2 · 점수 1",
+    );
+    expect(() =>
+      validatePeerResponse({
+        ...raw,
+        runLog: Array.from({ length: 21 }, () => raw.runLog[0]),
+      }),
+    ).toThrow();
+  });
+});

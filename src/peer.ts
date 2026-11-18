@@ -1,6 +1,6 @@
 import { AppError } from "./appError";
 import { missions } from "./data";
-import { LIMITS, now, uid } from "./model";
+import { LIMITS, RUN_LOG_LIMIT, now, uid } from "./model";
 import type { Check, Config, Mission, Work } from "./model";
 import { adoptMissions, isCustom } from "./customMissions";
 import { validateConfig } from "./storage";
@@ -39,6 +39,8 @@ export type PeerResponse = {
   title?: string;
   // 만든 학생의 질문에 친구가 적은 답(질문 순서대로)
   answers?: { question: string; answer: string }[];
+  // 친구가 검사하며 눌러 본 순서(증거로 남긴 실행 기록, 최근 20개)
+  runLog?: { label: string; state: string }[];
 };
 export function makePeerRequest(
   w: Work,
@@ -164,6 +166,17 @@ export function validatePeerResponse(data: unknown): PeerResponse {
             };
           }),
         }),
+    ...(r.runLog === undefined
+      ? {}
+      : {
+          runLog: list(r.runLog, "실행 기록", RUN_LOG_LIMIT).map((v) => {
+            const o = obj(v, "실행 기록 한 줄");
+            return {
+              label: str(o.label, "누른 것", LIMITS.short),
+              state: str(o.state, "바뀐 값", LIMITS.checkText),
+            };
+          }),
+        }),
   };
 }
 // 결과를 작품의 친구 의견 검사 기록으로 더한다. 검사한 설정 버전을 그대로 남긴다.
@@ -194,6 +207,23 @@ export function applyPeerResponse(w: Work, r: PeerResponse): Work {
         revision: r.revision,
         at: r.at,
       })),
+    ...(r.runLog?.length
+      ? [
+          {
+            id: uid(),
+            label: `친구가 눌러 본 순서 · ${who}`.slice(0, LIMITS.short),
+            expected: "친구가 검사하며 실제로 누른 것과 바뀐 값",
+            actual: r.runLog
+              .map((x, i) => `${i + 1}. ${x.label} → ${x.state}`)
+              .join("\n")
+              .slice(0, LIMITS.checkText),
+            source: "peer" as const,
+            status: "pending" as const,
+            revision: r.revision,
+            at: r.at,
+          },
+        ]
+      : []),
     ...(r.comment.trim()
       ? [
           {

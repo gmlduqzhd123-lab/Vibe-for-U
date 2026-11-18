@@ -1,10 +1,11 @@
+import "./late.css";
 import { useSendGuard } from "./sendGuard";
 import type { Feedback, Work } from "./model";
 import { aiStatus, kindNames, stageDone, correctionPrompt } from "./model";
 import { Icon, Pill } from "./ui";
 import type { Navigate } from "./Pages";
-import { configSummary, revisionLabel } from "./learning";
-import { rubric } from "./data";
+import { configSummary, portfolioGaps, revisionLabel } from "./learning";
+import { rubric } from "./lessonData";
 import { ShareButton } from "./Share";
 import { backupFiles, downloadText } from "./storage";
 import { standaloneHtml } from "./standalone";
@@ -27,6 +28,7 @@ export function Portfolio({
 }) {
   const t = useT();
   const guard = useSendGuard();
+  const gaps = portfolioGaps(w);
   const lang = useLang();
   const text = (v: string) => v || t("아직 기록하지 않았어요.");
   const when = (at: string) => new Date(at).toLocaleString(dateLocale(lang));
@@ -101,6 +103,28 @@ export function Portfolio({
       <div className="family-sheet">
         <FamilyCard w={w} />
       </div>
+      <section
+        className="panel portfolio-gaps no-print"
+        aria-labelledby="gaps-title"
+      >
+        <h2 id="gaps-title">{t("빠진 기록 살펴보기")}</h2>
+        {gaps.length ? (
+          <ul>
+            {gaps.map((g, i) => (
+              <li key={i}>
+                <span>
+                  {t(g.text, g.stage ? { stage: t(g.stage) } : undefined)}
+                </span>
+                <button onClick={() => go(`work/${w.id}/${g.step}`)}>
+                  {t("채우러 가기")}
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>{t("기록이 모두 채워졌어요. 인쇄하거나 파일로 보관해요.")}</p>
+        )}
+      </section>
       <article className="portfolio panel">
         <header>
           <Pill tone="green">

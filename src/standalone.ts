@@ -185,13 +185,23 @@ const PLAYER = String.raw`
     }
     var next = el("p", "note"), list = el("ul", "bins");
     next.setAttribute("role", "status");
-    function binOf(v) {
-      for (var i = 0; i < c.bins.length; i++) if (matches(c.bins[i], v)) return i;
+    function binOf(card) {
+      for (var i = 0; i < c.bins.length; i++) {
+        var b = c.bins[i], first = matches(b, card.value);
+        if (c.property2 && b.second) {
+          var second = matches(b.second, card.value2 || 0);
+          first = b.second.op === "and" ? first && second : first || second;
+        }
+        if (first) return i;
+      }
       return -1;
+    }
+    function values(card) {
+      return c.property + " " + card.value + (c.property2 ? " · " + c.property2 + " " + (card.value2 || 0) : "");
     }
     function update() {
       var card = c.cards[placed.length];
-      next.textContent = card ? fill(T.nextCard, { card: card.label, name: c.property, v: card.value }) : T.sorted;
+      next.textContent = card ? fill(T.nextCard, { card: card.label, what: values(card) }) : T.sorted;
       while (list.firstChild) list.removeChild(list.firstChild);
       c.bins.map(function (b, i) { return { i: i, name: b.name }; })
         .concat([{ i: -1, name: c.otherwise }])
@@ -206,11 +216,11 @@ const PLAYER = String.raw`
       one.disabled = all.disabled = !card;
     }
     var one = button(T.putOne, function () {
-      if (placed.length < c.cards.length) placed.push(binOf(c.cards[placed.length].value));
+      if (placed.length < c.cards.length) placed.push(binOf(c.cards[placed.length]));
       update();
     }, "primary");
     var all = button(T.putAll, function () {
-      while (placed.length < c.cards.length) placed.push(binOf(c.cards[placed.length].value));
+      while (placed.length < c.cards.length) placed.push(binOf(c.cards[placed.length]));
       update();
     });
     var row = el("div", "choices");
@@ -287,7 +297,7 @@ export function standaloneHtml(w: Work, t: Tr, lang: string) {
     board: t("{n}×{n} 판 · 칠한 칸 {p}개"),
     match: t("다 그렸어요. 목표 모양과 같아요!"),
     differ: t("다 그렸어요. 목표 모양과 달라요."),
-    nextCard: t("다음 카드: 「{card}」 {name} {v}"),
+    nextCard: t("다음 카드: 「{card}」 {what}"),
     sorted: t("카드를 모두 넣었어요."),
     empty: t("비어 있어요"),
     putOne: t("한 장 넣기"),

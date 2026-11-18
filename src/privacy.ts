@@ -101,6 +101,7 @@ function configTexts(c: Config): [string, string][] {
   if (c.kind === "sort")
     return [
       ["분류 특징", c.property],
+      ["분류 특징", c.property2 ?? ""],
       ["바구니 이름", c.otherwise],
       ...c.bins.map((b) => ["바구니 이름", b.name] as [string, string]),
       ...c.cards.map((k) => ["카드 이름", k.label] as [string, string]),

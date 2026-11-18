@@ -63,12 +63,8 @@ import {
 } from "./undoHistory";
 import type { History } from "./undoHistory";
 
-import {
-  applyPeerResponse,
-  peerFileKind,
-  validatePeerRequest,
-  validatePeerResponse,
-} from "./peer";
+// 친구 검사 파일 검사는 파일을 열 때만 불러온다(첫 화면 묶음을 가볍게).
+const peerTools = () => import("./peer");
 import type { PeerRequest, PeerResponse } from "./peer";
 import "./Welcome.css";
 import { LangContext, langs, translate } from "./i18n";
@@ -765,7 +761,8 @@ export default function App() {
       },
     });
   };
-  const applyPeer = (target: Work, r: PeerResponse) => {
+  const applyPeer = async (target: Work, r: PeerResponse) => {
+    const { applyPeerResponse } = await peerTools();
     persist(applyPeerResponse(target, r));
     setPeerResponse(null);
     go(`work/${target.id}/3`);
@@ -834,6 +831,8 @@ export default function App() {
         if (updates.length) askMissionUpdate(updates);
         return;
       }
+      const { peerFileKind, validatePeerRequest, validatePeerResponse } =
+        await peerTools();
       const peer = peerFileKind(data);
       if (peer === "request") {
         setPeerRequest(validatePeerRequest(data));
@@ -853,7 +852,7 @@ export default function App() {
           go("peer-apply");
           return;
         }
-        applyPeer(target, r);
+        await applyPeer(target, r);
         return;
       }
       // 작품 파일에 함께 담긴 선생님 미션을 먼저 이 기기에 더한다. 더 새로운 판이면 작품을 넣은 뒤 물어본다.
@@ -1249,7 +1248,7 @@ export default function App() {
                       works={visible}
                       apply={(w) => {
                         try {
-                          applyPeer(w, peerResponse!);
+                          void applyPeer(w, peerResponse!);
                         } catch (e) {
                           message(
                             `${t("합치지 못했어요.")} ${errorText(e, t, "")}`,

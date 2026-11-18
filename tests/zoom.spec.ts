@@ -12,14 +12,48 @@ const pages = [
   "library",
   "teacher",
 ];
-const cases = [
+type Case = {
+  name: string;
+  width: number;
+  height: number;
+  font: string;
+  lang?: "en";
+  // 화면 보기 설정(고대비·읽기 쉬운 글꼴)을 함께 켠다.
+  display?: { contrast: boolean; readable: boolean };
+};
+const cases: Case[] = [
   { name: "zoom200", width: 640, height: 400, font: "" },
   { name: "bigtext", width: 1280, height: 800, font: "24px" },
   { name: "bigtext-tablet", width: 768, height: 1024, font: "24px" },
+  // 범위 넓히기: 영어 화면, 휴대전화 너비, 고대비·읽기 쉬운 글꼴과 함께
+  { name: "bigtext-en", width: 1280, height: 800, font: "24px", lang: "en" },
+  {
+    name: "bigtext-en-tablet",
+    width: 768,
+    height: 1024,
+    font: "24px",
+    lang: "en",
+  },
+  { name: "bigtext-phone", width: 360, height: 740, font: "24px" },
+  {
+    name: "bigtext-readable-contrast",
+    width: 768,
+    height: 1024,
+    font: "24px",
+    display: { contrast: true, readable: true },
+  },
+  {
+    name: "zoom200-en-readable",
+    width: 640,
+    height: 400,
+    font: "",
+    lang: "en",
+    display: { contrast: false, readable: true },
+  },
 ];
 for (const c of cases)
   test(`확대·큰 글씨: ${c.name}`, async ({ page }) => {
-    test.setTimeout(90_000);
+    test.setTimeout(120_000);
     await page.setViewportSize({ width: c.width, height: c.height });
     if (c.font)
       await page.addInitScript((size) => {
@@ -31,6 +65,15 @@ for (const c of cases)
           document.head.append(s);
         });
       }, c.font);
+    await page.addInitScript(
+      ({ lang, display }) => {
+        if (lang)
+          localStorage.setItem("ttukttak-vibe:lang", JSON.stringify(lang));
+        if (display)
+          localStorage.setItem("ttukttak-vibe:view", JSON.stringify(display));
+      },
+      { lang: c.lang, display: c.display },
+    );
     await page.goto("#/mission/quiz-3");
     await page.locator(".detail-layout .primary").first().click();
     await expect(page).toHaveURL(/#\/work\//);

@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import "./late.css";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   englishEntries,
   originalEnglish,
@@ -20,6 +21,7 @@ export function TranslationFix({ message }: { message: (s: string) => void }) {
   const [query, setQuery] = useState("");
   const [fixes, setFixes] = useState(readEnglishFixes);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const input = useRef<HTMLInputElement>(null);
   useEffect(() => {
     let alive = true;
     loadEnglishMissions().then(() => alive && setReady(true));
@@ -59,6 +61,50 @@ export function TranslationFix({ message }: { message: (s: string) => void }) {
     });
     message(t("번역을 고쳤어요. 영어 화면에 바로 나와요."));
   };
+  // 다른 기기에서 내보낸 고침 파일을 이 기기에 더한다. 번역표에 없는 문장과 값 자리가 다른 문장은 넘어간다.
+  const load = async (file?: File) => {
+    if (!file) return;
+    try {
+      const data = JSON.parse(await file.text()) as {
+        format?: unknown;
+        version?: unknown;
+        fixes?: unknown;
+      };
+      if (
+        data?.format !== FIXES_FORMAT ||
+        data.version !== 1 ||
+        !data.fixes ||
+        typeof data.fixes !== "object"
+      )
+        throw new Error("format");
+      const known = new Set(englishEntries().map(([ko]) => ko));
+      let added = 0;
+      let skipped = 0;
+      for (const [ko, en] of Object.entries(data.fixes)) {
+        if (
+          typeof en === "string" &&
+          en.trim() &&
+          en.length <= 2000 &&
+          known.has(ko) &&
+          sameSlots(ko, en)
+        ) {
+          saveEnglishFix(ko, en.trim());
+          added++;
+        } else skipped++;
+      }
+      setFixes(readEnglishFixes());
+      message(
+        t("고친 문장 {n}개를 가져왔어요. 넘어간 문장 {m}개.", {
+          n: added,
+          m: skipped,
+        }),
+      );
+    } catch {
+      message(t("영어 번역 고침 파일을 골라 주세요."));
+    } finally {
+      if (input.current) input.current.value = "";
+    }
+  };
   const count = Object.keys(fixes).length;
   return (
     <section className="panel translation-fix">
@@ -96,6 +142,19 @@ export function TranslationFix({ message }: { message: (s: string) => void }) {
           <Icon name="download" />
           {t("고친 문장 {n}개 파일로 받기", { n: count })}
         </button>
+        <button type="button" onClick={() => input.current?.click()}>
+          <Icon name="folder" />
+          {t("고친 문장 파일 가져오기")}
+        </button>
+        <input
+          ref={input}
+          className="sr-only"
+          tabIndex={-1}
+          type="file"
+          accept=".json,application/json"
+          aria-label={t("고친 문장 JSON 파일")}
+          onChange={(e) => void load(e.target.files?.[0])}
+        />
       </div>
       {!ready ? (
         <p role="status">{t("영어 번역표를 불러오고 있어요…")}</p>

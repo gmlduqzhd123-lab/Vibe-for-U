@@ -1,16 +1,20 @@
+import "./late.css";
 import { RunHistory, useRunHistory } from "./runHistory";
 import { SpeakButton } from "./Speak";
 import { useState } from "react";
-import { binName, initialSort, resetSort, runSort, stepSort } from "./engines";
+import {
+  binCondition,
+  binName,
+  cardValues,
+  initialSort,
+  resetSort,
+  runSort,
+  stepSort,
+} from "./engines";
 import type { SortConfig } from "./model";
 import { Pill } from "./ui";
 import { useT } from "./i18n";
 // 분류 앱의 실행 화면: 카드를 한 장씩(또는 모두) 넣으면 위에서부터 처음 맞는 바구니에 들어간다.
-const conditionText = {
-  gte: "{v} 이상이면",
-  lte: "{v} 이하이면",
-  eq: "{v}과 같으면",
-};
 export function SortPreview({
   config,
   onRun,
@@ -46,10 +50,9 @@ export function SortPreview({
       </div>
       <p className="sort-next" role="status">
         {next
-          ? t("다음 카드: 「{card}」 {name} {v}", {
+          ? t("다음 카드: 「{card}」 {what}", {
               card: next.label,
-              name: config.property,
-              v: next.value,
+              what: cardValues(config, next),
             })
           : t("카드를 모두 넣었어요.")}
       </p>
@@ -96,9 +99,7 @@ export function SortPreview({
             <small>
               {b.i < 0
                 ? t("나머지 · 어떤 조건에도 맞지 않을 때")
-                : t(conditionText[config.bins[b.i].when], {
-                    v: config.bins[b.i].value,
-                  })}
+                : binCondition(config, config.bins[b.i], t)}
             </small>
             <span className="sort-cards">
               {b.cards.length
@@ -127,9 +128,8 @@ export function SortPreview({
         <ol className="rule-list">
           {config.bins.map((b, i) => (
             <li key={i}>
-              {t("만약 {name}이 {cond} → 「{bin}」", {
-                name: config.property,
-                cond: t(conditionText[b.when], { v: b.value }),
+              {t("만약 {cond} → 「{bin}」 바구니", {
+                cond: binCondition(config, b, t),
                 bin: b.name,
               })}
             </li>

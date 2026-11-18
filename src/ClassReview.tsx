@@ -1,4 +1,7 @@
+import "./late.css";
 import { QrSendButton } from "./QrShare";
+import { FamilyCard } from "./FamilyCard";
+import { useSendGuard } from "./sendGuard";
 import { PhraseBank } from "./Phrases";
 import { feedbackPayload } from "./qrTransfer";
 import { dateLocale, translate, useLang, useT } from "./i18n";
@@ -7,7 +10,7 @@ import { PraiseCards, ShowCase } from "./ShowCase";
 import { adoptMissions } from "./customMissions";
 import { ClassCharts } from "./ClassCharts";
 import { useEffect, useRef, useState } from "react";
-import { LIMITS, now, stageDone } from "./model";
+import { LIMITS, debugFields, debugFilled, now, stageDone } from "./model";
 import type { Feedback, Work } from "./model";
 import {
   clearClassSession,
@@ -20,8 +23,11 @@ import {
 } from "./storage";
 import {
   emptyFeedback,
+  CLASS_FORMAT,
   classBugs,
+  classSessionFiles,
   graded,
+  parseClassSession,
   lessonProgress,
   levelNames,
   summarize,
@@ -30,7 +36,8 @@ import {
 import type { Entry } from "./classSummary";
 import { Empty, Field, Icon, Pill } from "./ui";
 import { RubricChoices } from "./Rubric";
-import { missions, rubric } from "./data";
+import { missions } from "./data";
+import { rubric } from "./lessonData";
 import { stageNames } from "./model";
 const fileBase = (name: string) => name.replace(/\.json$/i, "");
 // 우리 반이 많이 만난 버그: 다음 차시에 함께 다룰 버그를 고르는 근거로 쓴다.
@@ -150,6 +157,8 @@ export function ClassReview({ message }: { message: (s: string) => void }) {
   const lang = useLang();
   const [entries, setEntries] = useState<Entry[]>([]);
   const [showing, setShowing] = useState(false);
+  const [printFamilies, setPrintFamilies] = useState(false);
+  const guard = useSendGuard();
   const [errors, setErrors] = useState<string[]>([]);
   const input = useRef<HTMLInputElement>(null);
   // 새로고침해도 평가가 사라지지 않게 이 기기에 임시로 보관하고 다시 연다.
@@ -206,6 +215,20 @@ export function ClassReview({ message }: { message: (s: string) => void }) {
           throw new Error(t("파일은 2MB 이하여야 해요."));
         // 파일은 한 번만 읽는다. 학급 모으기에는 되돌리기 기록이 필요 없어 검사하지 않는다.
         const data = readBackupText(await file.text());
+        // 다른 기기에서 내보낸 평가 목록 파일이면 평가와 함께 그대로 이어서 연다.
+        if ((data as { format?: unknown } | null)?.format === CLASS_FORMAT) {
+          adoptMissions((data as { missions?: unknown }).missions);
+          for (const e of parseClassSession(data, file.name)) {
+            added.push({
+              ...e,
+              work: {
+                ...e.work,
+                feedback: e.work.feedback ?? emptyFeedback(now()),
+              },
+            });
+          }
+          continue;
+        }
         // 학생 작품에 담긴 선생님 미션은 교사 기기에도 더해 둔다.
         try {
           adoptMissions((data as { missions?: unknown } | null)?.missions);
@@ -269,6 +292,12 @@ export function ClassReview({ message }: { message: (s: string) => void }) {
       <div className="praise-sheet" aria-hidden="true">
         <PraiseCards entries={entries} />
       </div>
+      {/* 보호자용 소개 카드 모두 인쇄: 그 인쇄 때만 보인다(A4 한 장에 두 명). */}
+      <div className="families-sheet">
+        {printFamilies
+          ? entries.map((e) => <FamilyCard key={e.key} w={e.work} />)
+          : null}
+      </div>
       <div className="panel">
         <h2 id="class-review-title">{t("학급 작품 모으기")}</h2>
         <p>
@@ -318,6 +347,28 @@ export function ClassReview({ message }: { message: (s: string) => void }) {
           >
             {t("평가 파일 모두 내려받기")}
           </button>
+          <button
+            disabled={!entries.length}
+            onClick={() => {
+              const files = classSessionFiles(entries);
+              files.forEach((text, i) =>
+                downloadText(
+                  `뚝딱-평가목록-${new Date().toISOString().slice(0, 10)}${files.length > 1 ? `-${i + 1}` : ""}.json`,
+                  text,
+                  "application/json",
+                ),
+              );
+              message(
+                t(
+                  "평가 목록 파일 {n}개의 다운로드를 요청했어요. 다른 기기의 ‘학생 작품 파일 고르기’로 열면 이어서 평가해요.",
+                  { n: files.length },
+                ),
+              );
+            }}
+          >
+            <Icon name="download" />
+            {t("평가 목록 옮기기")}
+          </button>
           <button disabled={!entries.length} onClick={() => setShowing(true)}>
             <Icon name="play" />
             {t("작품 발표 화면")}
@@ -336,6 +387,31 @@ export function ClassReview({ message }: { message: (s: string) => void }) {
           >
             <Icon name="print" />
             {t("칭찬·질문 카드 인쇄")}
+          </button>
+          <button
+            disabled={!entries.length}
+            onClick={() =>
+              guard(
+                entries.map((e) => e.work),
+                () => {
+                  // 카드와 QR을 먼저 그린 뒤 인쇄 창을 연다.
+                  setPrintFamilies(true);
+                  document.documentElement.dataset.print = "families";
+                  addEventListener(
+                    "afterprint",
+                    () => {
+                      delete document.documentElement.dataset.print;
+                      setPrintFamilies(false);
+                    },
+                    { once: true },
+                  );
+                  setTimeout(() => window.print(), 300);
+                },
+              )
+            }
+          >
+            <Icon name="print" />
+            {t("보호자용 소개 카드 모두 인쇄")}
           </button>
           <button
             className="danger-text"
@@ -401,6 +477,7 @@ export function ClassReview({ message }: { message: (s: string) => void }) {
                     <th>{t("직접 확인")}</th>
                     <th>{t("버전")}</th>
                     <th>{t("힌트")}</th>
+                    <th>{t("짝·일지")}</th>
                     <th>{t("평가")}</th>
                   </tr>
                 </thead>
@@ -439,6 +516,12 @@ export function ClassReview({ message }: { message: (s: string) => void }) {
                             : t("안 봄")}
                         </td>
                         <td>
+                          {s.swaps === null
+                            ? "–"
+                            : t("역할 교대 {n}번", { n: s.swaps })}
+                          {s.journal ? ` · ${t("일지 적음")}` : ""}
+                        </td>
+                        <td>
                           {graded(e.work.feedback) ? (
                             <Pill tone="green">{t("평가 완료")}</Pill>
                           ) : (
@@ -456,7 +539,7 @@ export function ClassReview({ message }: { message: (s: string) => void }) {
                         {entries.length}
                       </td>
                     ))}
-                    <td colSpan={4} />
+                    <td colSpan={5} />
                   </tr>
                 </tbody>
               </table>
@@ -543,6 +626,28 @@ function ReviewCard({
           <dt>{t("도움받은 내용")}</dt>
           <dd className="preserve">{d.help || t("미기록")}</dd>
         </div>
+        {debugFilled(d.debugLog) ? (
+          <div>
+            <dt>{t("버그 탐정 일지")}</dt>
+            <dd className="preserve">
+              {debugFields
+                .map(([key, label]) => `${t(label)}: ${d.debugLog![key]}`)
+                .join("\n")}
+            </dd>
+          </div>
+        ) : null}
+        {d.pair ? (
+          <div>
+            <dt>{t("짝 활동")}</dt>
+            <dd>
+              {t("{a} · {b} · 역할 교대 {n}번", {
+                a: d.pair.a.trim() || t("짝 1"),
+                b: d.pair.b.trim() || t("짝 2"),
+                n: Math.max(0, d.pair.swaps.length - 1),
+              })}
+            </dd>
+          </div>
+        ) : null}
         <div>
           <dt>{t("학생 자기 평가")}</dt>
           <dd>

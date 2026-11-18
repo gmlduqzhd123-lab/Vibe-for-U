@@ -72,11 +72,26 @@ export type RuleConfig = {
 };
 // 분류 앱: 카드마다 특징 값(예: 다리 수)이 있고, 위에서부터 처음 맞는 바구니 조건에 카드를 넣는다.
 // 어떤 조건에도 맞지 않는 카드는 나머지 바구니로 간다. expect는 카드가 들어가야 할 바구니 이름이다.
+// 둘째 특징(property2)을 정하면 카드마다 둘째 값(value2)이 생기고, 바구니 조건에
+// "그리고"·"또는"으로 둘째 조건(second)을 붙일 수 있다. 없으면 특징 하나로만 나눈다.
+export type SortCard = {
+  label: string;
+  value: number;
+  value2?: number;
+  expect: string;
+};
+export type SortBin = {
+  name: string;
+  when: RuleCondition;
+  value: number;
+  second?: { op: "and" | "or"; when: RuleCondition; value: number };
+};
 export type SortConfig = {
   kind: "sort";
   property: string;
-  cards: { label: string; value: number; expect: string }[];
-  bins: { name: string; when: RuleCondition; value: number }[];
+  property2?: string;
+  cards: SortCard[];
+  bins: SortBin[];
   otherwise: string;
 };
 export type Config =

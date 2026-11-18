@@ -1,3 +1,4 @@
+import "./late.css";
 import { useLang, useT } from "./i18n";
 import { localizeMission } from "./missionText";
 import { useEffect, useRef, useState } from "react";

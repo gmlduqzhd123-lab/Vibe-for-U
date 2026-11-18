@@ -4,6 +4,7 @@ import { makeWork } from "../src/model";
 import type { SortConfig } from "../src/model";
 import {
   autoChecks,
+  binCondition,
   initialSort,
   resetSort,
   runSort,
@@ -58,5 +59,28 @@ describe("분류 앱", () => {
       expect(validateConfig(m.starter)).toEqual(m.starter);
     expect(() => validateConfig({ ...starter("sort-1"), cards: [] })).toThrow();
     expect(bugCandidates("sort").length).toBeGreaterThan(0);
+  });
+  it("그리고·또는: 둘째 특징 조건을 이어 판정하고, 가린 바구니도 두 특징으로 찾는다", () => {
+    const and = starter("sort-5");
+    expect(runSort(and).placed).toEqual([0, 1, 0, -1, -1]);
+    expect(sortMismatches(and)).toEqual([]);
+    expect(autoChecks(and, "r").every((x) => x.status === "pass")).toBe(true);
+    // '그리고'를 '또는'으로 바꾸면 날개만 있는 참새도 들어간다.
+    const loose = {
+      ...and,
+      bins: and.bins.map((b) =>
+        b.second ? { ...b, second: { ...b.second, op: "or" as const } } : b,
+      ),
+    };
+    expect(runSort(loose).placed[3]).toBe(0);
+    // 넓은 바구니(다리 6)를 위로 올리면 '나는 곤충'은 가려진다.
+    const hidden = { ...and, bins: [...and.bins].reverse() };
+    expect(diagnose(hidden)[0].id).toBe("sort-shadowed");
+    const or = starter("sort-6");
+    expect(runSort(or).placed).toEqual([-1, 0, 0, 0, -1]);
+    expect(binCondition(or, or.bins[0])).toBe(
+      "기온(도) 33 이상이면 또는 미세먼지 80 이상이면",
+    );
+    expect(validateConfig(and)).toEqual(and);
   });
 });

@@ -1,3 +1,4 @@
+import "./late.css";
 import { debugFilled, kinds, kindNames } from "./model";
 import type { Kind, Work } from "./model";
 import { Icon, Pill } from "./ui";

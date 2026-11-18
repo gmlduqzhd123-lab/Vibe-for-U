@@ -2,7 +2,8 @@ import { useRef, useState } from "react";
 import { dateLocale, useLang, useT } from "./i18n";
 import { AppError, errorText } from "./appError";
 import { localizeMission } from "./missionText";
-import { LIMITS, kindNames, now } from "./model";
+import { LIMITS, RUN_LOG_LIMIT, kindNames, now } from "./model";
+import { RunEvidenceContext } from "./runHistory";
 import type { PeerRequest, PeerResponse, PeerResult } from "./peer";
 import type { Work } from "./model";
 import { peerFileKind, validatePeerRequest } from "./peer";
@@ -28,6 +29,8 @@ export function PeerCheck({
   const [comment, setComment] = useState("");
   const [results, setResults] = useState<PeerResult[]>([]);
   const [answers, setAnswers] = useState<string[]>([]);
+  // 친구가 증거로 남긴 실행 기록(결과 파일에 함께 담는다)
+  const [runLog, setRunLog] = useState<{ label: string; state: string }[]>([]);
   const open = async (file?: File) => {
     if (!file) return;
     try {
@@ -39,6 +42,7 @@ export function PeerCheck({
       setRequest(r);
       setResults(r.tests.map((t) => ({ ...t, actual: "", status: "pending" })));
       setAnswers((r.questions ?? []).map(() => ""));
+      setRunLog([]);
       message("친구 작품을 열었어요. 먼저 예상하고 직접 눌러 보세요.");
     } catch (e) {
       message(
@@ -66,11 +70,13 @@ export function PeerCheck({
         question,
         answer: answers[i] ?? "",
       })),
+      ...(runLog.length ? { runLog } : {}),
     });
   const filled =
     results.some((r) => r.actual.trim()) ||
     comment.trim() ||
-    answers.some((a) => a.trim());
+    answers.some((a) => a.trim()) ||
+    runLog.length > 0;
   return (
     <>
       <div className="page-heading">
@@ -226,7 +232,26 @@ export function PeerCheck({
               <Icon name="play" size={18} />
               <h2>{t("친구가 만든 앱")}</h2>
             </div>
-            <Preview config={request.config} onRun={() => {}} />
+            <RunEvidenceContext.Provider
+              value={(steps) => {
+                const kept = steps
+                  .slice(-RUN_LOG_LIMIT)
+                  .map(({ label, state }) => ({ label, state }));
+                setRunLog(kept);
+                message(
+                  t("눌러 본 기록 {n}개를 검사 결과에 함께 담아요.", {
+                    n: kept.length,
+                  }),
+                );
+              }}
+            >
+              <Preview config={request.config} onRun={() => {}} />
+            </RunEvidenceContext.Provider>
+            {runLog.length ? (
+              <p className="small" role="status">
+                {t("검사 결과에 담을 실행 기록 {n}개", { n: runLog.length })}
+              </p>
+            ) : null}
           </aside>
         </div>
       )}

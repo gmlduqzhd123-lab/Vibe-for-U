@@ -1,3 +1,4 @@
+import "./late.css";
 import { useT } from "./i18n";
 import { useState } from "react";
 import { missions } from "./data";

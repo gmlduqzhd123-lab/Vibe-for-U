@@ -1,3 +1,4 @@
+import "./late.css";
 import { useEffect, useState } from "react";
 import type { PairLog } from "./model";
 import { stageNames } from "./model";

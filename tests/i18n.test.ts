@@ -3,7 +3,8 @@ import { addTranslations, translate } from "../src/i18n";
 import { en } from "../src/i18nEn";
 import { stageNames, kindNames, aiStatus, makeWork } from "../src/model";
 import { dirNames, autoChecks } from "../src/engines";
-import { lessons, missions, quiz, rubric, story, timer } from "../src/data";
+import { missions, quiz, story, timer } from "../src/data";
+import { lessons, rubric } from "../src/lessonData";
 import { bugNames, levelNames } from "../src/classSummary";
 import { debugFields } from "../src/model";
 import { builtInPhrases } from "../src/Phrases";
@@ -36,6 +37,11 @@ describe("학생 화면 전체 번역", () => {
       ...Object.values(bugNames),
       ...debugFields.flatMap(([, label, hint]) => [label, hint]),
       ...builtInPhrases.flat(),
+      // 포트폴리오의 빠진 기록 안내(learning.ts의 portfolioGaps가 돌려주는 문장)
+      "「{stage}」 단계에 기록할 내용이 남았어요.",
+      "예상이 맞았는지 아직 표시하지 않았어요.",
+      "어떻게 눌러 봤는지 실행 기록 증거가 없어요.",
+      "스스로 평가를 아직 다 고르지 않았어요.",
       ...predictionStarters,
       "시작 작품 · 현재 편집본",
       "가져온 복사본 · 현재 편집본",

@@ -1,6 +1,10 @@
-import { rubric, missions, lessonMissionIds, lessons } from "./data";
-import { kindNames, stageDone, stageNames } from "./model";
+import { missions } from "./data";
+import { rubric, lessonMissionIds, lessons } from "./lessonData";
+import { debugFilled, kindNames, stageDone, stageNames } from "./model";
 import { diagnose } from "./diagnose";
+import { AppError } from "./appError";
+import { jsonBytes, validateWork } from "./storage";
+import { LIMITS } from "./model";
 import type { Feedback, Work } from "./model";
 // 학급 작품 모으기: 학생이 낸 작품 파일을 교사 기기에서 읽어 요약·평가한다. 서버나 기기 저장소에 넣지 않는다.
 export const levelNames = ["미평가", "시작", "수행", "설명·적용"];
@@ -34,6 +38,9 @@ export function summarize(w: Work) {
     versions: w.versions.length,
     hintsUsed: w.hintsUsed,
     updatedAt: w.updatedAt,
+    // 짝 활동에서 역할을 바꾼 횟수(짝 활동을 하지 않았으면 null)와 버그 탐정 일지를 다 적었는지
+    swaps: d.pair ? Math.max(0, d.pair.swaps.length - 1) : null,
+    journal: debugFilled(d.debugLog),
   };
 }
 export const graded = (f: Feedback | null) =>
@@ -83,6 +90,8 @@ export function toCSV(entries: Entry[]) {
     "재검사",
     "버전 수",
     "힌트 사용",
+    "역할 교대",
+    "버그 탐정 일지",
     "최근 수정",
     ...rubric.map((r) => `스스로: ${r[0]}`),
     ...rubric.map((r) => r[0]),
@@ -102,6 +111,8 @@ export function toCSV(entries: Entry[]) {
       s.retested ? "예" : "아니요",
       s.versions,
       s.hintsUsed,
+      s.swaps === null ? "짝 활동 안 함" : s.swaps,
+      s.journal ? "적음" : "없음",
       new Date(s.updatedAt).toLocaleString("ko-KR"),
       ...rubric.map((_, i) => levelNames[work.selfAssessment?.levels[i] ?? 0]),
       ...rubric.map((_, i) => levelNames[f?.levels[i] ?? 0]),
@@ -149,4 +160,68 @@ export function classBugs(works: Work[]) {
   return [...rows]
     .map(([id, r]) => ({ id, name: bugNames[id] ?? id, ...r }))
     .sort((a, b) => b.met - a.met || a.name.localeCompare(b.name));
+}
+
+// 평가 목록 옮기기: 평가 중인 학급 목록을 파일로 내보내 다른 기기에서 이어서 평가한다.
+// 학생 작품 파일과 섞이지 않게 형식 이름을 따로 두고, 파일 한도(2MB)를 넘으면 여러 파일로 나눈다.
+export const CLASS_FORMAT = "ttukttak-vibe-class";
+const pack = (entries: Entry[]) => ({
+  format: CLASS_FORMAT,
+  version: 1,
+  // 선생님 미션으로 만든 작품도 다른 기기에서 열리게 그 미션을 함께 담는다.
+  missions: missions.filter(
+    (m) =>
+      m.id.startsWith("custom-") &&
+      entries.some((e) => e.work.missionId === m.id),
+  ),
+  entries: entries.map(({ file, work, sourceId }) => ({
+    file,
+    work,
+    ...(sourceId ? { sourceId } : {}),
+  })),
+});
+export function classSessionFiles(entries: Entry[]) {
+  const files: string[] = [];
+  let group: Entry[] = [];
+  for (const e of entries) {
+    if (group.length && jsonBytes(pack([...group, e])) > LIMITS.bytes) {
+      files.push(JSON.stringify(pack(group)));
+      group = [];
+    }
+    group.push(e);
+  }
+  if (group.length) files.push(JSON.stringify(pack(group)));
+  return files;
+}
+// 작품은 작품 파일과 같은 규칙으로 검사한다. 평가(feedback)는 작품 안에 들어 있어 함께 온다.
+export function parseClassSession(data: unknown, name: string): Entry[] {
+  const o = (data ?? {}) as {
+    format?: unknown;
+    version?: unknown;
+    entries?: unknown;
+  };
+  if (o.format !== CLASS_FORMAT || o.version !== 1 || !Array.isArray(o.entries))
+    throw new AppError("평가 목록 파일 형식을 알 수 없어요.");
+  if (o.entries.length < 1 || o.entries.length > 200)
+    throw new AppError("평가 목록에는 작품이 1~200개 있어야 해요.");
+  return o.entries.map((raw, i) => {
+    const e = (raw ?? {}) as {
+      file?: unknown;
+      work?: unknown;
+      sourceId?: unknown;
+    };
+    const work = validateWork(e.work);
+    const file =
+      typeof e.file === "string" && e.file.trim()
+        ? e.file.slice(0, LIMITS.short)
+        : `${name} (${i + 1})`;
+    return {
+      key: `${name}#${i}:${work.id}`,
+      file,
+      work,
+      ...(typeof e.sourceId === "string" && e.sourceId.length <= 80
+        ? { sourceId: e.sourceId }
+        : {}),
+    };
+  });
 }

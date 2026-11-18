@@ -1,6 +1,8 @@
+import "./late.css";
 import { useLang, useT } from "./i18n";
 import { localizeMission } from "./missionText";
-import { lessonMissionIds, lessons, missions } from "./data";
+import { missions } from "./data";
+import { lessonMissionIds, lessons } from "./lessonData";
 import { kindNames } from "./model";
 import { Icon } from "./ui";
 import { qrPath } from "./qrTransfer";
