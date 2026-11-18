@@ -571,4 +571,52 @@ export const missionsEn: Record<string, MissionText> = {
     ],
     closing: "Why don't you have to write a condition for every case?",
   },
+  "sort-5": {
+    title: "It needs wings to be a flying insect",
+    goal: "Join two features with “and” to pick only insects that have 6 legs and wings too.",
+    prediction:
+      "The ant has 6 legs but no wings. Which basket will it go into?",
+    tests: [
+      {
+        label: "When both match",
+        expected:
+          "The butterfly and bee match both conditions and go into “Flying insects”.",
+      },
+      {
+        label: "When only one matches",
+        expected:
+          "The ant matches only the legs and goes into “Walking insects”.",
+      },
+    ],
+    task: "Change “and” to “or”, see where the sparrow goes, then change it back and write why.",
+    hints: [
+      "“And” needs both conditions to match.",
+      "The ant has 0 wings, so the second condition does not match.",
+      "With “or”, wings alone are enough, so the sparrow goes in too.",
+    ],
+    closing: "Which accepts more cards, “and” or “or”?",
+  },
+  "sort-6": {
+    title: "Indoors if it is hot or dusty",
+    goal: "Join two features with “or” so that one match is enough to send the day to indoor PE.",
+    prediction:
+      "Wednesday is 28 degrees but fine dust is 95. Where will PE be held?",
+    tests: [
+      {
+        label: "One match is enough",
+        expected: "Tuesday (hot) and Wednesday (dusty) go into “Indoor PE”.",
+      },
+      {
+        label: "When neither matches",
+        expected: "Monday and Friday go into “Playground PE”.",
+      },
+    ],
+    task: "Change “or” to “and”, see who changes, then change it back and write why.",
+    hints: [
+      "“Or” needs only one of the two conditions to match.",
+      "Fine dust 79 does not match “80 or more”.",
+      "With “and”, only Thursday, which is both hot and dusty, is left.",
+    ],
+    closing: "For a safety rule, which fits better, “and” or “or”?",
+  },
 };

@@ -1,6 +1,7 @@
+import "./late.css";
 import { useState } from "react";
 import { APP_PREFIX, LIMITS } from "./model";
-import { rubric } from "./data";
+import { rubric } from "./lessonData";
 import { Icon } from "./ui";
 import { useT } from "./i18n";
 // 평가 의견 문장 모음: 과정 평가 의견에 자주 쓰는 문장을 눌러 넣는다.

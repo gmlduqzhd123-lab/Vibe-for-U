@@ -1,3 +1,4 @@
+import "./late.css";
 import { useEffect, useState } from "react";
 import type { Work } from "./model";
 import { kindNames } from "./model";

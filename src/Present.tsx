@@ -1,7 +1,7 @@
 import { translate, useLang, useT } from "./i18n";
 import { localizeMission } from "./missionText";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { lessons } from "./data";
+import { lessons } from "./lessonData";
 import { initialTimer, pauseTimer, startTimer, tickTimer } from "./engines";
 import type { Mission, TimerConfig } from "./model";
 import { kindNames } from "./model";

@@ -44,7 +44,9 @@ describe("학급 작품 모으기", () => {
     expect(csv.charCodeAt(0)).toBe(0xfeff);
     const [head, row] = csv.slice(1).split("\r\n");
     expect(head).toContain("문제와 요구사항");
-    expect(head).toContain("힌트 사용,최근 수정,스스로: 문제와 요구사항");
+    expect(head).toContain(
+      "힌트 사용,역할 교대,버그 탐정 일지,최근 수정,스스로: 문제와 요구사항",
+    );
     expect(row).toContain(`"'=HYPERLINK(""x"")"`);
     expect(row).toContain("설명·적용,수행,시작,미평가");
     expect(row).toContain('"줄\n바꿈, 쉼표"');
@@ -90,5 +92,46 @@ describe("우리 반이 많이 만난 버그", () => {
       fixed: 1,
     });
     expect(rows[0].name).toBe("같은 정답에 점수가 또 올라요");
+  });
+});
+describe("평가 목록 옮기기", () => {
+  it("평가와 원래 작품 ID를 담아 내보내고 그대로 읽으며, 크면 여러 파일로 나눈다", async () => {
+    const { classSessionFiles, parseClassSession } =
+      await import("../src/classSummary");
+    const w = makeWork(missions[0]);
+    w.feedback = { levels: [3, 2, 2, 1], note: "좋아요", at: w.createdAt };
+    const entries = [{ key: "k", file: "7번.json", work: w, sourceId: "원래" }];
+    const [text, ...rest] = classSessionFiles(entries);
+    expect(rest).toHaveLength(0);
+    const back = parseClassSession(JSON.parse(text), "목록.json");
+    expect(back[0]).toMatchObject({ file: "7번.json", sourceId: "원래" });
+    expect(back[0].work.feedback?.note).toBe("좋아요");
+    expect(back[0].work.id).toBe(w.id);
+    // 큰 작품 여러 개는 2MB를 넘지 않게 나눈다.
+    const big = Array.from({ length: 12 }, (_, i) => {
+      const x = makeWork(missions[0]);
+      x.draft.reflection = "가".repeat(3900);
+      x.draft.checks = Array.from({ length: 90 }, (_, k) => ({
+        id: `c${k}`,
+        label: "검사",
+        expected: "가".repeat(450),
+        actual: "가".repeat(450),
+        source: "self" as const,
+        status: "pass" as const,
+        revision: x.draft.revision,
+        at: x.createdAt,
+      }));
+      return { key: `b${i}`, file: `${i}.json`, work: x };
+    });
+    const files = classSessionFiles(big);
+    expect(files.length).toBeGreaterThan(1);
+    for (const f of files)
+      expect(new TextEncoder().encode(f).length).toBeLessThanOrEqual(
+        2 * 1024 * 1024,
+      );
+    expect(
+      files.flatMap((f) => parseClassSession(JSON.parse(f), "n")).length,
+    ).toBe(12);
+    expect(() => parseClassSession({ format: "x" }, "n")).toThrow();
   });
 });

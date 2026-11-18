@@ -1,4 +1,6 @@
-import { rubric, missions } from "./data";
+import "./late.css";
+import { missions } from "./data";
+import { rubric } from "./lessonData";
 import { debugFields, debugFilled, kindNames, stageDone } from "./model";
 import { bugSolved } from "./bugChallenge";
 import type { Feedback, Work } from "./model";

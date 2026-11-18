@@ -1,3 +1,4 @@
+import "./late.css";
 import { missions } from "./data";
 import { courses } from "./customMissions";
 import { kindNames, kinds, stageDone } from "./model";

@@ -1,5 +1,5 @@
 import { useT } from "./i18n";
-import { rubric } from "./data";
+import { rubric } from "./lessonData";
 import { stageNames } from "./model";
 import type { Work } from "./model";
 import { levelNames, summarize } from "./classSummary";

@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { lessons, missions } from "../src/data";
+import { missions } from "../src/data";
+import { lessons } from "../src/lessonData";
 import { roleState, slidesFor } from "../src/Present";
 describe("수업 진행 화면", () => {
   it("미션을 다섯 장면으로 나누고 차시 정보가 있으면 함께 넣는다", () => {

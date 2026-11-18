@@ -1,14 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useLang, useT } from "./i18n";
 import { localizeConfig } from "./missionText";
-import {
-  lessonMissionIds,
-  lessons,
-  missions,
-  quiz,
-  story,
-  timer,
-} from "./data";
+import { missions, quiz, story, timer } from "./data";
+import { lessonMissionIds, lessons } from "./lessonData";
 import { answerQuiz, initialQuiz } from "./engines";
 import type { Kind, Mission, QuizConfig } from "./model";
 import { Preview } from "./Preview";
@@ -20,7 +14,7 @@ type Create = (
   normal?: boolean,
   starter?: { prediction: string; reason: string },
 ) => void;
-export { lessonMissionIds } from "./data";
+export { lessonMissionIds } from "./lessonData";
 export const materialUrl = (file: string) =>
   `${import.meta.env.BASE_URL}materials/${file}`;
 const practiceQuiz = quiz as QuizConfig;

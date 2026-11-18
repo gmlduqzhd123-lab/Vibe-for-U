@@ -1,3 +1,4 @@
+import "./late.css";
 import { RunHistory, useRunHistory } from "./runHistory";
 import { SpeakButton } from "./Speak";
 import { useState } from "react";

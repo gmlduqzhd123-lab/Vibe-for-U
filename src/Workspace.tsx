@@ -1,3 +1,4 @@
+import "./late.css";
 import { useSendGuard } from "./sendGuard";
 import { useEffect, useRef, useState } from "react";
 import { Inspection } from "./Inspection";
@@ -28,7 +29,7 @@ import { LearningWords } from "./Welcome";
 import { BlockPrompt, predictionStarters } from "./BlockPrompt";
 import { SpeakButton } from "./Speak";
 import { dateLocale, useLang, useT } from "./i18n";
-import { rubric } from "./data";
+import { rubric } from "./lessonData";
 import { RubricChoices } from "./Rubric";
 import { makePeerRequest } from "./peer";
 import { backupFiles, downloadText } from "./storage";

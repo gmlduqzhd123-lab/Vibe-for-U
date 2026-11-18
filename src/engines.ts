@@ -9,6 +9,8 @@ import type {
   QuizConfig,
   RuleCondition,
   RuleConfig,
+  SortBin,
+  SortCard,
   SortConfig,
   StoryConfig,
   TimerConfig,
@@ -157,8 +159,58 @@ export const shadowedRules = (c: RuleConfig) =>
   shadowedConditions(c.rules, [c.start]);
 // 분류 앱: 카드를 위에서부터 처음 맞는 바구니에 넣는다. 맞는 바구니가 없으면 나머지(-1)다.
 export type SortState = { placed: number[]; event: string };
-export const sortBin = (c: SortConfig, v: number) =>
-  c.bins.findIndex((b) => ruleMatches(b, v));
+// 바구니 조건이 카드에 맞는지. 둘째 조건이 있으면 "그리고"는 둘 다, "또는"은 하나만 맞아도 된다.
+export function binMatches(
+  c: SortConfig,
+  b: SortBin,
+  card: Pick<SortCard, "value" | "value2">,
+) {
+  const first = ruleMatches(b, card.value);
+  if (!c.property2 || !b.second) return first;
+  const second = ruleMatches(b.second, card.value2 ?? 0);
+  return b.second.op === "and" ? first && second : first || second;
+}
+export const sortBin = (
+  c: SortConfig,
+  card: Pick<SortCard, "value" | "value2">,
+) => c.bins.findIndex((b) => binMatches(c, b, card));
+const conditionWords = {
+  gte: "{v} 이상이면",
+  lte: "{v} 이하이면",
+  eq: "{v}과 같으면",
+};
+// 사람이 읽는 바구니 조건(예: "다리 수 6과 같으면 그리고 날개 수 1 이상이면")
+export function binCondition(c: SortConfig, b: SortBin, t: Tr = ko) {
+  const first = `${c.property} ${t(conditionWords[b.when], { v: b.value })}`;
+  if (!c.property2 || !b.second) return first;
+  return `${first} ${t(b.second.op === "and" ? "그리고" : "또는")} ${c.property2} ${t(conditionWords[b.second.when], { v: b.second.value })}`;
+}
+// 카드의 특징 값(예: "다리 수 6 · 날개 수 4")
+export const cardValues = (c: SortConfig, card: SortCard) =>
+  `${c.property} ${card.value}` +
+  (c.property2 ? ` · ${c.property2} ${card.value2 ?? 0}` : "");
+// 앞 바구니에 가려 어떤 카드도 들어갈 수 없는 바구니. 기준 값 바로 앞뒤와 카드 값을 모두 넣어 본다.
+export function shadowedBins(c: SortConfig) {
+  const around = (xs: number[]) => [
+    ...new Set(xs.flatMap((x) => [x - 1, x, x + 1])),
+  ];
+  const v1 = around([
+    ...c.bins.map((b) => b.value),
+    ...c.cards.map((k) => k.value),
+  ]);
+  const v2 = c.property2
+    ? around([
+        ...c.bins.flatMap((b) => (b.second ? [b.second.value] : [])),
+        ...c.cards.map((k) => k.value2 ?? 0),
+      ])
+    : [0];
+  return c.bins.flatMap((_, i) => {
+    for (const value of v1)
+      for (const value2 of v2)
+        if (sortBin(c, { value, value2 }) === i) return [];
+    return [i];
+  });
+}
 export const binName = (c: SortConfig, i: number) =>
   i < 0 ? c.otherwise : c.bins[i].name;
 export const initialSort = (t: Tr = ko): SortState => ({
@@ -168,13 +220,12 @@ export const initialSort = (t: Tr = ko): SortState => ({
 export function stepSort(c: SortConfig, s: SortState, t: Tr = ko): SortState {
   const card = c.cards[s.placed.length];
   if (!card) return s;
-  const i = sortBin(c, card.value);
+  const i = sortBin(c, card);
   return {
     placed: [...s.placed, i],
-    event: t("「{card}」 {name} {v} → {rule} → 「{bin}」", {
+    event: t("「{card}」 {what} → {rule} → 「{bin}」", {
       card: card.label,
-      name: c.property,
-      v: card.value,
+      what: cardValues(c, card),
       rule:
         i < 0
           ? t("맞는 조건 없음 → 나머지 바구니")
@@ -198,7 +249,7 @@ export const resetSort = (t: Tr = ko): SortState => ({
 // 기대한 바구니와 다른 곳에 들어간 카드(카드 번호, 들어간 곳, 기대한 곳)
 export function sortMismatches(c: SortConfig) {
   return c.cards.flatMap((card, i) => {
-    const got = binName(c, sortBin(c, card.value));
+    const got = binName(c, sortBin(c, card));
     return got.trim() === card.expect.trim()
       ? []
       : [{ index: i, got, want: card.expect.trim() }];
@@ -528,10 +579,7 @@ export function autoChecks(c: Config, revision: string, t: Tr = ko): Check[] {
       },
     );
   } else if (c.kind === "sort") {
-    const hidden = shadowedConditions(
-      c.bins,
-      c.cards.map((x) => x.value),
-    );
+    const hidden = shadowedBins(c);
     const wrong = sortMismatches(c);
     const done = runSort(c, initialSort(t), t);
     const reset = resetSort(t);

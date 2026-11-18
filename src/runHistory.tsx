@@ -1,3 +1,4 @@
+import "./late.css";
 import { createContext, useContext, useState } from "react";
 import { useT } from "./i18n";
 import { RUN_LOG_LIMIT } from "./model";

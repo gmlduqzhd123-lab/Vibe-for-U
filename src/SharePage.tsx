@@ -1,6 +1,6 @@
 import { useT } from "./i18n";
 import { useRef, useState } from "react";
-import { lessons } from "./data";
+import { lessons } from "./lessonData";
 import { qrData } from "./qrData";
 import { Icon } from "./ui";
 

@@ -229,7 +229,7 @@ export function runDesign(c: Config, d: Design, t: Tr): DesignRun | null {
     case "sort-card": {
       if (c.kind !== "sort") return null;
       const card = c.cards[a - 1];
-      const bin = binName(c, sortBin(c, card.value));
+      const bin = binName(c, sortBin(c, card));
       return {
         label,
         actual: t("「{card}」 → 「{bin}」 바구니", { card: card.label, bin }),

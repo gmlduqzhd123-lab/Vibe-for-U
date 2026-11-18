@@ -48,6 +48,7 @@ export function localizeConfig(c: Config, lang: Lang): Config {
     return {
       ...c,
       property: t(c.property),
+      ...(c.property2 ? { property2: t(c.property2) } : {}),
       cards: c.cards.map((k) => ({
         ...k,
         label: t(k.label),
@@ -84,6 +85,7 @@ export function configStrings(c: Config): string[] {
   if (c.kind === "sort")
     return [
       c.property,
+      ...(c.property2 ? [c.property2] : []),
       ...c.cards.flatMap((k) => [k.label, k.expect]),
       ...c.bins.map((b) => b.name),
       c.otherwise,

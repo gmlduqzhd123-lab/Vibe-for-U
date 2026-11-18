@@ -9,8 +9,9 @@ import {
   resetQuiz,
   ruleMatches,
   runPattern,
-  shadowedConditions,
   shadowedRules,
+  binMatches,
+  shadowedBins,
   sortBin,
   sortMismatches,
 } from "./engines";
@@ -71,10 +72,7 @@ export function diagnose(c: Config): Finding[] {
         hint: "설정의 ‘0초가 되면 종료 안내 표시’를 켜 보세요.",
       });
   } else if (c.kind === "sort") {
-    const hidden = shadowedConditions(
-      c.bins,
-      c.cards.map((x) => x.value),
-    );
+    const hidden = shadowedBins(c);
     const wrong = sortMismatches(c);
     if (hidden.length) {
       const i = hidden[0];
@@ -107,12 +105,12 @@ export function diagnose(c: Config): Finding[] {
           hint: "「{want}」이라는 바구니가 없어요. 카드의 ‘들어갈 바구니’를 바구니 이름과 똑같이 적어 주세요.",
           vars,
         });
-      else if (want >= 0 && ruleMatches(c.bins[want], card.value))
+      else if (want >= 0 && binMatches(c, c.bins[want], card))
         out.push({
           id: "sort-order",
           problem,
           hint: "「{want}」 바구니 조건도 맞지만 앞의 바구니 {k}번이 먼저 맞았어요. 바구니 순서를 바꿔 보세요.",
-          vars: { ...vars, k: sortBin(c, card.value) + 1 },
+          vars: { ...vars, k: sortBin(c, card) + 1 },
         });
       else
         out.push({
@@ -122,7 +120,7 @@ export function diagnose(c: Config): Finding[] {
             want < 0
               ? "나머지 바구니로 가려면 어떤 바구니 조건에도 맞지 않아야 해요. 바구니 {k}번의 조건 값과 ‘이상·이하·같으면’을 확인해 보세요."
               : "「{want}」 바구니 조건이 {v}에서 맞지 않아요. 기준 값과 ‘이상·이하·같으면’을 확인해 보세요. 딱 기준 값인 카드가 어디로 가야 하는지 생각해 봐요.",
-          vars: { ...vars, k: sortBin(c, card.value) + 1 },
+          vars: { ...vars, k: sortBin(c, card) + 1 },
         });
     }
   } else if (c.kind === "rule") {

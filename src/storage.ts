@@ -353,20 +353,37 @@ export function validateConfig(value: unknown): Config {
     return {
       kind,
       property: str(c.property, "비교하는 특징 이름", 40),
+      ...(c.property2 === undefined
+        ? {}
+        : { property2: str(c.property2, "둘째 특징 이름", 40) }),
       cards: arr(c.cards, "카드", 1, 12).map((v) => {
         const k = obj(v, "카드");
         return {
           label: str(k.label, "카드 이름", LIMITS.short),
           value: num(k.value, "카드 값", -10000, 10000),
+          ...(k.value2 === undefined
+            ? {}
+            : { value2: num(k.value2, "카드 둘째 값", -10000, 10000) }),
           expect: str(k.expect, "들어갈 바구니", LIMITS.short),
         };
       }),
       bins: arr(c.bins, "바구니", 1, LIMITS.choices).map((v) => {
         const b = obj(v, "바구니");
+        const second =
+          b.second === undefined ? undefined : obj(b.second, "둘째 조건");
         return {
           name: str(b.name, "바구니 이름", LIMITS.short),
           when: one(b.when, when, "바구니 조건 종류"),
           value: num(b.value, "바구니 조건 값", -10000, 10000),
+          ...(second
+            ? {
+                second: {
+                  op: one(second.op, ["and", "or"] as const, "둘째 조건 잇기"),
+                  when: one(second.when, when, "둘째 조건 종류"),
+                  value: num(second.value, "둘째 조건 값", -10000, 10000),
+                },
+              }
+            : {}),
         };
       }),
       otherwise: str(c.otherwise, "나머지 바구니 이름", LIMITS.short),

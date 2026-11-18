@@ -1,3 +1,4 @@
+import "./late.css";
 import type { RuleCondition, SortConfig } from "./model";
 import { LIMITS } from "./model";
 import { Field, Icon } from "./ui";
@@ -34,6 +35,15 @@ export function SortSettings({
         value={config.property}
         onChange={(property) => edit({ property })}
       />
+      <Field
+        label={t("둘째 특징 이름 (비우면 특징 하나로만 나눠요)")}
+        max={40}
+        value={config.property2 ?? ""}
+        hint={t(
+          "둘째 특징을 적으면 바구니 조건에 ‘그리고’·‘또는’으로 둘째 조건을 붙일 수 있어요.",
+        )}
+        onChange={(v) => edit({ property2: v || undefined })}
+      />
       <h4>{t("바구니 · 위에서부터 확인하고 처음 맞는 바구니에 넣어요")}</h4>
       {bins.map((b, i) => (
         <fieldset className="rule-edit" key={i}>
@@ -67,6 +77,74 @@ export function SortSettings({
               />
             </label>
           </div>
+          {config.property2 ? (
+            <div className="form-grid">
+              <label className="field">
+                <span>{t("바구니 {n} 둘째 조건 잇기", { n: i + 1 })}</span>
+                <select
+                  value={b.second?.op ?? ""}
+                  onChange={(e) =>
+                    setBin(i, {
+                      second: e.target.value
+                        ? {
+                            when: "gte",
+                            value: 1,
+                            ...b.second,
+                            op: e.target.value as "and" | "or",
+                          }
+                        : undefined,
+                    })
+                  }
+                >
+                  <option value="">{t("둘째 조건 없음")}</option>
+                  <option value="and">{t("그리고 (둘 다 맞아야)")}</option>
+                  <option value="or">{t("또는 (하나만 맞아도)")}</option>
+                </select>
+              </label>
+              {b.second ? (
+                <>
+                  <label className="field">
+                    <span>{t("바구니 {n} 둘째 조건 종류", { n: i + 1 })}</span>
+                    <select
+                      value={b.second.when}
+                      onChange={(e) =>
+                        setBin(i, {
+                          second: {
+                            ...b.second!,
+                            when: e.target.value as RuleCondition,
+                          },
+                        })
+                      }
+                    >
+                      <option value="gte">{t("이상이면 (≥)")}</option>
+                      <option value="lte">{t("이하이면 (≤)")}</option>
+                      <option value="eq">{t("같으면 (=)")}</option>
+                    </select>
+                  </label>
+                  <label className="field">
+                    <span>
+                      {t("바구니 {n} 둘째 기준 값 ({name})", {
+                        n: i + 1,
+                        name: config.property2,
+                      })}
+                    </span>
+                    <input
+                      type="number"
+                      value={b.second.value}
+                      onChange={(e) =>
+                        setBin(i, {
+                          second: {
+                            ...b.second!,
+                            value: num(e.target.value),
+                          },
+                        })
+                      }
+                    />
+                  </label>
+                </>
+              ) : null}
+            </div>
+          ) : null}
           <div className="button-row">
             <button
               type="button"
@@ -132,6 +210,18 @@ export function SortSettings({
               onChange={(e) => setCard(i, { value: num(e.target.value) })}
             />
           </label>
+          {config.property2 ? (
+            <label className="field">
+              <span>
+                {t("카드 {n} {name}", { n: i + 1, name: config.property2 })}
+              </span>
+              <input
+                type="number"
+                value={c.value2 ?? 0}
+                onChange={(e) => setCard(i, { value2: num(e.target.value) })}
+              />
+            </label>
+          ) : null}
           <label className="field">
             <span>{t("카드 {n}이 들어갈 바구니", { n: i + 1 })}</span>
             <select

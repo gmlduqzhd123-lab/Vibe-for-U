@@ -1,6 +1,7 @@
 import type { Config, Snapshot, Work } from "./model";
+import { stageDone, stageNames } from "./model";
 import { uid } from "./model";
-import { dirNames } from "./engines";
+import { binCondition, cardValues, dirNames } from "./engines";
 import { translate } from "./i18n";
 export function updatePrediction(d: Snapshot, prediction: string): Snapshot {
   // 예상을 바꾸면 "눌러 봤다" 기록과 맞았는지 표시도 처음으로 돌아간다.
@@ -84,35 +85,28 @@ export function configSummary(c: Config, t: Tr = ko): string[] {
         : []),
       t("목표 칸 {n}개", { n: c.target.length }),
     ];
-  if (c.kind === "sort") {
-    const when = {
-      gte: "{v} 이상이면",
-      lte: "{v} 이하이면",
-      eq: "{v}과 같으면",
-    };
+  if (c.kind === "sort")
     return [
       t("비교하는 특징: {name} · 카드 {n}장", {
-        name: c.property,
+        name: c.property2 ? `${c.property}, ${c.property2}` : c.property,
         n: c.cards.length,
       }),
       ...c.bins.map((b, i) =>
         t("바구니 {n}: 만약 {cond} 「{bin}」", {
           n: i + 1,
-          cond: t(when[b.when], { v: b.value }),
+          cond: binCondition(c, b, t),
           bin: b.name,
         }),
       ),
       t("나머지 바구니: 「{bin}」", { bin: c.otherwise }),
       ...c.cards.map((k) =>
-        t("카드 「{card}」 {name} {v} → 기대 「{bin}」", {
+        t("카드 「{card}」 {what} → 기대 「{bin}」", {
           card: k.label,
-          name: c.property,
-          v: k.value,
+          what: cardValues(c, k),
           bin: k.expect,
         }),
       ),
     ];
-  }
   if (c.kind === "rule") {
     const when = {
       gte: "{v} 이상이면",
@@ -176,4 +170,30 @@ export function compareSnapshots(a: Snapshot, b: Snapshot, t: Tr = ko) {
     sameConfig: JSON.stringify(a.config) === JSON.stringify(b.config),
     fields: fields.filter(([, get]) => get(a) !== get(b)).map(([n]) => n),
   };
+}
+
+// 포트폴리오의 빠진 기록 안내: 아직 비어 있는 기록과, 그 기록을 채우는 작업실 단계(0~4)를 돌려준다.
+// text는 번역 열쇠이고 vars의 stage도 번역 열쇠다(화면에서 t()로 바꾼다).
+export type Gap = { text: string; stage?: string; step: number };
+export function portfolioGaps(w: Work): Gap[] {
+  const d = w.draft;
+  const out: Gap[] = stageDone(d).flatMap((done, i) =>
+    done
+      ? []
+      : [
+          {
+            text: "「{stage}」 단계에 기록할 내용이 남았어요.",
+            stage: stageNames[i],
+            step: i,
+          },
+        ],
+  );
+  const ran = Boolean(d.prediction.trim()) && d.runRevision === d.revision;
+  if (ran && !d.predictionCheck)
+    out.push({ text: "예상이 맞았는지 아직 표시하지 않았어요.", step: 2 });
+  if (ran && !d.runLog)
+    out.push({ text: "어떻게 눌러 봤는지 실행 기록 증거가 없어요.", step: 2 });
+  if (!w.selfAssessment || w.selfAssessment.levels.some((l) => l === 0))
+    out.push({ text: "스스로 평가를 아직 다 고르지 않았어요.", step: 4 });
+  return out;
 }

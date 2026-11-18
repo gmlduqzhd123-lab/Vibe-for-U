@@ -1962,9 +1962,9 @@ export const en: Record<string, string> = {
   "선생님 미션의 새 판이 왔어요":
     "A new edition of a teacher's mission arrived",
   "새 판으로 바꾸기": "Update to new edition",
-  "1~8차시 예상·관찰·수정·재검사 기록지와 보충 차시(만약 규칙 앱) · 차시마다 앞뒤 2쪽":
-    "Predict · observe · fix · re-check sheets for Lessons 1–8 plus the extra lesson (If-then rule app) · 2 pages per lesson",
-  "1~8차시와 보충 차시(만약 규칙 앱) 활동지를 같은 배치로 옮긴 영어판 · 영어 화면으로 배우는 학생용":
+  "1~8차시 예상·관찰·수정·재검사 기록지와 보충 차시(만약 규칙·분류하기 앱) · 차시마다 앞뒤 2쪽":
+    "Predict · observe · fix · re-check sheets for Lessons 1–8 plus the extra lessons (If-then rule app, Sorting app) · 2 pages per lesson",
+  "1~8차시와 보충 차시(만약 규칙·분류하기 앱) 활동지를 같은 배치로 옮긴 영어판 · 영어 화면으로 배우는 학생용":
     "English edition of the Lesson 1–8 and extra-lesson worksheets, same layout · for students using the English screen",
   "교사용 안내서 영어판 (Teacher guide in English)": "Teacher guide in English",
   "14쪽 안내서를 같은 배치로 옮긴 영어판 · 영어로 수업하는 교사용":
@@ -2375,4 +2375,73 @@ export const en: Record<string, string> = {
   물병: "Water bottle",
   "바구니마다 카드가 들어갈 수 있음": "Every basket can get cards",
   "카드가 기대한 바구니로": "Cards go to expected baskets",
+  "평가 목록 파일 {n}개의 다운로드를 요청했어요. 다른 기기의 ‘학생 작품 파일 고르기’로 열면 이어서 평가해요.":
+    "Requested the download of {n} assessment list files. Open them with ‘Choose student work files’ on another device to continue assessing.",
+  "평가 목록 옮기기": "Move assessment list",
+  "보호자용 소개 카드 모두 인쇄": "Print all family cards",
+  "짝·일지": "Pair · journal",
+  "역할 교대 {n}번": "{n} role switches",
+  "일지 적음": "journal written",
+  "{a} · {b} · 역할 교대 {n}번": "{a} · {b} · {n} role switches",
+  "눌러 본 기록 {n}개를 검사 결과에 함께 담아요.":
+    "{n} run log steps will be included in the test result.",
+  "검사 결과에 담을 실행 기록 {n}개":
+    "{n} run log steps to include in the result",
+  "빠진 기록 살펴보기": "Check for missing records",
+  "채우러 가기": "Go fill it in",
+  "기록이 모두 채워졌어요. 인쇄하거나 파일로 보관해요.":
+    "All records are filled in. Print it or keep it as a file.",
+  "「{stage}」 단계에 기록할 내용이 남았어요.":
+    "The “{stage}” step still has something to record.",
+  "예상이 맞았는지 아직 표시하지 않았어요.":
+    "You haven't marked whether your prediction was right.",
+  "어떻게 눌러 봤는지 실행 기록 증거가 없어요.":
+    "There is no run log evidence of what you pressed.",
+  "스스로 평가를 아직 다 고르지 않았어요.":
+    "You haven't finished your self-assessment.",
+  "다음 카드: 「{card}」 {what}": "Next card: “{card}” {what}",
+  "「{card}」 {what} → {rule} → 「{bin}」":
+    "“{card}” {what} → {rule} → “{bin}”",
+  "만약 {cond} → 「{bin}」 바구니": "If {cond} → basket “{bin}”",
+  "둘째 특징 이름 (비우면 특징 하나로만 나눠요)":
+    "Second feature name (leave empty to sort by one feature)",
+  "둘째 특징을 적으면 바구니 조건에 ‘그리고’·‘또는’으로 둘째 조건을 붙일 수 있어요.":
+    "With a second feature, you can add a second condition to a basket using ‘and’ or ‘or’.",
+  "바구니 {n} 둘째 조건 잇기": "Basket {n} second condition link",
+  "둘째 조건 없음": "No second condition",
+  "그리고 (둘 다 맞아야)": "and (both must match)",
+  "또는 (하나만 맞아도)": "or (one match is enough)",
+  "바구니 {n} 둘째 조건 종류": "Basket {n} second condition type",
+  "바구니 {n} 둘째 기준 값 ({name})": "Basket {n} second limit value ({name})",
+  "고친 문장 {n}개를 가져왔어요. 넘어간 문장 {m}개.":
+    "Imported {n} fixed sentences. Skipped {m}.",
+  "영어 번역 고침 파일을 골라 주세요.":
+    "Choose an English translation fix file.",
+  "고친 문장 파일 가져오기": "Import fixed sentences file",
+  "고친 문장 JSON 파일": "Fixed sentences JSON file",
+  그리고: "and",
+  또는: "or",
+  "카드 「{card}」 {what} → 기대 「{bin}」":
+    "Card “{card}” {what} → expected “{bin}”",
+  "둘째 특징 이름": "second feature name",
+  "카드 둘째 값": "card second value",
+  "둘째 조건": "second condition",
+  "둘째 조건 잇기": "second condition link",
+  "둘째 조건 종류": "second condition type",
+  "둘째 조건 값": "second condition value",
+  "날개 수": "number of wings",
+  나비: "Butterfly",
+  "나는 곤충": "Flying insects",
+  "걷는 곤충": "Walking insects",
+  벌: "Bee",
+  "곤충이 아니에요": "Not an insect",
+  "기온(도)": "temperature (°C)",
+  미세먼지: "fine dust",
+  월요일: "Monday",
+  "운동장 체육": "Playground PE",
+  화요일: "Tuesday",
+  "실내 체육": "Indoor PE",
+  수요일: "Wednesday",
+  목요일: "Thursday",
+  금요일: "Friday",
 };

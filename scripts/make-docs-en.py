@@ -73,6 +73,6 @@ def convert(src, out, shrink=0.0):
     print(out)
 
 
-SHRINK = {"public/materials/new-features-guide.docx": 0.5}
+SHRINK = {"public/materials/new-features-guide.docx": 1.0}
 for src, out in PAIRS:
     convert(src, out, SHRINK.get(src, 0.0))

@@ -1,3 +1,4 @@
+import "./late.css";
 import type { RuleCondition, RuleConfig } from "./model";
 import { LIMITS } from "./model";
 import { Field, Icon } from "./ui";
