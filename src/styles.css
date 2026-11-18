@@ -3896,3 +3896,12 @@ pre {
     text-align: center;
   }
 }
+/* 좁은 화면 + 큰 글씨: 선택 상자는 줄바꿈을 못 하므로, 긴 선택지가 잘리지 않게
+   화면 너비에 맞춰 글자를 조금만 줄이고 안쪽 여백을 좁힌다(보통 글자 크기에서는 달라지지 않는다). */
+@media (max-width: 480px) {
+  main .field select {
+    font-size: min(1em, 5vw);
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+}
