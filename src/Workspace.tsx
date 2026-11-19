@@ -33,6 +33,7 @@ import { rubric } from "./lessonData";
 import { RubricChoices } from "./Rubric";
 import { makePeerRequest } from "./peer";
 import { backupFiles, downloadText } from "./storage";
+import { markBackedUp } from "./backupReminder";
 import { ShareButton } from "./Share";
 import { standaloneHtml } from "./standalone";
 import { QrSendButton } from "./QrShare";
@@ -196,6 +197,7 @@ export function Workspace({
             works={[w]}
             name={`뚝딱-작품-${d.title || "작품"}.json`}
             text={() => backupFiles([w])[0]}
+            onShared={() => markBackedUp([w])}
             title={d.title || "뚝딱 작품"}
             message={message}
           />

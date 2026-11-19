@@ -1,5 +1,5 @@
 import "./late.css";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { APP_PREFIX, LIMITS } from "./model";
 import { rubric } from "./lessonData";
 import { Icon } from "./ui";
@@ -38,12 +38,17 @@ function readMine(): string[] {
     return [];
   }
 }
-function writeMine(list: string[]) {
+// 평가 카드마다 문장 모음이 따로 열려 있으므로, 저장소를 하나의 원본으로 두고 바뀌면 모두에게 알린다.
+const PHRASE_EVENT = "ttukttak-phrases";
+// 저장 직전에 저장소를 다시 읽어 바꾼다(다른 카드에서 그사이 저장한 문장을 덮어쓰지 않게).
+function changeMine(change: (list: string[]) => string[]) {
+  const next = change(readMine()).slice(0, PHRASE_LIMIT);
   try {
-    localStorage.setItem(KEY, JSON.stringify(list));
+    localStorage.setItem(KEY, JSON.stringify(next));
   } catch {
     // 저장할 수 없으면 이번 화면에서만 쓴다.
   }
+  dispatchEvent(new CustomEvent(PHRASE_EVENT, { detail: next }));
 }
 // 의견 끝에 문장을 한 줄로 붙인다(이미 있으면 넣지 않는다).
 export function appendPhrase(note: string, phrase: string) {
@@ -60,14 +65,15 @@ export function PhraseBank({
 }) {
   const t = useT();
   const [mine, setMine] = useState(readMine);
+  useEffect(() => {
+    const sync = (e: Event) => setMine((e as CustomEvent<string[]>).detail);
+    addEventListener(PHRASE_EVENT, sync);
+    return () => removeEventListener(PHRASE_EVENT, sync);
+  }, []);
   const [draft, setDraft] = useState("");
   const put = (p: string) => {
     const next = appendPhrase(note, p);
     if (next.length <= LIMITS.text) onChange(next);
-  };
-  const save = (list: string[]) => {
-    setMine(list);
-    writeMine(list);
   };
   return (
     <details className="phrase-bank">
@@ -101,7 +107,9 @@ export function PhraseBank({
                 type="button"
                 className="text-button"
                 aria-label={t("내 문장 「{p}」 지우기", { p })}
-                onClick={() => save(mine.filter((_, k) => k !== i))}
+                onClick={() =>
+                  changeMine((list) => list.filter((x) => x !== p))
+                }
               >
                 <Icon name="trash" size={16} />
               </button>
@@ -125,7 +133,10 @@ export function PhraseBank({
               mine.includes(draft.trim())
             }
             onClick={() => {
-              save([...mine, draft.trim()]);
+              const text = draft.trim();
+              changeMine((list) =>
+                list.includes(text) ? list : [...list, text],
+              );
               setDraft("");
             }}
           >

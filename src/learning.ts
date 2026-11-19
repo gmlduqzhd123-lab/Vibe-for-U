@@ -191,7 +191,7 @@ export function portfolioGaps(w: Work): Gap[] {
   const ran = Boolean(d.prediction.trim()) && d.runRevision === d.revision;
   if (ran && !d.predictionCheck)
     out.push({ text: "예상이 맞았는지 아직 표시하지 않았어요.", step: 2 });
-  if (ran && !d.runLog)
+  if (ran && d.runLog?.revision !== d.revision)
     out.push({ text: "어떻게 눌러 봤는지 실행 기록 증거가 없어요.", step: 2 });
   if (!w.selfAssessment || w.selfAssessment.levels.some((l) => l === 0))
     out.push({ text: "스스로 평가를 아직 다 고르지 않았어요.", step: 4 });

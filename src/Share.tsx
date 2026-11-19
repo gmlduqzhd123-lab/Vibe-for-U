@@ -26,7 +26,10 @@ export function ShareButton({
   message,
   label = "공유로 보내기",
   works = [],
+  onShared,
 }: {
+  // 공유가 끝났을 때(취소가 아닐 때)만 부른다. 백업 공유는 여기서 백업한 것으로 기억한다.
+  onShared?: () => void;
   // 개인정보 확인에 쓸 작품(보내는 내용의 원래 작품)
   works?: Work[];
   name: string;
@@ -46,6 +49,7 @@ export function ShareButton({
         guard(works, async () => {
           try {
             await navigator.share({ files: [jsonFile(name, text())], title });
+            onShared?.();
             message(t("공유 창으로 파일을 보냈어요."));
           } catch (e) {
             if (e instanceof Error && e.name === "AbortError") return;

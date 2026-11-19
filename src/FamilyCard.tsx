@@ -1,5 +1,5 @@
 import "./late.css";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Work } from "./model";
 import { kindNames } from "./model";
 import { missions } from "./data";
@@ -14,13 +14,24 @@ import {
 } from "./qrTransfer";
 // 보호자용 작품 소개 한 장: 무엇을 만들고 왜 고쳤고 무엇을 배웠는지, 직접 눌러 볼 QR을 A4 반 장에 담는다.
 // 인쇄 전에 개인정보 확인을 거친다(포트폴리오의 버튼). QR에는 작품 설정만 들어간다.
-export function FamilyCard({ w }: { w: Work }) {
+export function FamilyCard({
+  w,
+  onReady,
+}: {
+  w: Work;
+  // QR을 다 그렸거나(또는 QR 없이 인쇄하기로 정했을 때) 한 번 알린다. 여러 장을 인쇄할 때 기다리는 데 쓴다.
+  onReady?: () => void;
+}) {
   const t = useT();
   const lang = useLang();
   const d = w.draft;
   const found = missions.find((m) => m.id === w.missionId);
   const mission = found && localizeMission(found, lang);
   const [qr, setQr] = useState<{ size: number; d: string } | null>(null);
+  const ready = useRef(onReady);
+  useEffect(() => {
+    ready.current = onReady;
+  });
   useEffect(() => {
     let alive = true;
     encodeShare(workPayload(w))
@@ -28,7 +39,8 @@ export function FamilyCard({ w }: { w: Work }) {
         const url = receiveUrl(code);
         if (alive) setQr(url.length <= QR_MAX ? qrPath(url) : null);
       })
-      .catch(() => alive && setQr(null));
+      .catch(() => alive && setQr(null))
+      .finally(() => alive && ready.current?.());
     return () => {
       alive = false;
     };
