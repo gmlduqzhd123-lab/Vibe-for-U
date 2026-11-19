@@ -37,6 +37,12 @@ describe("영어 번역 고침 파일을 번역표에 합치기", () => {
     expect(out).toContain('"미션 공작대": "Mission Lab",');
     expect(out).toContain('되돌리기: "Undo \\"it\\"",');
     expect(out).toContain('"긴 문장이에요.":\n    "Long.",');
+    // 영어에 큰따옴표가 있어 작은따옴표로 적힌 값도 찾아 바꾼다.
+    const quoted = applyFixes('  "시작을 눌러요": \'Press "Start"\',', {
+      "시작을 눌러요": "Press Start",
+    });
+    expect(quoted.done).toEqual(["시작을 눌러요"]);
+    expect(quoted.source).toBe('  "시작을 눌러요": "Press Start",');
   });
   it("실제 번역표에서 문장을 찾아 바꾼다", () => {
     const { done } = applyFixes(readFileSync("src/i18n.tsx", "utf8"), {

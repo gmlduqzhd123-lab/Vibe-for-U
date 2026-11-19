@@ -313,3 +313,22 @@ describe("파일 신뢰 경계와 저장", () => {
       expect(validateConfig(m.starter)).toEqual(m.starter);
   });
 });
+describe("포트폴리오의 빠진 기록 안내", () => {
+  it("지난 설정에서 남긴 실행 증거는 지금 설정의 증거로 치지 않는다", async () => {
+    const { portfolioGaps } = await import("../src/learning");
+    const w = makeWork(missions[0]);
+    w.draft.prediction = "1점";
+    w.draft.runRevision = w.draft.revision;
+    const text = "어떻게 눌러 봤는지 실행 기록 증거가 없어요.";
+    const has = () => portfolioGaps(w).some((g) => g.text === text);
+    expect(has()).toBe(true);
+    w.draft.runLog = {
+      revision: w.draft.revision,
+      at: w.createdAt,
+      steps: [{ label: "선택 1", state: "점수 0 → 1" }],
+    };
+    expect(has()).toBe(false);
+    w.draft.runLog = { ...w.draft.runLog, revision: "지난-판" };
+    expect(has()).toBe(true);
+  });
+});

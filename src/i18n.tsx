@@ -156,7 +156,11 @@ export function saveEnglishFix(ko: string, fix: string | null) {
   } catch {
     // 저장할 수 없으면 이번 화면에서만 바뀐다.
   }
+  // 이미 그려진 화면(메뉴·제목)도 고친 글로 다시 그리게 알린다(App이 듣는다).
+  if (typeof dispatchEvent === "function")
+    dispatchEvent(new Event(TRANSLATION_EVENT));
 }
+export const TRANSLATION_EVENT = "ttukttak-translations";
 export const englishEntries = () => Object.entries(tables.en);
 export const originalEnglish = (ko: string) => originals[ko] ?? tables.en[ko];
 // 번역에 한국어와 같은 {값} 자리가 있는지

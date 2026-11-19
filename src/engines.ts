@@ -246,6 +246,26 @@ export const resetSort = (t: Tr = ko): SortState => ({
   placed: [],
   event: t("처음으로 → 카드를 모두 꺼냈어요."),
 });
+// 바구니 이름을 바꾼다(i가 -1이면 나머지 바구니). 카드는 들어갈 바구니를 이름으로 기억하므로,
+// 그 이름을 가리키던 카드도 함께 바꾼다. 같은 이름의 바구니가 또 있으면 어느 쪽인지 알 수 없어 카드는 그대로 둔다.
+export function renameBasket(
+  c: SortConfig,
+  i: number,
+  name: string,
+): SortConfig {
+  const old = binName(c, i);
+  const shared =
+    [...c.bins.map((b) => b.name), c.otherwise].filter((n) => n === old)
+      .length > 1;
+  return {
+    ...c,
+    bins: i < 0 ? c.bins : c.bins.map((b, k) => (k === i ? { ...b, name } : b)),
+    otherwise: i < 0 ? name : c.otherwise,
+    cards: shared
+      ? c.cards
+      : c.cards.map((k) => (k.expect === old ? { ...k, expect: name } : k)),
+  };
+}
 // 기대한 바구니와 다른 곳에 들어간 카드(카드 번호, 들어간 곳, 기대한 곳)
 export function sortMismatches(c: SortConfig) {
   return c.cards.flatMap((card, i) => {

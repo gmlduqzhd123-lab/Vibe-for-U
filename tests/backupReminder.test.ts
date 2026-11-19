@@ -36,11 +36,13 @@ describe("백업 알림", () => {
       due: true,
     });
   });
-  it("백업 파일을 만들면 그 작품은 다시 세지 않고, 그 뒤에 고치면 다시 센다", () => {
+  it("파일을 만들기만 해서는(공유 취소) 백업으로 세지 않고, 백업을 기억하면 다시 세지 않으며 그 뒤에 고치면 다시 센다", () => {
     const now = Date.now();
     const a = work(5, now);
     const b = work(5, now);
     backupFiles([a, b]);
+    expect(backupDue([a, b], now).changed).toBe(2);
+    markBackedUp([a, b]);
     expect(backupDue([a, b], now).changed).toBe(0);
     a.updatedAt = new Date(now + 1000).toISOString();
     expect(backupDue([a, b], now + 2000).changed).toBe(1);

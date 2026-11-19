@@ -9,7 +9,7 @@ import { localizeMission } from "./missionText";
 import { PraiseCards, ShowCase } from "./ShowCase";
 import { adoptMissions } from "./customMissions";
 import { ClassCharts } from "./ClassCharts";
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { LIMITS, debugFields, debugFilled, now, stageDone } from "./model";
 import type { Feedback, Work } from "./model";
 import {
@@ -79,6 +79,20 @@ function BugBoard({ works }: { works: Work[] }) {
     </div>
   );
 }
+// 그래프·차시별 진행·많이 만난 버그는 작품 목록과 평가 단계가 바뀔 때만 다시 계산한다.
+// (의견을 한 글자 칠 때마다 모든 작품·버전을 다시 살피면 입력이 느려진다.)
+const Summaries = memo(
+  function Summaries({ works }: { works: Work[]; signature: string }) {
+    return (
+      <>
+        <ClassCharts works={works} />
+        <LessonBoard works={works} />
+        <BugBoard works={works} />
+      </>
+    );
+  },
+  (a, b) => a.signature === b.signature,
+);
 // 차시 진행 대시보드: 8차시 계획의 미션마다 읽은 작품이 어디까지 왔는지 한 표로 본다.
 function LessonBoard({ works }: { works: Work[] }) {
   const t = useT();
@@ -159,6 +173,22 @@ export function ClassReview({ message }: { message: (s: string) => void }) {
   const [showing, setShowing] = useState(false);
   const [printFamilies, setPrintFamilies] = useState(false);
   const guard = useSendGuard();
+  // 보호자 카드 모두 인쇄: 카드마다 QR을 따로 만들기 때문에, 모두 준비된 뒤에 인쇄한다.
+  const readyCount = useRef(0);
+  const familyReady = () => {
+    if (++readyCount.current < entries.length) return;
+    document.documentElement.dataset.print = "families";
+    addEventListener(
+      "afterprint",
+      () => {
+        delete document.documentElement.dataset.print;
+        setPrintFamilies(false);
+      },
+      { once: true },
+    );
+    // 마지막 QR이 화면에 그려질 틈을 준다.
+    setTimeout(() => window.print(), 50);
+  };
   const [errors, setErrors] = useState<string[]>([]);
   const input = useRef<HTMLInputElement>(null);
   // 새로고침해도 평가가 사라지지 않게 이 기기에 임시로 보관하고 다시 연다.
@@ -295,7 +325,9 @@ export function ClassReview({ message }: { message: (s: string) => void }) {
       {/* 보호자용 소개 카드 모두 인쇄: 그 인쇄 때만 보인다(A4 한 장에 두 명). */}
       <div className="families-sheet">
         {printFamilies
-          ? entries.map((e) => <FamilyCard key={e.key} w={e.work} />)
+          ? entries.map((e) => (
+              <FamilyCard key={e.key} w={e.work} onReady={familyReady} />
+            ))
           : null}
       </div>
       <div className="panel">
@@ -394,18 +426,9 @@ export function ClassReview({ message }: { message: (s: string) => void }) {
               guard(
                 entries.map((e) => e.work),
                 () => {
-                  // 카드와 QR을 먼저 그린 뒤 인쇄 창을 연다.
+                  // 카드를 먼저 그리고, 모든 카드의 QR이 준비되면 인쇄 창을 연다(아래 familyReady).
+                  readyCount.current = 0;
                   setPrintFamilies(true);
-                  document.documentElement.dataset.print = "families";
-                  addEventListener(
-                    "afterprint",
-                    () => {
-                      delete document.documentElement.dataset.print;
-                      setPrintFamilies(false);
-                    },
-                    { once: true },
-                  );
-                  setTimeout(() => window.print(), 300);
                 },
               )
             }
@@ -545,9 +568,12 @@ export function ClassReview({ message }: { message: (s: string) => void }) {
               </table>
             </div>
           </div>
-          <ClassCharts works={entries.map((e) => e.work)} />
-          <LessonBoard works={entries.map((e) => e.work)} />
-          <BugBoard works={entries.map((e) => e.work)} />
+          <Summaries
+            works={entries.map((e) => e.work)}
+            signature={entries
+              .map((e) => `${e.key}:${e.work.feedback?.levels.join("")}`)
+              .join("|")}
+          />
           <div className="class-cards">
             {entries.map((e) => (
               <ReviewCard

@@ -30,9 +30,10 @@ export function applyFixes(source, fixes) {
   let out = source;
   for (const [ko, en] of Object.entries(fixes)) {
     const key = JSON.stringify(ko);
-    // "열쇠": "값" 또는 따옴표 없는 열쇠: "값" (값이 다음 줄에 있을 수 있다)
+    // "열쇠": "값" 또는 따옴표 없는 열쇠: "값" (값이 다음 줄에 있을 수 있다).
+    // 영어에 큰따옴표가 들어 있으면 Prettier가 값을 작은따옴표로 쓰므로 둘 다 찾는다.
     const re = new RegExp(
-      `(^\\s*(?:${esc(key)}|${esc(ko)}):\\s*)"(?:[^"\\\\]|\\\\.)*"`,
+      `(^\\s*(?:${esc(key)}|${esc(ko)}):\\s*)(?:"(?:[^"\\\\]|\\\\.)*"|'(?:[^'\\\\]|\\\\.)*')`,
       "m",
     );
     if (!re.test(out)) continue;

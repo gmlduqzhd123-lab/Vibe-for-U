@@ -161,8 +161,6 @@ export function backupFiles(works: Work[]) {
     group.push(work);
   }
   if (group.length) files.push(exportJSON(group));
-  // 백업 파일을 만들었으면(내려받기·공유) 백업 알림이 이 작품들을 다시 세지 않게 기억한다.
-  markBackedUp(works);
   return files;
 }
 export function downloadText(name: string, text: string, type: string) {
@@ -179,6 +177,9 @@ export function downloadText(name: string, text: string, type: string) {
 }
 export function downloadWorks(works: Work[]) {
   const files = backupFiles(works);
+  // 내려받기를 요청했으면 백업 알림이 이 작품들을 다시 세지 않게 기억한다.
+  // (공유는 공유가 끝난 뒤 Share.tsx가 기억한다. 공유 창을 닫기만 하면 기억하지 않는다.)
+  markBackedUp(works);
   files.forEach((text, i) =>
     downloadText(
       `뚝딱-작품-${new Date().toISOString().slice(0, 10)}${files.length > 1 ? `-${i + 1}` : ""}.json`,

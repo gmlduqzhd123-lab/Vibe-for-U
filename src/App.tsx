@@ -67,7 +67,7 @@ import type { History } from "./undoHistory";
 const peerTools = () => import("./peer");
 import type { PeerRequest, PeerResponse } from "./peer";
 import "./Welcome.css";
-import { LangContext, langs, translate } from "./i18n";
+import { LangContext, TRANSLATION_EVENT, langs, translate } from "./i18n";
 import {
   englishReady,
   loadEnglishMissions,
@@ -149,6 +149,13 @@ export default function App() {
     const saved = getSetting<string>("mode", "child");
     return modes.includes(saved as Mode) ? (saved as Mode) : "child";
   });
+  // 영어 번역을 고치면(교사 자료실) 번역표가 바뀌므로 화면 전체를 다시 그린다.
+  const [, redraw] = useState(0);
+  useEffect(() => {
+    const bump = () => redraw((n) => n + 1);
+    addEventListener(TRANSLATION_EVENT, bump);
+    return () => removeEventListener(TRANSLATION_EVENT, bump);
+  }, []);
   const [lang, setLangState] = useState<Lang>(() => {
     const saved = getSetting<string>("lang", "ko");
     return langs.some((l) => l.id === saved) ? (saved as Lang) : "ko";
@@ -762,8 +769,18 @@ export default function App() {
     });
   };
   const applyPeer = async (target: Work, r: PeerResponse) => {
-    const { applyPeerResponse } = await peerTools();
-    persist(applyPeerResponse(target, r));
+    let next: Work;
+    try {
+      const { applyPeerResponse } = await peerTools();
+      next = applyPeerResponse(target, r);
+    } catch (e) {
+      // 작품 고르기 화면에서 부르면 바깥에 받아 줄 곳이 없으므로 여기서 알린다.
+      message(
+        `${t("가져오지 못했어요.")} ${errorText(e, t, t("내보낸 JSON 파일을 다시 선택해 주세요."))} ${t("기존 작품은 그대로예요.")}`,
+      );
+      return;
+    }
+    persist(next);
     setPeerResponse(null);
     go(`work/${target.id}/3`);
     message(

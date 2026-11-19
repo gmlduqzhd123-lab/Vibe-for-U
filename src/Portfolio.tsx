@@ -8,6 +8,7 @@ import { configSummary, portfolioGaps, revisionLabel } from "./learning";
 import { rubric } from "./lessonData";
 import { ShareButton } from "./Share";
 import { backupFiles, downloadText } from "./storage";
+import { markBackedUp } from "./backupReminder";
 import { standaloneHtml } from "./standalone";
 import { levelNames } from "./classSummary";
 import { dateLocale, useLang, useT } from "./i18n";
@@ -70,6 +71,7 @@ export function Portfolio({
             works={[w]}
             name={`뚝딱-작품-${d.title || "작품"}.json`}
             text={() => backupFiles([w])[0]}
+            onShared={() => markBackedUp([w])}
             title={d.title || t("뚝딱 작품")}
             message={message}
           />

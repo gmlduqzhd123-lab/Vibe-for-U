@@ -3,6 +3,7 @@ import type { RuleCondition, SortConfig } from "./model";
 import { LIMITS } from "./model";
 import { Field, Icon } from "./ui";
 import { useT } from "./i18n";
+import { renameBasket } from "./engines";
 // 분류 앱의 설정: 비교하는 특징, 카드(값과 들어갈 바구니), 바구니 조건(위에서부터 확인)과 나머지 바구니.
 export function SortSettings({
   config,
@@ -52,7 +53,7 @@ export function SortSettings({
             label={t("바구니 {n} 이름", { n: i + 1 })}
             max={LIMITS.short}
             value={b.name}
-            onChange={(name) => setBin(i, { name })}
+            onChange={(name) => onChange(renameBasket(config, i, name))}
           />
           <div className="form-grid">
             <label className="field">
@@ -189,7 +190,7 @@ export function SortSettings({
         label={t("나머지 바구니 이름 (어떤 조건에도 맞지 않을 때)")}
         max={LIMITS.short}
         value={config.otherwise}
-        onChange={(otherwise) => edit({ otherwise })}
+        onChange={(name) => onChange(renameBasket(config, -1, name))}
       />
       <h4>{t("카드 (1~12장)")}</h4>
       {cards.map((c, i) => (

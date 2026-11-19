@@ -6,6 +6,7 @@ import {
   autoChecks,
   binCondition,
   initialSort,
+  renameBasket,
   resetSort,
   runSort,
   sortMismatches,
@@ -82,5 +83,20 @@ describe("분류 앱", () => {
       "기온(도) 33 이상이면 또는 미세먼지 80 이상이면",
     );
     expect(validateConfig(and)).toEqual(and);
+  });
+  it("바구니 이름을 바꾸면 그 이름을 가리키던 카드도 함께 바뀌어 검사가 깨지지 않는다", () => {
+    const c = starter("sort-4");
+    const renamed = renameBasket(c, -1, "중간이에요");
+    expect(renamed.otherwise).toBe("중간이에요");
+    expect(renamed.cards.find((k) => k.label === "책")!.expect).toBe(
+      "중간이에요",
+    );
+    expect(sortMismatches(renamed)).toEqual([]);
+    const bin = renameBasket(c, 0, "묵직해요");
+    expect(bin.bins[0].name).toBe("묵직해요");
+    expect(sortMismatches(bin)).toEqual([]);
+    // 같은 이름의 바구니가 둘이면 어느 쪽인지 알 수 없어 카드는 그대로 둔다.
+    const twin = { ...c, bins: c.bins.map((b) => ({ ...b, name: "같음" })) };
+    expect(renameBasket(twin, 0, "다름").cards).toEqual(twin.cards);
   });
 });

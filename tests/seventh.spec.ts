@@ -186,6 +186,12 @@ test("학급 모으기: 짝·일지 표시, 보호자 카드 모두 인쇄, 평�
     .toBe("families");
   await page.emulateMedia({ media: "print" });
   await expect(page.locator(".families-sheet .family-card")).toHaveCount(2);
+  // 인쇄 창은 모든 카드의 QR이 그려진 뒤에 열린다.
+  await expect(
+    page
+      .locator(".families-sheet")
+      .getByRole("img", { name: "작품을 열어 보는 QR 코드" }),
+  ).toHaveCount(2);
   await expect(page.locator(".families-sheet")).toContainText("짝과 만든 퀴즈");
   await expect(page.locator(".class-table")).toBeHidden();
   await page.emulateMedia({ media: "screen" });
