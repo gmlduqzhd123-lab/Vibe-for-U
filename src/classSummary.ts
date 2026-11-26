@@ -137,6 +137,8 @@ export const bugNames: Record<string, string> = {
   "rule-shadowed": "앞 조건에 가린 조건",
   "loop-extra": "한 번 더 도는 반복",
   "loop-goal": "반복이 끝난 값이 목표와 달라요",
+  "loop-never": "멈춤 조건에 닿지 못하는 반복",
+  "list-duplicate": "목록에 같은 낱말이 두 번",
   "sort-shadowed": "앞 조건에 가린 바구니",
   "sort-unknown": "없는 바구니 이름",
   "sort-order": "바구니 순서 때문에 다른 곳으로",
@@ -228,14 +230,33 @@ export function parseClassSession(data: unknown, name: string): Entry[] {
   });
 }
 
+// 스스로 평가와 선생님 평가 비교: 둘 다 고른 항목 가운데 단계가 다른 것을 돌려준다.
+// big은 한 항목이라도 두 단계 차이(시작 ↔ 설명·적용)가 나는지다. 상담할 학생을 빨리 찾게 한다.
+export function assessmentGaps(w: Work) {
+  const self = w.selfAssessment?.levels ?? [];
+  const teacher = w.feedback?.levels ?? [];
+  const items = rubric.flatMap((r, i) => {
+    const a = self[i] ?? 0;
+    const b = teacher[i] ?? 0;
+    return a > 0 && b > 0 && a !== b
+      ? [{ name: r[0], self: a, teacher: b }]
+      : [];
+  });
+  return {
+    items,
+    big: items.some((x) => Math.abs(x.self - x.teacher) >= 2),
+  };
+}
+
 // 학급 모으기 걸러 보기·정렬: 평가할 작품을 빨리 찾게 한다.
-export type Filter = "all" | "ungraded" | "unfinished" | "bugs";
+export type Filter = "all" | "ungraded" | "unfinished" | "bugs" | "gap";
 export type Order = "loaded" | "name" | "progress";
 export const filters: [Filter, string][] = [
   ["all", "모든 작품"],
   ["ungraded", "평가 전인 작품"],
   ["unfinished", "다섯 단계를 다 기록하지 않은 작품"],
   ["bugs", "지금 버그가 남은 작품"],
+  ["gap", "스스로 평가와 선생님 평가가 다른 작품"],
 ];
 export const orders: [Order, string][] = [
   ["loaded", "읽은 순서"],
@@ -251,7 +272,9 @@ export function arrange(entries: Entry[], filter: Filter, order: Order) {
         ? steps(work) < stageNames.length
         : filter === "bugs"
           ? diagnose(work.draft.config).length > 0
-          : true,
+          : filter === "gap"
+            ? assessmentGaps(work).items.length > 0
+            : true,
   );
   if (order === "loaded") return keep;
   // 정렬해도 같은 값끼리는 읽은 순서를 지킨다.

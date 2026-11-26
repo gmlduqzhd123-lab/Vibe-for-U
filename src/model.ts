@@ -1,5 +1,5 @@
 export type Kind =
-  "quiz" | "story" | "timer" | "pattern" | "rule" | "sort" | "loop";
+  "quiz" | "story" | "timer" | "pattern" | "rule" | "sort" | "loop" | "list";
 export const kinds: Kind[] = [
   "quiz",
   "story",
@@ -8,6 +8,7 @@ export const kinds: Kind[] = [
   "rule",
   "sort",
   "loop",
+  "list",
 ];
 // easy: 3~4학년용. 어린이 모드 안내에 낱말 블록·읽어 주기·큰 글씨를 더한다.
 export type Mode = "child" | "adult" | "easy";
@@ -98,6 +99,7 @@ export type SortConfig = {
 };
 // 반복 계산기: 처음 값에서 시작해 같은 만큼 바꾸는 일을 정한 횟수만큼 되풀이한다(예: 매일 500원씩 7일 저금).
 // count가 "extra"이면 정한 횟수보다 한 번 더 돈다(학습용 오류). goal은 반복이 끝났을 때 되어야 할 값이다.
+// until을 정하면 값이 그 조건에 맞는 순간 멈춘다(조건 반복). 이때 times는 넘지 않을 가장 많은 횟수다.
 export type LoopConfig = {
   kind: "loop";
   variable: string;
@@ -108,9 +110,23 @@ export type LoopConfig = {
   count: "exact" | "extra";
   goal: number;
   doneMessage: string;
+  until?: { when: RuleCondition; value: number };
+};
+// 목록 앱: 낱말 버튼을 누르면 목록 맨 뒤에 차례로 들어간다. 목록은 순서와 개수를 기억한다.
+// duplicate가 "allow"이면 이미 있는 낱말도 또 들어간다(학습용 오류). max는 담을 수 있는 가장 많은 개수,
+// remove는 '하나 빼기'가 꺼내는 곳(맨 앞 = 먼저 넣은 것, 맨 뒤 = 나중에 넣은 것)이다.
+export type ListConfig = {
+  kind: "list";
+  name: string;
+  items: string[];
+  duplicate: "block" | "allow";
+  max: number;
+  remove: "first" | "last";
+  fullMessage: string;
 };
 export type Config =
   | LoopConfig
+  | ListConfig
   | QuizConfig
   | StoryConfig
   | TimerConfig
@@ -304,6 +320,7 @@ export const kindNames: Record<Kind, string> = {
   rule: "만약 규칙",
   sort: "분류하기",
   loop: "반복 계산기",
+  list: "목록 만들기",
 };
 const promiseText: Record<
   Kind,
@@ -331,6 +348,12 @@ const promiseText: Record<
     input: "한 번 반복이나 끝까지 반복 버튼 누르기",
     exceptions:
       "정한 횟수만큼만 반복하고 멈추며, 처음으로 누르면 처음 값에서 다시 시작하기",
+  },
+  list: {
+    features: "낱말을 차례로 목록에 넣고 순서와 개수 보기",
+    input: "낱말 버튼이나 하나 빼기 버튼 누르기",
+    exceptions:
+      "같은 낱말은 한 번만 넣고, 가득 차면 더 넣지 않으며, 처음으로 누르면 빈 목록이 되기",
   },
   sort: {
     features: "카드를 특징 값에 따라 알맞은 바구니에 나눠 담기",
@@ -423,7 +446,13 @@ export function makeWork(mission: Mission, normal = false): Work {
     // 정상 규칙: 좁은 조건(같으면 → 큰 값 이상 → 작은 값 이하)을 먼저 확인한다.
     if (config.kind === "rule") config.rules = narrowFirst(config.rules);
     if (config.kind === "sort") config.bins = narrowFirst(config.bins);
-    if (config.kind === "loop") config.count = "exact";
+    if (config.kind === "loop") {
+      config.count = "exact";
+      // 정상 규칙: 값이 건너뛸 수 있는 ‘같으면’ 대신 ‘이상·이하이면’으로 멈춘다.
+      if (config.until?.when === "eq")
+        config.until.when = config.change < 0 ? "lte" : "gte";
+    }
+    if (config.kind === "list") config.duplicate = "block";
     if (config.kind === "story") {
       const start = config.scenes.find((s) => s.id === config.start)!;
       if (start.choices[1]) start.choices[1].to = "sun";

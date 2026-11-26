@@ -1,4 +1,5 @@
 import { LoopSettings } from "./LoopSettings";
+import { ListSettings } from "./ListSettings";
 import { RuleSettings } from "./RuleSettings";
 import { SortSettings } from "./SortSettings";
 import type { Config, QuizConfig, StoryConfig } from "./model";
@@ -205,6 +206,8 @@ export function Settings({
     return <RuleSettings config={config} onChange={onChange} />;
   if (config.kind === "loop")
     return <LoopSettings config={config} onChange={onChange} />;
+  if (config.kind === "list")
+    return <ListSettings config={config} onChange={onChange} />;
   if (config.kind === "sort")
     return <SortSettings config={config} onChange={onChange} />;
   if (config.kind === "story") {

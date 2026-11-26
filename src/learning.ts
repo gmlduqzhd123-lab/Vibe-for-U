@@ -1,7 +1,7 @@
 import type { Config, Snapshot, Work } from "./model";
 import { stageDone, stageNames } from "./model";
 import { uid } from "./model";
-import { binCondition, cardValues, dirNames } from "./engines";
+import { binCondition, cardValues, dirNames, loopUntil } from "./engines";
 import { translate } from "./i18n";
 export function updatePrediction(d: Snapshot, prediction: string): Snapshot {
   // 예상을 바꾸면 "눌러 봤다" 기록과 맞았는지 표시도 처음으로 돌아간다.
@@ -98,9 +98,30 @@ export function configSummary(c: Config, t: Tr = ko): string[] {
           c.count === "exact" ? "정한 횟수만큼" : "한 번 더 반복 (학습용 오류)",
         ),
       }),
+      ...(c.until
+        ? [t("멈춤 조건: 값이 {cond} 멈추기", { cond: loopUntil(c, t) })]
+        : []),
       t("목표 값: {v} · 끝났을 때 「{msg}」", {
         v: c.goal,
         msg: c.doneMessage,
+      }),
+    ];
+  if (c.kind === "list")
+    return [
+      t("목록 이름: {name} · 낱말 {n}개", {
+        name: c.name,
+        n: c.items.length,
+      }),
+      t("낱말: {v}", { v: c.items.join(", ") }),
+      t("같은 낱말을 또 넣으면: {v}", {
+        v: t(c.duplicate === "block" ? "넣지 않기" : "또 넣기 (학습용 오류)"),
+      }),
+      t("가장 많이 {n}개 · 가득 차면 「{msg}」", {
+        n: c.max,
+        msg: c.fullMessage,
+      }),
+      t("하나 빼기: {v}", {
+        v: t(c.remove === "first" ? "맨 앞에서" : "맨 뒤에서"),
       }),
     ];
   if (c.kind === "sort")

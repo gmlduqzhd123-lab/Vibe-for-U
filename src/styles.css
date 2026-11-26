@@ -3953,3 +3953,32 @@ pre {
   margin: 6px 0;
   font-size: 1.125rem;
 }
+/* 강제 색상 모드(윈도우 고대비 등): 바탕색이 지워져도 고른 것·켜진 것이 보이게 테두리와 시스템 색을 쓴다. */
+@media (forced-colors: active) {
+  .sidebar nav button.active,
+  .segmented button.active,
+  .filter-row button.active,
+  .stage-nav button.active,
+  .activity-switch button.active,
+  .answers button.selected,
+  [aria-pressed="true"],
+  [aria-current="page"] {
+    outline: 3px solid Highlight;
+    outline-offset: -3px;
+  }
+  .stage-nav button.done {
+    border-style: double;
+    border-width: 4px;
+  }
+  .pattern-board .painted,
+  .status-dot,
+  .bar-fill {
+    forced-color-adjust: none;
+    background: Highlight;
+    border-color: Highlight;
+  }
+  .pattern-board .target {
+    outline: 2px dashed CanvasText;
+    outline-offset: -4px;
+  }
+}

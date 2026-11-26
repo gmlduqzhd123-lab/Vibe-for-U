@@ -1,4 +1,5 @@
 import { LoopPreview } from "./LoopPreview";
+import { ListPreview } from "./ListPreview";
 import { RunAnnouncer, RunHistory, useRunHistory } from "./runHistory";
 import { SpeakButton } from "./Speak";
 import { RulePreview } from "./RulePreview";
@@ -57,6 +58,8 @@ export function Preview({
     return <RulePreview config={config} onRun={onRun} />;
   if (config.kind === "loop")
     return <LoopPreview config={config} onRun={onRun} />;
+  if (config.kind === "list")
+    return <ListPreview config={config} onRun={onRun} />;
   if (config.kind === "sort")
     return <SortPreview config={config} onRun={onRun} />;
   if (config.kind === "quiz") {

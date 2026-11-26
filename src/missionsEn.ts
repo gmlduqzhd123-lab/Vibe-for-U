@@ -710,4 +710,145 @@ export const missionsEn: Record<string, MissionText> = {
     ],
     closing: "When a value must not go below 0, what should the app check?",
   },
+  "loop-5": {
+    title: "Stop when you reach the goal",
+    goal: "Save 700 won a week, and make the loop stop once you have 3000 won or more.",
+    prediction:
+      "After “Repeat to the end”, in which week and at how much will it stop?",
+    tests: [
+      {
+        label: "Stop condition",
+        expected:
+          "It stops at 3000 won or more, even if repeats are left over.",
+      },
+      {
+        label: "Value when it stops",
+        expected: "It stops in week 5 at 3500 won.",
+      },
+    ],
+    task: "Change the stop condition value to 5000, work out where it stops, and fix the goal value to match.",
+    hints: [
+      "Before each repeat, the app first checks whether the value meets the condition.",
+      "2800 won is not “3000 or more”, so it repeats once more.",
+      "The number of repeats, 10, is the most it will ever do.",
+    ],
+    closing:
+      "When is “repeat 7 times” better, and when is “repeat until 3000 won” better?",
+  },
+  "loop-6": {
+    title: "Huh? It won't stop!",
+    goal: "It should stop when the bottle has 1000 mL, but it pours to the very end. Find out why and fix it.",
+    prediction:
+      "Pouring 300 mL a cup, is there ever a moment with exactly 1000 mL?",
+    tests: [
+      {
+        label: "Stop condition",
+        expected: "It stops at 1000 mL or more.",
+      },
+      {
+        label: "Value when it stops",
+        expected: "It stops at cup 4 with 1200 mL.",
+      },
+    ],
+    task: "Change the stop condition to “or more” so it stops before the water spills, then check again.",
+    hints: [
+      "The value goes 300, 600, 900, 1200.",
+      "It is never exactly 1000, so the “equals” condition never matches.",
+      "In the settings, change how it stops to “stop when the value is at least”.",
+    ],
+    closing: "Why can “equals” be risky as a stop condition?",
+  },
+  "list-1": {
+    title: "A picnic packing list",
+    goal: "Add the things to take on a picnic one by one to make a list.",
+    prediction:
+      "If you add “water” first and then “lunch box”, what is in place 1?",
+    tests: [
+      {
+        label: "Order of adding",
+        expected: "Items go to the end of the list in the order you press.",
+      },
+      {
+        label: "Number of items",
+        expected: "The count goes up by 1 each time you add.",
+      },
+    ],
+    task: "Change the words to things you would pack, add one more word, then check again.",
+    hints: [
+      "A list remembers the order you added things.",
+      "A new word always goes to the end.",
+      "In the settings, edit the words and press “+ Add word”.",
+    ],
+    closing: "Why is it handy that a list remembers order?",
+  },
+  "list-2": {
+    title: "Full means stop",
+    goal: "Put things in a small bag that holds only three, and see what happens when it is full.",
+    prediction:
+      "After adding three things, what happens when you press a fourth?",
+    tests: [
+      {
+        label: "When it is full",
+        expected: "The fourth thing does not go in and a message appears.",
+      },
+      {
+        label: "Take out, then add",
+        expected: "After taking one out, you can add another thing.",
+      },
+    ],
+    task: "Change the most items to 4, rewrite the full message kindly, then check again.",
+    hints: [
+      "Before adding, the app counts the items in the list.",
+      "If the count equals the most items, it does not add.",
+      "“Take one out” removes the thing at the end.",
+    ],
+    closing:
+      "What would happen if the app did not check the count before adding?",
+  },
+  "list-3": {
+    title: "Huh? The same name twice!",
+    goal: "Find out why the same name gets on the attendance list twice, and fix it.",
+    prediction: "If you press “Haneul” twice, how many people are on the list?",
+    tests: [
+      {
+        label: "Adding the same name again",
+        expected: "The same name goes in only once.",
+      },
+      {
+        label: "Adding a different name",
+        expected: "A different name goes to the end.",
+      },
+    ],
+    task: "Fix “When the same word is added again” so a name goes in only once, then check again.",
+    hints: [
+      "Press “Haneul” twice and count the items.",
+      "Before adding, the app should check whether it is already in the list.",
+      "In the settings, change “When the same word is added again” to “Don't add”.",
+    ],
+    closing: "Which lists must never hold the same thing twice?",
+  },
+  "list-4": {
+    title: "First come, first served",
+    goal: "Make a list where the first thing added comes out first, like a lunch line.",
+    prediction:
+      "Add the Haneul, Bada and Namu groups in order, then press “Take one out”. Who comes out?",
+    tests: [
+      {
+        label: "Taking out the first one",
+        expected: "The group at the front comes out first.",
+      },
+      {
+        label: "Moving up",
+        expected: "When one comes out, the groups behind move forward.",
+      },
+    ],
+    task: "Change where “Take one out” removes from to the end and see what changes, then set it back to suit a lunch line.",
+    hints: [
+      "In a line, the person who came first leaves first.",
+      "When the front one leaves, number 2 becomes number 1.",
+      "A stack of plates is a list you take from the end (the top).",
+    ],
+    closing:
+      "Where would you use a list that takes from the front, and one that takes from the end?",
+  },
 };

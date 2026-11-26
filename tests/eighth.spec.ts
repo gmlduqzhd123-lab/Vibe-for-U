@@ -181,6 +181,7 @@ test("평가 기준 맞춤·걸러 보기·학기 요약 한 장", async ({ page
     "평가 전인 작품 (1)",
     "다섯 단계를 다 기록하지 않은 작품 (2)",
     "지금 버그가 남은 작품 (1)",
+    "스스로 평가와 선생님 평가가 다른 작품 (1)",
   ]);
   await filter.selectOption("bugs");
   await expect(rows).toHaveCount(1);

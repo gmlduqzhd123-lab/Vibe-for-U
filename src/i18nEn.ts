@@ -633,8 +633,6 @@ export const en: Record<string, string> = {
     "Restored the selected settings and check records. The app opens at the start, stopped.",
   "친구 검사 요청 파일이에요. 친구 작품 검사하기 화면에서 열었어요.":
     "This is a peer check request file. It opened in the Check a friend's work screen.",
-  "평가 목록을 이 기기에 보관하지 못했어요. CSV나 평가 파일로 내려받아 두세요.":
-    "Couldn't keep the rating list on this device. Download it as a CSV or rating file.",
   "이번 미션의 카드는 이미 준비되어 있어요. 실제 결과와 확인 상태를 기록해 주세요.":
     "Cards for this mission are already ready. Record the actual results and check status.",
   "친구 작품을 열었어요. 먼저 예상하고 직접 눌러 보세요.":
@@ -643,11 +641,8 @@ export const en: Record<string, string> = {
   "검사 결과 파일을 만들었어요. 친구에게 돌려주면 친구가 ‘파일 가져오기’로 열어요.":
     "Made the check result file. Give it back to your friend, who opens it with ‘Import file’.",
   "완성 예제 눌러보기": "Try finished examples",
-  "8차시 수업 안내": "8-lesson class guide",
-  "검사표 · 짝 활동": "Checklist · pair activity",
   "과정 평가표": "Process rubric",
   "학급 작품 모으기": "Collect class works",
-  "시범 작품": "Demo work",
   "어떤 상황에서 생긴 문제인가요?": "When did the problem happen?",
   "그대로 유지할 동작": "Behavior to keep the same",
   "수정 후 다시 할 검사": "Check to do again after fixing",
@@ -718,9 +713,7 @@ export const en: Record<string, string> = {
     "Explains what help was used and why things changed.",
   "다른 조건의 과제에 배운 방법을 옮겨 설명한다.":
     "Explains how to use learned methods on a task with different conditions.",
-  미평가: "Not rated",
   수행: "Doing",
-  "설명·적용": "Explaining & applying",
   "관찰 기록 있음": "Has observation notes",
   "실제 결과 미기록": "Actual result not recorded",
   "시작 작품 · 현재 편집본": "Starter work · current draft",
@@ -1052,7 +1045,6 @@ export const en: Record<string, string> = {
     "This file has only the work's settings, not learning records. It opens without the internet.",
   "QR로 받은 작품을 새 작품으로 더했어요.":
     "Added the work from the QR code as a new work.",
-  "미션 만들기": "Create a mission",
   "QR로 받은 작품": "Work from a QR code",
   "다른 탭을 닫은 뒤 다시 시도해 주세요.": "Close other tabs and try again.",
   "저장하지 못했어요.": "Couldn't save.",
@@ -1194,18 +1186,7 @@ export const en: Record<string, string> = {
     "You can have up to 100 check records. Back them up to a file, then select and delete ones you don't need.",
   "QR 주소를 읽지 못했어요. QR을 다시 비추거나 파일로 주고받아 주세요.":
     "Couldn't read the QR address. Scan the QR again or share by file.",
-  "{what}: {max}자 이내로 적어 주세요.":
-    "{what}: Write {max} characters or fewer.",
-  "미션 파일 형식을 알 수 없어요.": "Unknown mission file format.",
-  "검사 항목은 1~6개여야 해요.": "Check items must be 1–6.",
-  "힌트는 1~3개여야 해요.": "Hints must be 1–3.",
-  "미션 제목": "Mission title",
-  "이번 과제": "This task",
-  "미션 목표": "Mission goal",
-  "예상 질문": "Prediction question",
   힌트: "Hint",
-  "선생님 미션은 이 기기에 {n}개까지 둘 수 있어요.":
-    "This device can hold up to {n} teacher's missions.",
   요청문: "Request",
   "만들고 싶은 것과 지켜야 할 약속을 설명하는 말이에요.":
     "Words that explain what you want to make and the promises it must keep.",
@@ -1312,96 +1293,21 @@ export const en: Record<string, string> = {
   "다시 보기": "Review",
   "이어서 찾기": "Keep looking",
   "아직 받은 도전이 없어요.": "No challenges yet.",
-  "{label}: {n}명 / {total}명": "{label}: {n} / {total} students",
-  "{n}명": "{n} students",
-  "학급 진행 요약 그래프": "Class progress summary chart",
-  "가장 많은 학생({n}명)이 「{stage}」 단계에서 멈춰 있어요. 다음 차시 도입에서 이 단계를 함께 짚어 보세요.":
-    "Most students ({n}) are stuck at the “{stage}” step. Go over this step together in the next lesson's Opening.",
-  "모든 학생이 다섯 단계를 모두 기록했어요.":
-    "All students have recorded all five steps.",
-  "다음에 기록할 단계별 학생 수": "Students by next step to record",
-  "미션 힌트를 연 정도": "How many mission hints were opened",
-  "자기 평가와 선생님 평가 (평균 단계)":
-    "Self-rating vs. teacher rating (average level)",
   스스로: "Self",
   선생님: "Teacher",
-  "{label}: 스스로 {self} · 선생님 {teacher} ({n}명)":
-    "{label}: self {self} · teacher {teacher} ({n} students)",
-  "{label}: 둘 다 평가한 작품 없음": "{label}: no work rated by both",
-  "{label}: 스스로 평균 {self}, 선생님 평균 {teacher}":
-    "{label}: self average {self}, teacher average {teacher}",
-  "{label}: 비교할 평가 없음": "{label}: no ratings to compare",
-  "스스로 평가와 선생님 평가를 모두 넣은 작품이 생기면 비교가 나와요.":
-    "A comparison appears once some work has both a self-rating and a teacher rating.",
-  "「{label}」에서 학생들이 스스로를 더 높게 봤어요(평균 차이 {gap}단계). 근거를 함께 이야기해 보세요.":
-    "In “{label}”, students rated themselves higher (average gap: {gap} levels). Talk through the evidence together.",
-  "「{label}」에서 학생들이 스스로를 더 낮게 봤어요(평균 차이 {gap}단계). 근거를 함께 이야기해 보세요.":
-    "In “{label}”, students rated themselves lower (average gap: {gap} levels). Talk through the evidence together.",
-  "표로 보기": "View as table",
   항목: "Item",
   값: "Value",
-  "다음 단계 · {label}": "Next step · {label}",
-  "힌트 · {label}": "Hints · {label}",
-  "평가 · {label}": "Rating · {label}",
-  "스스로 {self} · 선생님 {teacher} ({n}명)":
-    "Self {self} · teacher {teacher} ({n} students)",
-  "비교할 평가 없음": "No ratings to compare",
   "파일은 2MB 이하여야 해요.": "Files must be 2MB or smaller.",
   "읽지 못했어요.": "Couldn't read it.",
-  "작품 {n}개를 읽었어요. 파일 {failed}개는 읽지 못했어요.":
-    "Read {n} works. Couldn't read {failed} files.",
-  "작품 {n}개를 읽었어요.": "Read {n} works.",
   학생이: "Select several JSON files at once that students exported with",
-  "내 작품 선반 → 목록 백업": "My work shelf → Back up list",
-  "또는 작업실의": "or the workshop's",
-  "으로 낸 JSON 파일을 여러 개 한꺼번에 고르세요. 파일 이름을 학생 번호·이름으로 바꿔 받으면 누구의 작품인지 알아보기 쉬워요.":
-    ". If students rename files with their number and name, it's easy to tell whose work is whose.",
-  "평가 중인 목록은 이 기기에만 임시로 보관해 새로고침해도 이어서 열려요. 서버에는 올리지 않고, 학생 작품 선반과도 섞이지 않아요. 평가를 마치면 CSV나 평가 파일로 내려받고":
-    "The list you're rating is kept temporarily on this device only, so it reopens after a refresh. It isn't uploaded to a server or mixed with the student work shelf. When you finish, download a CSV or rating files, then clear it with",
-  "목록 비우기": "Clear list",
-  "로 지워 주세요.": ".",
-  "학생 작품 파일 고르기": "Choose student work files",
-  "표 CSV로 내려받기": "Download table as CSV",
-  "평가를 넣은 작품 파일 {n}개의 다운로드를 요청했어요. 여러 파일 다운로드를 허용해 주세요.":
-    "Requested downloads of {n} rated work files. Please allow multiple file downloads.",
-  "평가 파일 모두 내려받기": "Download all rating files",
-  "작품 발표 화면": "Work presentation screen",
-  "칭찬·질문 카드 인쇄": "Print praise & question cards",
-  "학생 작품 JSON 파일 여러 개": "Multiple student work JSON files",
-  "읽지 못한 파일": "Files that couldn't be read",
-  "한눈에 보기": "At a glance",
-  "작품 {n}개 · 다섯 단계 모두 기록 {done}개 · 평가 완료 {graded}개":
-    "{n} works · all five steps recorded: {done} · rated: {graded}",
-  "학급 작품 요약표 · 좌우 방향키로 이동해 읽기":
-    "Class work summary table · use the left and right arrow keys to move and read",
-  "파일 / 작품": "File / Work",
   "직접 확인": "Checked myself",
   평가: "Rating",
-  "✓ 완료": "✓ Done",
   남음: "Left",
-  "통과 {n}": "Passed {n}",
-  " · 남은 {n}": " · {n} left",
-  " · 재검사함": " · rechecked",
   "{n}개": "{n}",
-  "{n}번째까지": "Up to #{n}",
-  "안 봄": "Not viewed",
-  "평가 완료": "Rated",
-  "평가 전": "Not rated yet",
-  "단계별 완료": "Steps done",
-  "아직 읽은 작품이 없어요": "No work read yet",
-  "학생 작품 파일을 고르면 단계 기록 표와 평가 카드가 나와요.":
-    "Choose student work files to see the step record table and rating cards.",
-  "{title} · {n} / 5단계": "{title} · {n} / 5 steps",
   "실행 전 예상": "Prediction before running",
-  "바꾼 동작과 이유": "What I changed and why",
-  "직접 확인한 검사": "Checks I did myself",
   "학생 자기 평가": "Student self-rating",
   "과정 평가": "Process rating",
   "확인한 근거와 다음 도움": "Evidence checked & next support",
-  "평가를 넣은 작품 파일 내려받기": "Download rated work file",
-  "학생이 이 파일을": "When the student opens this file with",
-  "로 열면 포트폴리오에서 평가와 의견을 볼 수 있어요.":
-    ", they can see the ratings and comments in their portfolio.",
   "내가 만들고 고쳐 온 길": "The path of making and fixing",
   "작품 {n}개 · {from} ~ {to}": "{n} works · {from} – {to}",
   "다섯 단계를 모두 기록한 작품 {n}개":
@@ -1414,99 +1320,18 @@ export const en: Record<string, string> = {
   자랐어요: "I grew!",
   "자기 평가를 한 작품이 두 개 이상이면 처음과 마지막을 비교해요.":
     "Once two or more works have a self-rating, the first and last are compared.",
-  "A4 한 장으로 인쇄": "Print on one A4 page",
-  "교사 자료실로": "To teacher resources",
-  "뚝딱 바이브 공작소 · 오늘 수업 키트":
-    "Ttukttak Vibe Workshop · Today's lesson kit",
-  "{n}차시 · {title}": "Lesson {n} · {title}",
-  "{title} 미션 주소 QR 코드": "QR code for the {title} mission link",
-  "카메라로 비추면 오늘 미션이 열려요":
-    "Scan with a camera to open today's mission",
-  "진행 순서 (40분)": "Lesson flow (40 min)",
-  "미션에서 할 일": "What to do in the mission",
-  "준비와 살펴볼 것": "Preparation & what to watch for",
-  "{n}차시 학생 활동지(앞뒤 2쪽)":
-    "Lesson {n} student worksheet (2 pages, front and back)",
-  "핵심 질문": "Key question",
   "살펴볼 것": "What to watch for",
-  "수업 전 확인": "Before the lesson",
-  "□ 기기마다 QR로 미션이 열리고 ‘기기에 저장됨’이 보여요":
-    "□ Each device opens the mission via QR and shows ‘Saved on device’",
-  "□ 짝 역할(운전자·관찰자)과 교대 시간을 정했어요":
-    "□ Partner roles (driver & observer) and switch times are set",
-  "□ 수업 끝에 ‘수업 끝 정리 도우미’로 백업·정리할 시간을 남겼어요":
-    "□ Time is left at the end to back up and tidy up with the ‘End-of-lesson wrap-up helper’",
-  "미션 주소: {url}": "Mission link: {url}",
-  "미션을 만들지 못했어요.": "Couldn't create the mission.",
-  "선생님 미션 만들기": "Make a teacher's mission",
-  "시작 설정과 검사 항목을 정해 우리 반 미션을 만들어요. 이 기기에 더하면 미션 공작대에 바로 나오고, 미션 파일을 나눠 주면 학생이 ‘파일 가져오기’로 더해요.":
-    "Set the starting setup and checks to make a mission for your class. Add it to this device and it appears in the Mission workshop right away; share the mission file and students add it with ‘Import file’.",
-  "미션 목표 (학생이 무엇을 만들고 확인하나요?)":
-    "Mission goal (What will students make and check?)",
-  "먼저 예상하기 질문": "Predict-first question",
-  "이번 과제 (무엇을 고치거나 바꾸나요?)":
-    "This task (What will students fix or change?)",
   "시작 설정": "Starting setup",
-  "학생이 처음 여는 앱이에요. 일부러 틀린 규칙을 넣었다면 아래 ‘학습용 오류 포함’을 켜 주세요.":
-    "This is the app students open first. If you put in a wrong rule on purpose, turn on ‘Includes practice bug’ below.",
-  "학습용 오류 포함 (학생이 찾아 고칠 규칙이 있어요)":
-    "Includes practice bug (there's a rule for students to find and fix)",
-  "검사 항목 (1~6개)": "Checks (1–6)",
   "검사 {n}": "Check {n}",
-  "검사 {n} 이름": "Check {n} name",
-  "검사 {n} 기대 결과": "Check {n} expected result",
-  "검사 {n} 삭제": "Delete check {n}",
-  "검사 항목 추가": "Add a check",
-  "힌트 (1~3개, 차례로 열려요)": "Hints (1–3, open one at a time)",
-  "「{title}」을 이 기기의 미션 공작대에 더했어요.":
-    "Added “{title}” to this device's Mission workshop.",
-  "이 기기에 미션 더하기": "Add mission to this device",
-  "미션 파일을 내려받았어요. 학생은 내 작품 선반의 ‘파일 가져오기’로 더해요.":
-    "Mission file downloaded. Students add it with ‘Import file’ on My work shelf.",
-  "미션 파일 내려받기": "Download mission file",
-  "이 기기의 선생님 미션 {n}개": "Teacher's missions on this device: {n}",
-  " · 이 미션의 작품 {n}개": " · {n} works from this mission",
-  "미션 보기": "View mission",
-  "파일 다시 받기": "Download file again",
-  "이 미션으로 만든 작품이 있어 지울 수 없어요.":
-    "This mission can't be deleted because there's work made with it.",
-  "「{title}」을 이 기기에서 지웠어요.": "Deleted “{title}” from this device.",
   지우기: "Delete",
-  "아직 만든 미션이 없어요.": "No missions made yet.",
   "내가 걸어온 길": "The path I've taken",
   "다섯 단계를 모두 기록한 미션 {n}개 / 전체 {m}개":
     "Missions with all five steps recorded: {n} / {m}",
   "지도 표시": "Map legend",
-  "오늘의 활동 · {title}": "Today's activity · {title}",
   "오늘의 미션": "Today's mission",
-  "목표: {goal}": "Goal: {goal}",
-  "활동 시간이 끝났어요.": "Activity time is up.",
-  " · {n}차시": " · Lesson {n}",
-  "전체 화면": "Full screen",
-  "이 기기는 전체 화면을 지원하지 않아요. 기기를 가로로 놓거나 브라우저 메뉴의 ‘홈 화면에 추가’로 열면 화면을 넓게 쓸 수 있어요.":
-    "This device doesn't support full screen. Turn the device sideways or open it with ‘Add to Home Screen’ in the browser menu to use more of the screen.",
-  "수업 진행 끝내기": "End lesson presentation",
-  "진행 단계": "Lesson stages",
-  "← 이전": "← Back",
-  "다음 →": "Next →",
-  "활동 타이머": "Activity timer",
   도입: "Opening",
-  전개: "Activity",
   정리: "Wrap-up",
   "{n}분": "{n} min",
-  "10분마다 짝 역할 교대 알림": "Partner role-switch alert every 10 minutes",
-  "소리로도 알리기 (교대 두 번, 종료 세 번)":
-    "Also alert with sound (switch: two beeps, end: three)",
-  "운전자:": "Driver:",
-  "짝 B": "Partner B",
-  "짝 A": "Partner A",
-  "관찰자:": "Observer:",
-  "다음 교대까지 {time}": "Next switch in {time}",
-  "활동 시간이 끝났어요. 정리해 볼까요?":
-    "Activity time is over. Ready to wrap up?",
-  "역할을 바꿔요!": "Switch roles!",
-  "이제 운전자는 {driver}, 관찰자는 {observer}예요.":
-    "Now {driver} is the driver and {observer} is the observer.",
   확인: "OK",
   "지나온 길 {n}개": "Path so far: {n}",
   "준비된 만약 규칙 템플릿": "Ready-made if-then rule templates",
@@ -1578,90 +1403,9 @@ export const en: Record<string, string> = {
   "QR을 읽고 바로 시작하세요 · 학생 가입 없이":
     "Scan the QR and start right away · no sign-up",
   "{title} 직접 열기 · 새 탭": "Open {title} directly · new tab",
-  "작품 {n} / {total} · {file}": "Work {n} / {total} · {file}",
-  "✕ 발표 끝내기": "✕ End presentation",
-  "발표 장면": "Presentation slide",
-  "누르기 전에 이렇게 예상했어요": "Before running, I predicted this",
-  "직접 눌러 보니": "When I ran it",
-  "이상했던 점": "What seemed wrong",
-  "이렇게 바꿨어요": "What I changed",
   "바꾼 까닭": "Why I changed it",
-  "이 앱은 이렇게 움직여요": "How this app works",
-  "←·→ 방향키로 넘기고 Esc로 끝내요": "Use ←·→ keys to move, Esc to end",
-  "칭찬·질문 카드": "Praise & question card",
-  "작품: {title}": "Work: {title}",
-  "좋았던 점 ________________________________":
-    "What I liked ________________________________",
-  "궁금한 점 ________________________________":
-    "What I wonder ________________________________",
-  "적은 친구 ____________": "Written by ____________",
-  "모두에게 열린 학습 자료": "Learning materials open to everyone",
-  "40분 × 8차시. 아이의 생각과 검사 과정을 함께 살펴보세요.":
-    "40 minutes × 8 lessons. Look at students' thinking and their checking process together.",
-  "화면 안내 인쇄": "Print screen guide",
-  "공개 학습 자료예요. 모드 선택은 교사 인증이나 접근 통제가 아니에요. 3~4학년은 선택 카드와 짝 활동을 활용해 주세요.":
-    "These are public learning materials. Choosing a mode is not teacher verification or access control. For grades 3–4, use choice cards and partner activities.",
-  "수업 자료 내려받기": "Download lesson materials",
-  "초등 5~6학년 기준 · 40분씩 8차시 · PDF로 인쇄하고 Word로 수정하세요.":
-    "For grades 5–6 · 8 lessons of 40 minutes · print as PDF, edit in Word.",
-  "모두 받기 · ZIP": "Download all · ZIP",
-  "{n}쪽 · PDF / Word": "{n} pages · PDF / Word",
-  "{title} PDF 열기 (새 탭)": "Open {title} PDF (new tab)",
-  "PDF 열기": "Open PDF",
-  "{title} PDF 내려받기": "Download {title} PDF",
-  "PDF 내려받기": "Download PDF",
-  "{title} Word 수정본 내려받기": "Download editable Word file of {title}",
-  "Word 수정본": "Editable Word",
-  "오늘 쓸 활동지만 필요하면 아래 차시를 펼쳐 받으세요. 한 면당 한 쪽으로 인쇄하고, 양면 인쇄는 긴 쪽 넘김을 선택하세요. 6차시 외부 AI 도구는 교사·성인이 조작해요.":
-    "If you only need today's worksheet, expand a lesson below to download it. Print one page per sheet; for double-sided printing, choose long-edge flip. In Lesson 6, the external AI tool is operated by the teacher or another adult.",
-  "이 차시에 연결한 미션 · {title}": "Mission linked to this lesson · {title}",
   "미션 안내 열기": "Open mission guide",
-  "수업 키트 한 장 인쇄": "Print one-page lesson kit",
-  "학생용 미션 주소 복사": "Copy student mission link",
-  "주소에는 미션만 들어가요. 학생의 기록은 각자 기기에 남아요.":
-    "The link contains only the mission. Student records stay on each device.",
-  "{n}차시 학생 활동지 · 앞뒤 2쪽":
-    "Lesson {n} student worksheet · 2 pages, front and back",
-  "{n}차시 학생 활동지 PDF 열기 (새 탭)":
-    "Open Lesson {n} student worksheet PDF (new tab)",
-  "활동지 PDF 열기": "Open worksheet PDF",
-  "{n}차시 학생 활동지 내려받기": "Download Lesson {n} student worksheet",
-  "활동지 내려받기": "Download worksheet",
-  "전개 30분": "Activity 30 min",
-  "교사 발문": "Teacher questions",
-  "관찰 기준": "Observation criteria",
-  "기기 문제 대안": "If devices fail",
-  "짝 활동 · 역할을 바꿔요": "Partner activity · switch roles",
-  "운전자: 버튼을 누르고 규칙을 수정해요. 관찰자: 실행 전에 예상하고, 결과와 이유를 적어요.":
-    "Driver: presses buttons and edits rules. Observer: predicts before running, then records the result and the reason.",
-  "10분마다 역할을 교대해요. 먼저 답을 알려 주기보다 “어떻게 검사할까?”를 물어보세요.":
-    "Switch roles every 10 minutes. Rather than giving the answer first, ask “How could we check it?”",
-  "인쇄용 검사 카드": "Printable check card",
-  "검사표 프로젝트": "Check sheet project",
-  "모든 프로젝트": "All projects",
-  "기대한 결과는 정상 규칙의 예시예요. 작품의 약속에 맞게 조정해서 사용하고, 실제 결과는 직접 관찰한 뒤 적어 주세요.":
-    "Expected results are examples of the correct rule. Adjust them to fit each work's rules, and write actual results only after observing them.",
-  "검사표 · 좌우 방향키로 이동해 읽기":
-    "Check sheet · use left/right arrow keys to scroll",
-  "검사 행동": "Check action",
-  "실제 결과 / 판정": "Actual result / verdict",
-  "실제: __________________": "Actual: __________________",
-  "□ 확인 □ 수정 필요 □ 미확인": "□ OK □ Needs fixing □ Not checked",
   "수정과 재검사": "Fix and recheck",
-  "발생 상황: _____________________": "What happened: _____________________",
-  "바꾼 규칙과 이유: _____________________":
-    "Rule changed and why: _____________________",
-  "같은 행동으로 다시 검사한 결과: _____________________":
-    "Result of rechecking with the same action: _____________________",
-  "친구의 관찰 의견: _____________________":
-    "Partner's observation: _____________________",
-  "프롬프트 길이, 코드 줄 수, 장식의 양으로 이해도를 평가하지 않습니다. 실제 기록과 설명을 근거로 단계와 의견을 적습니다.":
-    "Understanding is not assessed by prompt length, lines of code or amount of decoration. Levels and comments are based on actual records and explanations.",
-  "과정 평가표 · 좌우 방향키로 이동해 읽기":
-    "Process rubric · use left/right arrow keys to scroll",
-  "확인한 근거 / 다음 도움: _____________________________________":
-    "Evidence checked / next support: _____________________________________",
-  "시범 작품 열기": "Open sample work",
   "처음 값 {v}에서 시작해요.": "Starts at the starting value {v}.",
   "맞는 조건 없음 → 그 밖에 문구": "No condition matches → otherwise message",
   "조건 {n}번이 처음으로 맞음": "Condition {n} is the first match",
@@ -1684,8 +1428,6 @@ export const en: Record<string, string> = {
   "버튼 「{label}」: {name} {change}": "Button “{label}”: {name} {change}",
   "조건 {n}: 만약 {cond} 「{msg}」": "Condition {n}: if {cond} “{msg}”",
   "그 밖에: 「{msg}」": "Otherwise: “{msg}”",
-  "{date}까지 평가하던 작품 {n}개를 이어서 열었어요.":
-    "Reopened {n} works you were assessing until {date}.",
   "보내기 전에 확인해요": "Check before sending",
   "그대로 보내기": "Send as is",
   "가장 작은 값": "Smallest value",
@@ -1707,66 +1449,17 @@ export const en: Record<string, string> = {
     "The message “{msg}” can never show because an earlier condition hides it.",
   "앱은 조건을 위에서부터 확인하고 처음 맞는 것 하나만 써요. 조건 {n}번을 조건 {k}번보다 위로 올려 보세요.":
     "The app checks conditions from the top and uses only the first one that matches. Try moving condition {n} above condition {k}.",
-  "교사용 사용 안내서": "Teacher's guide",
-  "앱 사용법, 차시별 시간표와 발문, 과정 평가, 저장·백업 안내":
-    "How to use the app, lesson-by-lesson schedules and questions, process assessment, saving and backup",
-  "차시별 학생 활동지 전체": "All student worksheets by lesson",
   "1~8차시 예상·관찰·수정·재검사 기록지 · 차시마다 앞뒤 2쪽":
     "Prediction, observation, fix and re-check sheets for Lessons 1–8 · 2 pages (front and back) per lesson",
-  "새 기능 수업 보충 안내": "Supplementary guide for new features",
-  "패턴 그리기·쉬운 모드·친구 검사·자기 평가·수업 진행·맞춤 힌트·앱 파일·QR·화면 보기·선생님 미션 · 친구 검사 기록지 1쪽":
-    "Pattern drawing · easy mode · partner check · self-assessment · lesson presentation · tailored hints · app files · QR · screen view · teacher's missions · 1-page partner check sheet",
-  "학생 활동지 영어판 (Student worksheets in English)":
-    "Student worksheets in English",
   "1~8차시 활동지를 같은 배치로 옮긴 영어판 · 영어 화면으로 배우는 학생용":
     "English version of the Lesson 1–8 worksheets with the same layout · for students learning with the English screen",
-  "같은 정답을 세 번 누르기": "Press the same correct answer three times",
   "한 문제의 점수는 한 번만 반영된다.":
     "Each question's score counts only once.",
-  "마지막 문제까지 풀기": "Solve through the last question",
-  "마지막 문제 뒤에 최종 점수와 결과가 나온다.":
-    "After the last question, the final score and result appear.",
   "다시 시작하기": "Start over",
-  "점수 0점·첫 문제·답하지 않은 상태로 돌아간다.":
-    "Returns to 0 points, the first question and no answer chosen.",
-  "두 갈림길 모두 가 보기": "Try both paths",
-  "각 선택이 의도한 장면으로 연결되고 모든 결말에 도달한다.":
-    "Each choice leads to the intended scene, and every ending can be reached.",
   "처음으로 돌아가기": "Go back to the beginning",
-  "시작 장면으로 돌아가고 지나온 길이 비워진다.":
-    "Returns to the starting scene and clears the path taken.",
-  "시작을 연속으로 누르기": "Press Start several times in a row",
-  "타이머 하나만 실행되고 시간이 두 배로 줄지 않는다.":
-    "Only one timer runs, and time doesn't count down twice as fast.",
-  "일시정지 후 기다렸다가 재개하기": "Pause, wait, then resume",
-  "멈춘 동안 남은 시간이 유지되고 그 지점부터 이어진다.":
-    "The remaining time is kept while paused and continues from that point.",
-  "0초가 된 뒤 기다리기": "Wait after it reaches 0 seconds",
-  "0초보다 작아지지 않고 종료 안내가 한 번 나온다.":
-    "It doesn't go below 0 seconds, and the end message appears once.",
-  "초기화한 다음 다시 시작하기": "Reset, then start again",
-  "설정한 시간·정지 상태로 돌아간 뒤 다시 실행된다.":
-    "Returns to the set time in a stopped state, then runs again.",
-  "그리기 전에 모양을 예상하고 모두 그리기":
-    "Predict the shape before drawing, then draw it all",
-  "명령 순서대로 칸이 칠해지고 목표 모양과 같다.":
-    "Squares are filled in command order and match the target shape.",
-  "한 칸씩 그리며 위치 기록하기":
-    "Draw one square at a time and record the position",
-  "이동할 때마다 현재 위치가 한 칸씩 바뀐다.":
-    "The current position moves one square with each move.",
-  "판 끝에 닿은 뒤에도 그리기":
-    "Keep drawing after reaching the edge of the board",
   "판 끝에서 멈추고 반대편 칸을 칠하지 않는다.":
     "It stops at the edge and doesn't fill squares on the opposite side.",
-  "시작 단계": "Beginning",
-  "수행 단계": "Doing",
-  "설명·적용 단계": "Explaining & applying",
   "모두 기록": "Record all",
-  "1번째": "1st",
-  "2번째": "2nd",
-  "3번째까지": "Up to 3rd",
-  "작품 실행": "Running the work",
   "예상과 실제": "Prediction and actual",
   "고친 이유": "Reason for the fix",
   "작동 원리": "How it works",
@@ -1949,43 +1642,14 @@ export const en: Record<string, string> = {
     "Updated {n} teacher's mission(s) to the new edition.",
   "「{title}」은 이미 같은 판이 이 기기에 있어요.":
     "“{title}” is already on this device in the same edition.",
-  "「{title}」 {v}판을 고치는 중이에요. 저장하면 {next}판이 되고, 이 미션을 이미 받은 기기는 다음에 파일을 열 때 새 판으로 바꿀지 물어요.":
-    "Editing “{title}” edition {v}. Saving makes edition {next}; devices that already have this mission will be asked to update the next time they open a file.",
-  "고치기 그만두기": "Stop editing",
-  "영어 글 함께 적기 (선택)": "Add English text (optional)",
-  "영어 화면을 쓰는 학급에 나눠 줄 때 채워요. 다섯 칸을 모두 적고 검사·힌트 줄 수가 한국어와 같아야 영어 화면에 나와요. 비워 두면 영어 화면에서도 한국어 글을 보여 줘요.":
-    "Fill this in for classes that use the English screen. All five fields must be filled and the number of check and hint lines must match the Korean for it to show in English. Left empty, the Korean text is shown in English too.",
-  "Checks · 한 줄에 하나, 「이름 | 기대 결과」 ({n}줄)":
-    "Checks · one per line, “name | expected result” ({n} lines)",
-  "Hints · 한 줄에 하나 ({n}줄)": "Hints · one per line ({n} lines)",
-  "고쳐서 새 판 만들기": "Edit as new edition",
   "선생님 미션의 새 판이 왔어요":
     "A new edition of a teacher's mission arrived",
   "새 판으로 바꾸기": "Update to new edition",
-  "1~8차시 예상·관찰·수정·재검사 기록지와 보충 차시(만약 규칙·분류하기 앱) · 차시마다 앞뒤 2쪽":
-    "Predict · observe · fix · re-check sheets for Lessons 1–8 plus the extra lessons (If-then rule app, Sorting app) · 2 pages per lesson",
-  "1~8차시와 보충 차시(만약 규칙·분류하기 앱) 활동지를 같은 배치로 옮긴 영어판 · 영어 화면으로 배우는 학생용":
-    "English edition of the Lesson 1–8 and extra-lesson worksheets, same layout · for students using the English screen",
-  "교사용 안내서 영어판 (Teacher guide in English)": "Teacher guide in English",
-  "14쪽 안내서를 같은 배치로 옮긴 영어판 · 영어로 수업하는 교사용":
-    "English edition of the 14-page guide, same layout · for teachers teaching in English",
-  "새 기능 보충 안내 영어판 (New features supplement in English)":
-    "New features supplement in English",
-  "6쪽 보충 안내의 영어판": "English edition of the 6-page supplement",
   "코스 「{title}」을 받았어요. 나의 미션 지도에서 순서대로 열어요.":
     "Received the course “{title}”. Open it in order from My mission map.",
   "최근 되돌리기 기록도 함께 왔어요.": "Recent undo steps came along too.",
   "선생님 평가를 받았어요.": "Received the teacher’s assessment.",
-  "차시별 진행": "Progress by lesson",
-  "8차시 계획의 미션별로 읽은 작품을 셌어요. 같은 미션을 쓰는 차시는 같은 작품이 보여요. ‘많이 멈춘 단계’는 아직 기록하지 않은 첫 단계가 가장 많은 곳이에요.":
-    "Works are counted by the mission of each lesson in the 8-lesson plan. Lessons that share a mission show the same works. ‘Most stuck at’ is the first unrecorded step that the most students are on.",
-  "차시별 진행표 · 좌우 방향키로 이동해 읽기":
-    "Progress by lesson table · use the left and right arrow keys to read",
   차시: "Lesson",
-  "다섯 단계 완료": "All five steps done",
-  "많이 멈춘 단계": "Most stuck at",
-  "{stage} · {n}명": "{stage} · {n} students",
-  "평가를 QR로 돌려주기": "Return assessment by QR",
   "내가 설계한 검사 · 앱에게 실험 시키기":
     "My own test · let the app run the experiment",
   "‘이렇게 누르면 이런 결과가 나올 거야’를 적어요. 앱이 대신 눌러 본 결과와 비교해 ‘학습자 직접 확인’ 카드로 남겨요.":
@@ -2001,27 +1665,8 @@ export const en: Record<string, string> = {
   "실험하고 기록하기": "Run and record",
   "자동 검사 결과 듣기": "Listen to the automatic test results",
   "힌트 듣기": "Listen to the hint",
-  "미션 묶음(코스) 만들기": "Make a mission course",
-  "기본 미션과 선생님 미션을 순서대로 묶어요. 학생이 코스 파일을 가져오면 나의 미션 지도에 ‘우리 반 코스’ 길이 생기고, 담긴 선생님 미션도 함께 더해져요.":
-    "Bundle built-in and teacher missions in order. When a student imports the course file, a ‘Our class course’ path appears on their mission map and the teacher missions inside are added too.",
-  "코스 이름": "Course name",
-  "넣을 미션": "Mission to add",
-  "코스에 더하기": "Add to course",
-  "코스 순서": "Course order",
-  "{n}번 미션을 앞으로": "Move mission {n} up",
-  "{n}번 미션 빼기": "Remove mission {n}",
   빼기: "Remove",
-  "아직 넣은 미션이 없어요.": "No missions added yet.",
-  "코스 「{title}」을 이 기기에 더했어요.":
-    "Added the course “{title}” to this device.",
-  "이 기기에 코스 더하기": "Add course to this device",
-  "코스 파일을 내려받았어요. 학생은 내 작품 선반의 ‘파일 가져오기’로 더해요.":
-    "Course file downloaded. Students add it with ‘Import file’ on My shelf.",
-  "코스 파일 내려받기": "Download course file",
-  "이 기기의 코스 {n}개": "{n} courses on this device",
   "미션 {n}개": "{n} missions",
-  "코스 「{title}」을 이 기기에서 지웠어요.":
-    "Removed the course “{title}” from this device.",
   "우리 반 코스 · {title}": "Our class course · {title}",
   "{n} / {m} 완료": "{n} / {m} done",
   "다음에 할 미션": "Next mission",
@@ -2099,10 +1744,6 @@ export const en: Record<string, string> = {
   "질문 답": "question answer",
   답: "answer",
   "평가가 비어 있어요.": "The assessment is empty.",
-  "코스 파일 형식을 알 수 없어요.": "Unknown course file format.",
-  "코스에는 미션을 1~{n}개 넣어 주세요.": "A course needs 1 to {n} missions.",
-  "코스는 이 기기에 {n}개까지 둘 수 있어요.":
-    "This device can hold up to {n} courses.",
   "문제 {a}에서 {b}번 답 고르기 → 그 문제에서 얻은 점수":
     "Pick answer {b} on question {a} → points from that question",
   "문제 {a}에서 정답을 두 번 고르기 → 그 문제에서 얻은 점수":
@@ -2111,26 +1752,8 @@ export const en: Record<string, string> = {
     "Points from this question {g} · total score {n}",
   "평가를 돌려줄 작품을 알 수 없어요.":
     "Can't tell which work this assessment belongs to.",
-  "코스에 적힌 미션 {n}개가 이 기기에 없어요. 미션 파일을 먼저 가져와 주세요.":
-    "{n} missions in this course are not on this device. Import the mission files first.",
   "일지 다 적음": "journal complete",
-  "우리 반이 많이 만난 버그": "Bugs our class met most",
-  "저장한 버전과 지금 편집본을 맞춤 힌트 규칙으로 살펴 셌어요. ‘지금은 고침’은 지금 편집본에서는 그 버그가 없는 학생 수예요.":
-    "Counted by checking saved versions and the current draft with the smart-hint rules. ‘Fixed now’ is the number of students whose current draft no longer has that bug.",
-  "버그 종류": "Bug type",
-  "만난 학생": "Students who met it",
-  "지금은 고침": "Fixed now",
-  "읽은 작품에서 맞춤 힌트가 찾는 버그가 없었어요.":
-    "The smart hints found no bugs in the works you loaded.",
-  "제가 만든 작은 앱을 소개해요": "Here is a small app I made",
-  "무엇을 만들었나요": "What I made",
-  "고친 점과 이유": "What I fixed and why",
   "배운 점": "What I learned",
-  "작품을 열어 보는 QR 코드": "QR code to open the work",
-  "휴대전화 카메라로 비추고 ‘새 작품으로 받기’를 누르면 직접 눌러 볼 수 있어요.":
-    "Scan it with a phone camera and press ‘Receive as a new work’ to try it yourself.",
-  "뚝딱 바이브 공작소 · 가입과 서버 없이 학교에서 쓰는 코딩 학습 앱이에요. 점수가 아니라 예상하고 검사하고 고친 과정을 기록해요.":
-    "Ttukttak Vibe Workshop · a coding app for school with no sign-up and no server. It records how students predicted, tested and fixed, not a score.",
   "버그 탐정 일지 {n}편": "{n} bug detective journals",
   도전: "Challenge",
   "작품 {n}개가 마지막 백업 뒤에 바뀌었어요.":
@@ -2202,24 +1825,6 @@ export const en: Record<string, string> = {
   "카드 {n} 삭제": "Delete card {n}",
   "새 카드": "New card",
   "카드 추가": "Add card",
-  "고친 영어에도 한국어와 같은 {값} 자리가 있어야 해요. 중괄호 안 이름은 그대로 두세요.":
-    "The fixed English needs the same {값} slots as the Korean. Keep the names inside the braces as they are.",
-  "번역을 고쳤어요. 영어 화면에 바로 나와요.":
-    "Translation fixed. It shows in the English screens right away.",
-  "영어 번역 고치기": "Fix English translations",
-  "영어 문장은 자동 번역으로 넣었어요. 수업에서 어색한 문장을 찾아 고치면 이 기기의 영어 화면에 바로 나와요. 고친 문장 파일을 저장소 관리자에게 보내면 모든 기기에 반영할 수 있어요.":
-    "The English sentences were machine-translated. Find awkward ones and fix them, and the English screens on this device change right away. Send the file of fixes to the repository maintainer to apply them on every device.",
-  "한국어나 영어로 찾기": "Search in Korean or English",
-  "예: 다음 문제": "e.g. Next question",
-  "고친 문장 {n}개 파일로 받기": "Download {n} fixed sentences as a file",
-  "영어 번역표를 불러오고 있어요…": "Loading the English translations…",
-  "찾는 문장이 없어요.": "No matching sentences.",
-  "아직 고친 문장이 없어요. 위에서 고칠 문장을 찾아보세요.":
-    "No fixed sentences yet. Search above for one to fix.",
-  "원래 번역: {en}": "Original translation: {en}",
-  "영어 문장": "English sentence",
-  "고친 번역 저장": "Save fixed translation",
-  "원래 번역으로 되돌렸어요.": "Restored the original translation.",
   원래대로: "Restore original",
   "버그 탐정 일지": "Bug detective journal",
   "탐정처럼 차례로 적어요. 틀린 의심도 괜찮아요. 다 적으면 성장 포트폴리오에 모여요.":
@@ -2306,19 +1911,6 @@ export const en: Record<string, string> = {
   "「{want}」 바구니 조건이 {v}에서 맞지 않아요. 기준 값과 ‘이상·이하·같으면’을 확인해 보세요. 딱 기준 값인 카드가 어디로 가야 하는지 생각해 봐요.":
     "The “{want}” condition does not match at {v}. Check the limit and ‘or more · or less · equals’. Think about where a card exactly at the limit should go.",
   분류하기: "Sorting",
-  "같은 정답에 점수가 또 올라요": "Score rises again on the same answer",
-  "다시 시작해도 점수가 남아요": "Score stays after restarting",
-  "없는 장면으로 가는 선택지": "Choice goes to a missing scene",
-  "갈 수 없는 결말": "Unreachable ending",
-  "0초가 돼도 안내가 없어요": "No message at 0 seconds",
-  "앞 조건에 가린 조건": "Condition hidden by one above",
-  "앞 조건에 가린 바구니": "Basket hidden by one above",
-  "없는 바구니 이름": "Basket name that doesn't exist",
-  "바구니 순서 때문에 다른 곳으로": "Wrong basket because of order",
-  "기준 값에서 다른 곳으로": "Wrong basket at the limit",
-  "판 밖으로 넘어가요": "Goes off the board",
-  "목표에서 빠진 칸": "Cells missing from the target",
-  "목표 밖 칸을 칠해요": "Paints cells outside the target",
   "예: 점수가 두 번 오르는 것 같아요. 채점 규칙이 의심돼요.":
     "e.g. The score seems to go up twice. I suspect the scoring rule.",
   "예: 같은 정답을 세 번 눌러 봤어요.":
@@ -2375,14 +1967,6 @@ export const en: Record<string, string> = {
   물병: "Water bottle",
   "바구니마다 카드가 들어갈 수 있음": "Every basket can get cards",
   "카드가 기대한 바구니로": "Cards go to expected baskets",
-  "평가 목록 파일 {n}개의 다운로드를 요청했어요. 다른 기기의 ‘학생 작품 파일 고르기’로 열면 이어서 평가해요.":
-    "Requested the download of {n} assessment list files. Open them with ‘Choose student work files’ on another device to continue assessing.",
-  "평가 목록 옮기기": "Move assessment list",
-  "보호자용 소개 카드 모두 인쇄": "Print all family cards",
-  "짝·일지": "Pair · journal",
-  "역할 교대 {n}번": "{n} role switches",
-  "일지 적음": "journal written",
-  "{a} · {b} · 역할 교대 {n}번": "{a} · {b} · {n} role switches",
   "눌러 본 기록 {n}개를 검사 결과에 함께 담아요.":
     "{n} run log steps will be included in the test result.",
   "검사 결과에 담을 실행 기록 {n}개":
@@ -2413,12 +1997,6 @@ export const en: Record<string, string> = {
   "또는 (하나만 맞아도)": "or (one match is enough)",
   "바구니 {n} 둘째 조건 종류": "Basket {n} second condition type",
   "바구니 {n} 둘째 기준 값 ({name})": "Basket {n} second limit value ({name})",
-  "고친 문장 {n}개를 가져왔어요. 넘어간 문장 {m}개.":
-    "Imported {n} fixed sentences. Skipped {m}.",
-  "영어 번역 고침 파일을 골라 주세요.":
-    "Choose an English translation fix file.",
-  "고친 문장 파일 가져오기": "Import fixed sentences file",
-  "고친 문장 JSON 파일": "Fixed sentences JSON file",
   그리고: "and",
   또는: "or",
   "카드 「{card}」 {what} → 기대 「{bin}」":
@@ -2447,19 +2025,6 @@ export const en: Record<string, string> = {
   "선생님 평가표를 이 기기에 저장했어요.":
     "A teacher's assessment rubric was saved on this device.",
   "작품 나란히 비교": "Compare works side by side",
-  "학급 과정 평가 요약": "Class process assessment summary",
-  "과정 평가 평균 (1 시작 · 2 수행 · 3 설명·적용)":
-    "Process assessment averages (1 starting · 2 doing · 3 explaining and applying)",
-  "둘 다 평가한 작품": "Works assessed by both",
-  "만난 학생 {n}명 · 지금은 고침 {m}명": "{n} students met it · {m} fixed now",
-  "작품 {n}개 · 다섯 단계 완료 {m}개":
-    "{n} works · {m} with all five steps done",
-  "기록을 근거로 교사가 직접 매긴 평가의 요약이에요. 앱은 점수를 자동으로 매기지 않으며, 이 요약에는 학생 이름과 작품 글을 넣지 않았어요.":
-    "This summarizes assessments the teacher gave based on the records. The app never scores automatically, and no student names or work text are included.",
-  "학기 요약 한 장 인쇄": "Print one-page term summary",
-  "걸러 보기": "Filter",
-  정렬: "Sort",
-  "작품 {n}개 가운데 {m}개를 보고 있어요.": "Showing {m} of {n} works.",
   "비교하려면 작품이 두 개 있어야 해요.": "You need two works to compare.",
   "미션 고르러 가기": "Go pick a mission",
   "작품 두 개를 골라 규칙이 어떻게 다른지 보고 나란히 눌러 봐요. 여기서 누른 것은 작품에 기록하지 않아요.":
@@ -2492,31 +2057,6 @@ export const en: Record<string, string> = {
   "목표 값 (반복이 끝났을 때)": "Goal value (when the loop ends)",
   "끝났을 때 문구": "Message when it ends",
   "다음에 해 볼 미션": "Missions to try next",
-  "오늘 미션을 여는 QR 코드": "QR code that opens today's mission",
-  "기기 카메라로 비추면 오늘 미션이 열려요.":
-    "Scan with the device camera to open today's mission.",
-  "지금 할 일": "Do now",
-  "평가표를 저장하지 못했어요. 네 항목의 이름과 세 단계를 모두 적어 주세요.":
-    "Couldn't save the rubric. Fill in the name and all three levels for each of the four items.",
-  "평가표 고쳐 쓰기 · 지금 이 기기는 고친 평가표를 써요":
-    "Edit the rubric · this device is using an edited rubric",
-  "평가표 고쳐 쓰기 · 우리 학교 기준에 맞추기":
-    "Edit the rubric · fit it to your school",
-  "항목 네 개의 이름과 단계 설명을 고칠 수 있어요. 항목 수와 단계 수는 평가 기록과 맞아야 해서 바꾸지 않아요. 고친 평가표는 이 기기의 평가 화면·포트폴리오·CSV에 쓰여요.":
-    "You can edit the names and level descriptions of the four items. The number of items and levels stays fixed so it matches the assessment records. The edited rubric is used in this device's assessment screens, portfolio and CSV.",
-  "항목 {n}": "Item {n}",
-  "항목 {n} 이름": "Item {n} name",
-  "항목 {n} · {level}": "Item {n} · {level}",
-  "고친 평가표를 이 기기에 저장했어요.":
-    "Saved the edited rubric on this device.",
-  "평가표 저장": "Save rubric",
-  "평가표 파일 내려받기": "Download rubric file",
-  "평가표 파일 가져오기": "Import rubric file",
-  "기본 평가표로 되돌렸어요.": "Restored the default rubric.",
-  "기본 평가표로 되돌리기": "Restore default rubric",
-  "평가표 JSON 파일": "Rubric JSON file",
-  "평가표 파일을 가져와 저장했어요.": "Imported and saved the rubric file.",
-  "평가표 파일을 골라 주세요.": "Choose a rubric file.",
   "먼저 ‘예상하고 실행’ 단계에서 눌러 보고 ‘이 기록을 증거로 남기기’를 눌러 주세요.":
     "First press the app in “Predict and run”, then press “Save this log as evidence”.",
   "설명 틀을 채웠어요. 빈 곳을 내 말로 고쳐 써요.":
@@ -2562,20 +2102,12 @@ export const en: Record<string, string> = {
   "처음 값 {start}에 한 번에 바뀌는 값 {change}을 {n}번 더하면 얼마인지 계산해 보세요. 횟수나 바뀌는 값, 목표 값 가운데 하나를 고쳐요.":
     "Work out the starting value {start} plus the change {change} added {n} times. Then fix the number of repeats, the change, or the goal value.",
   "반복 계산기": "Loop calculator",
-  "한 번 더 도는 반복": "Loop runs one extra time",
-  "반복이 끝난 값이 목표와 달라요": "Final loop value differs from the goal",
   "하던 미션을 이어서 해요.": "Continue the mission you started.",
   "방금 끝낸 종류의 다음 미션이에요.":
     "The next mission of the kind you just finished.",
   "아직 안 해 본 종류예요.": "A kind you haven't tried yet.",
   "처음이라면 여기서 시작해요.": "Start here if this is your first time.",
   "모든 작품": "All works",
-  "평가 전인 작품": "Works not assessed yet",
-  "다섯 단계를 다 기록하지 않은 작품": "Works without all five steps recorded",
-  "지금 버그가 남은 작품": "Works with a bug still present",
-  "읽은 순서": "Order loaded",
-  "파일 이름 순서": "By file name",
-  "기록한 단계가 적은 순서": "Fewest recorded steps first",
   "저금통(원)": "piggy bank (won)",
   일째: "day",
   "일주일 저금 끝! 3500원을 모았어요.":
@@ -2592,4 +2124,172 @@ export const en: Record<string, string> = {
   "정한 횟수만큼 반복": "Repeats the set number of times",
   "반복이 끝난 값": "Value when the loop ends",
   "끝난 뒤 더 누르기": "Pressing after it ends",
+  "{v} 이상이면": "{v} or more",
+  "{v} 이하이면": "{v} or less",
+  "{v}과 같으면": "equal to {v}",
+  "「{item}」 넣기": "Add “{item}”",
+  "「{item}」은 이미 목록에 있어요.": "“{item}” is already in the list.",
+  "{n}개 / 가장 많이 {m}개": "{n} / at most {m}",
+  "준비된 목록 만들기 템플릿": "Ready-made list maker template",
+  "하나 빼기": "Take one out",
+  "빈 목록": "Empty list",
+  "낱말은 맨 뒤에 들어가고, 하나 빼기는 맨 앞(먼저 넣은 것)을 꺼내요.":
+    "Words go to the end, and “Take one out” removes the front one (the first added).",
+  "낱말은 맨 뒤에 들어가고, 하나 빼기는 맨 뒤(나중에 넣은 것)를 꺼내요.":
+    "Words go to the end, and “Take one out” removes the end one (the last added).",
+  "앱이 기억하는 목록: {list}": "The list the app remembers: {list}",
+  "목록 이름": "List name",
+  "가장 많은 개수 (1~12)": "Most items (1–12)",
+  "같은 낱말을 또 넣으면": "When the same word is added again",
+  "넣지 않기 (정상 규칙)": "Don't add (normal rule)",
+  "또 넣기 (학습용 규칙)": "Add again (practice rule)",
+  "하나 빼기가 꺼내는 곳": "Where “Take one out” removes from",
+  "맨 앞 (먼저 넣은 것)": "The front (first added)",
+  "맨 뒤 (나중에 넣은 것)": "The end (last added)",
+  "낱말 {n}": "Word {n}",
+  "낱말 {n} 지우기": "Delete word {n}",
+  "+ 낱말 추가": "+ Add word",
+  "가득 찼을 때 문구": "Message when full",
+  "낱말은 8개까지 만들 수 있어요.": "You can make up to 8 words.",
+  "반복하기 전에 먼저 확인해요: 만약 {name}이 {cond} 횟수가 남아도 멈춰요.":
+    "It checks before each repeat: if {name} is {cond}, it stops even if repeats are left.",
+  "멈추는 방법": "How it stops",
+  "횟수를 다 채우면 멈추기": "Stop after the set number of repeats",
+  "값이 얼마 이상이면 멈추기": "Stop when the value is at least",
+  "값이 얼마 이하이면 멈추기": "Stop when the value is at most",
+  "값이 얼마와 같으면 멈추기": "Stop when the value equals",
+  "멈춤 조건의 값": "Stop condition value",
+  "멈춤 조건이 있으면 ‘반복 횟수’는 넘지 않을 가장 많은 횟수예요. 조건에 맞으면 그 전에 멈춰요.":
+    "With a stop condition, “Number of repeats” is the most it will ever do. It stops earlier once the condition is met.",
+  "미션 찾기": "Find a mission",
+  "예: 점수, 반복, 줄 서기": "e.g. score, loop, line",
+  "진행 상태": "Progress",
+  "모든 상태": "Any progress",
+  "미션 {n}개를 보여 줘요.": "Showing {n} missions.",
+  "찾는 미션이 없어요": "No missions found",
+  "다른 낱말로 찾거나 진행 상태를 ‘모든 상태’로 바꿔 보세요.":
+    "Try another word, or set progress to “Any progress”.",
+  "처음이라면 화면 둘러보기": "New here? Take a screen tour",
+  "화면 둘러보기": "Screen tour",
+  "둘러보기 {n} / {m} · {title}": "Tour {n} / {m} · {title}",
+  "이전 안내": "Previous tip",
+  "다음 안내": "Next tip",
+  "둘러보기 끝내기": "End the tour",
+  "다섯 단계": "Five steps",
+  "목표부터 설명까지 다섯 단계를 차례로 해요. 단계 이름을 누르면 그 단계로 가고, 기록을 마친 단계에는 체크 표시가 생겨요.":
+    "You go through five steps in order, from the goal to the explanation. Press a step name to go there. A finished step gets a check mark.",
+  "지금 고치는 작품": "The work you are editing",
+  "지금 고치는 작품의 이름이에요. 고친 내용은 저절로 이 기기에 저장돼요.":
+    "This is the name of the work you are editing. Your changes are saved on this device automatically.",
+  "이번 단계에서 할 일": "What to do in this step",
+  "이 아래에 이번 단계의 글을 적어요. 3단계부터는 설정을 바꾸고 실행 화면을 직접 눌러 볼 수 있어요.":
+    "Write this step's notes below. From step 3 you can change the settings and press the running app yourself.",
+  "되돌리기와 백업": "Undo and backup",
+  "잘못 고쳤으면 되돌리기를 눌러요. 파일 백업으로 작품을 파일로 남기고, 과정 포트폴리오에서 내가 한 일을 모아 봐요.":
+    "If you make a wrong change, press Undo. “Back up file” keeps your work as a file, and the process portfolio gathers what you did.",
+  "막힐 때는": "When you get stuck",
+  "막히면 화면의 힌트를 열어 보세요. 한 단계를 마치면 아래의 ‘다음 단계’를 눌러 넘어가요.":
+    "If you get stuck, open the hints on the screen. When a step is done, press “Next step” below to move on.",
+  "{a}번 낱말을 {b}번 넣기 → 목록에 든 개수":
+    "Add word {a} {b} times → number of items in the list",
+  "낱말 번호": "Word number",
+  "낱말을 모두 넣고 {a}번 빼기 → 남은 개수":
+    "Add every word, then take out {a} times → items left",
+  "빼는 횟수": "Times to take out",
+  "모두 {n}개 · {list}": "{n} in all · {list}",
+  "멈춤 조건 「{cond}」에 맞아 멈춤": "it is now {cond}, so it stops",
+  "멈춤 조건에 아직 안 맞아 계속": "stop condition not met yet, so it goes on",
+  "빈 목록에서 시작해요.": "It starts with an empty list.",
+  "「{item}」 넣기 → 이미 {n}개로 가득 참 → 넣지 않음":
+    "Add “{item}” → already full with {n} → not added",
+  "「{item}」 넣기 → 이미 목록에 있음 → 넣지 않음":
+    "Add “{item}” → already in the list → not added",
+  "「{item}」 넣기 → {n}번 자리에 들어감 → 모두 {n}개":
+    "Add “{item}” → goes into place {n} → {n} in all",
+  "하나 빼기 → 목록이 비어 있어 그대로":
+    "Take one out → the list is empty, so nothing changes",
+  "하나 빼기 → 맨 앞 「{item}」이 빠짐 → 모두 {n}개":
+    "Take one out → “{item}” leaves from the front → {n} in all",
+  "하나 빼기 → 맨 뒤 「{item}」이 빠짐 → 모두 {n}개":
+    "Take one out → “{item}” leaves from the end → {n} in all",
+  "처음으로 → 빈 목록": "Start over → empty list",
+  "「{cond}」 멈춘다": "It stops when the value is {cond}",
+  "{n}번 반복하고 {name} {v}": "{n} repeats, then {name} {v}",
+  "한 번만 들어간다 (모두 1개)": "It goes in only once (1 in all)",
+  "모두 {n}개": "{n} in all",
+  "{n}개까지만 들어간다": "It holds at most {n}",
+  "하나가 빠져 {n}개가 된다": "One leaves, so there are {n}",
+  "빈 목록 그대로": "Still an empty list",
+  "멈춤 조건: 값이 {cond} 멈추기":
+    "Stop condition: stop when the value is {cond}",
+  "목록 이름: {name} · 낱말 {n}개": "List name: {name} · {n} words",
+  "낱말: {v}": "Words: {v}",
+  "같은 낱말을 또 넣으면: {v}": "When the same word is added again: {v}",
+  "넣지 않기": "don't add",
+  "또 넣기 (학습용 오류)": "add again (practice bug)",
+  "가장 많이 {n}개 · 가득 차면 「{msg}」": "At most {n} · when full “{msg}”",
+  "하나 빼기: {v}": "Take one out: {v}",
+  "맨 앞에서": "from the front",
+  "맨 뒤에서": "from the end",
+  "멈춤 조건": "Stop condition",
+  "멈춤 조건 값": "Stop condition value",
+  낱말: "Word",
+  "같은 낱말 규칙": "Same-word rule",
+  "가장 많은 개수": "Most items",
+  "빼는 곳": "Where to take from",
+  "낱말을 누르면 목록 맨 뒤에 들어가요.":
+    "Pressing a word adds it to the end of the list.",
+  "목록에 몇 개 있는지 보여 줘요.": "It shows how many are in the list.",
+  "하나 빼기를 누르면 먼저 넣은 것이 빠져요.":
+    "Pressing “Take one out” removes the first one added.",
+  "이미 있는 낱말은 또 넣지 않아요.":
+    "A word already in the list is not added again.",
+  "가득 차면 더 넣지 않아요.": "When it is full, nothing more is added.",
+  "처음으로 누르면 빈 목록이 돼요.": "Pressing “Start over” empties the list.",
+  "멈춤 조건 「{cond}」에 한 번도 맞지 않아 {n}번을 다 돌았어요.":
+    "The value was never {cond}, so it ran all {n} repeats.",
+  "값이 {change}씩 바뀌면 딱 그 숫자를 건너뛸 수 있어요. 멈춤 조건을 ‘이상이면’이나 ‘이하이면’으로 바꾸거나, 값이 닿을 수 있는 숫자로 고쳐 보세요.":
+    "Changing by {change} each time can jump right over that number. Change the stop condition to “at least” or “at most”, or pick a number the value can actually reach.",
+  "멈춤 조건에 맞아 멈춘 값이 {v}이에요. 목표 값을 실제로 멈추는 값으로 고치거나, 멈춤 조건의 숫자를 바꿔 보세요.":
+    "It stopped at {v} when the stop condition was met. Change the goal value to where it really stops, or change the number in the stop condition.",
+  "같은 낱말을 또 누르면 목록에 두 번 들어가요.":
+    "Pressing the same word again puts it in the list twice.",
+  "설정의 ‘같은 낱말을 또 넣으면’을 ‘넣지 않기 (정상 규칙)’로 바꿔 보세요. 앱은 넣기 전에 목록에 이미 있는지 확인해야 해요.":
+    "In the settings, change “When the same word is added again” to “Don't add (normal rule)”. The app should check whether the word is already in the list before adding.",
+  "목록 만들기": "List maker",
+  "모은 돈(원)": "savings (won)",
+  주째: "week",
+  "3000원을 넘었어요! 이제 살 수 있어요.": "Over 3000 won! Now you can buy it.",
+  "물통(mL)": "bottle (mL)",
+  컵째: "cup",
+  "물통이 찼어요. 그만 부어요!": "The bottle is full. Stop pouring!",
+  "소풍 준비물": "Picnic packing list",
+  도시락: "lunch box",
+  물: "water",
+  돗자리: "picnic mat",
+  모자: "hat",
+  "준비물 목록이 가득 찼어요!": "The packing list is full!",
+  "작은 가방": "Small bag",
+  공책: "notebook",
+  필통: "pencil case",
+  물통: "water bottle",
+  우산: "umbrella",
+  간식: "snack",
+  "가방이 가득 찼어요. 하나를 빼야 넣을 수 있어요.":
+    "The bag is full. Take one out before adding another.",
+  "출석 명단": "Attendance list",
+  나무: "Namu",
+  구름: "Gureum",
+  "명단이 가득 찼어요.": "The list is full.",
+  "급식 줄": "Lunch line",
+  "하늘 모둠": "Haneul group",
+  "바다 모둠": "Bada group",
+  "나무 모둠": "Namu group",
+  "구름 모둠": "Gureum group",
+  "줄이 가득 찼어요.": "The line is full.",
+  "멈춤 조건에서 멈추기": "Stopping at the stop condition",
+  "차례로 넣기": "Adding in order",
+  "같은 낱말 다시 넣기": "Adding the same word again",
+  "가득 찼을 때": "When it is full",
+  "빈 목록에서 빼기": "Taking out of an empty list",
 };

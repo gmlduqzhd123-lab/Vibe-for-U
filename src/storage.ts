@@ -360,6 +360,37 @@ export function validateConfig(value: unknown): Config {
       count: one(c.count, ["exact", "extra"] as const, "반복 세는 방법"),
       goal: num(c.goal, "목표 값", -1000000, 1000000),
       doneMessage: str(c.doneMessage, "끝났을 때 문구", LIMITS.short),
+      ...(c.until === undefined || c.until === null
+        ? {}
+        : {
+            until: {
+              when: one(
+                obj(c.until, "멈춤 조건").when,
+                ["gte", "lte", "eq"] as const,
+                "멈춤 조건",
+              ),
+              value: num(
+                obj(c.until, "멈춤 조건").value,
+                "멈춤 조건 값",
+                -1000000,
+                1000000,
+              ),
+            },
+          }),
+    };
+  if (kind === "list")
+    return {
+      kind,
+      name: str(c.name, "목록 이름", 40),
+      items: arr(c.items, "낱말", 1, 8).map((v) => str(v, "낱말", 40)),
+      duplicate: one(
+        c.duplicate,
+        ["block", "allow"] as const,
+        "같은 낱말 규칙",
+      ),
+      max: num(c.max, "가장 많은 개수", 1, 12),
+      remove: one(c.remove, ["first", "last"] as const, "빼는 곳"),
+      fullMessage: str(c.fullMessage, "가득 찼을 때 문구", LIMITS.short),
     };
   if (kind === "sort") {
     const when = ["gte", "lte", "eq"] as const;

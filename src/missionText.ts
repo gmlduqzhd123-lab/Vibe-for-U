@@ -6,11 +6,13 @@ import type { MissionText } from "./missionsEn";
 let english: Record<string, MissionText> | null = null;
 export async function loadEnglishMissions() {
   if (!english) {
-    const [m, more] = await Promise.all([
+    const [m, more, teacher] = await Promise.all([
       import("./missionsEn"),
       import("./i18nEn"),
+      import("./i18nEnTeacher"),
     ]);
     addTranslations("en", more.en);
+    addTranslations("en", teacher.enTeacher);
     applyEnglishFixes();
     english = m.missionsEn;
   }
@@ -51,6 +53,13 @@ export function localizeConfig(c: Config, lang: Lang): Config {
       round: t(c.round),
       doneMessage: t(c.doneMessage),
     };
+  if (c.kind === "list")
+    return {
+      ...c,
+      name: t(c.name),
+      items: c.items.map((x) => t(x)),
+      fullMessage: t(c.fullMessage),
+    };
   if (c.kind === "sort")
     return {
       ...c,
@@ -90,6 +99,7 @@ export function configStrings(c: Config): string[] {
     ]);
   if (c.kind === "timer") return [c.endMessage];
   if (c.kind === "loop") return [c.variable, c.round, c.doneMessage];
+  if (c.kind === "list") return [c.name, ...c.items, c.fullMessage];
   if (c.kind === "sort")
     return [
       c.property,

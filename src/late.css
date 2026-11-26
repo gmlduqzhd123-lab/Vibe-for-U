@@ -700,3 +700,96 @@ button.phrase {
     display: none !important;
   }
 }
+/* 목록 만들기 */
+.list-items {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0;
+  padding-left: 1.75rem;
+}
+.list-items li {
+  padding: 6px 10px;
+  border: 1px solid var(--line, #d9d3c7);
+  border-radius: 8px;
+}
+.list-empty {
+  margin: 10px 0;
+  color: var(--muted, #6b655f);
+}
+.list-item-edit {
+  display: flex;
+  align-items: end;
+  gap: 8px;
+}
+.list-item-edit .field {
+  flex: 1;
+}
+/* 미션 찾기 */
+.mission-find {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.mission-find .field {
+  flex: 1 1 12rem;
+  max-width: 22rem;
+  margin: 0;
+}
+.mission-find p {
+  flex: 1 1 100%;
+  margin: 0;
+}
+/* 첫 사용 둘러보기 */
+.tour-start {
+  margin: 0 0 10px;
+}
+.tour-fresh {
+  border: 2px dashed var(--purple);
+  background: transparent;
+  font-size: 0.8125rem;
+}
+.tour {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border: 2px solid var(--purple);
+  border-radius: 12px;
+  background: #f6f3fb;
+}
+.tour p {
+  margin: 0 0 10px;
+}
+.tour-target {
+  outline: 3px dashed var(--purple);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+@media (forced-colors: active) {
+  .prediction-check button.active {
+    outline: 3px solid Highlight;
+    outline-offset: -3px;
+  }
+  .loop-dots li.on,
+  .map-stop.done .map-dot-big {
+    forced-color-adjust: none;
+    background: Highlight;
+    border-color: Highlight;
+  }
+  .tour,
+  .tour-target {
+    outline-color: Highlight;
+    border-color: Highlight;
+  }
+}
+/* 목록의 개수 글은 숫자 하나보다 길어서 조금 작게 쓰고, 안내가 없을 때는 빈 띠를 보이지 않는다. */
+.list-preview .rule-value strong {
+  font-size: 1.5rem;
+}
+.list-preview .rule-message:empty {
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+}

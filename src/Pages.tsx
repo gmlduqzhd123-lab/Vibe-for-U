@@ -1,3 +1,4 @@
+import "./late.css";
 import { useEffect, useMemo, useState } from "react";
 import { missions } from "./data";
 import { kindNames, kinds, stageDone } from "./model";
@@ -24,6 +25,18 @@ export function Missions({
   const t = useT();
   const lang = useLang();
   const picks = useMemo(() => recommend(works), [works]);
+  // 미션 찾기: 제목·목표 글로 찾고, 진행 상태로 걸러 본다.
+  const [query, setQuery] = useState("");
+  const [state, setState] = useState<MissionState | "all">("all");
+  const shown = missions
+    .map((m) => localizeMission(m, lang))
+    .filter((m) => !valid || m.kind === filter)
+    .map((m) => ({ m, state: missionState(m.id, works) }))
+    .filter(
+      (x) =>
+        (state === "all" || x.state === state) &&
+        missionMatches(x.m, query, t(kindNames[x.m.kind])),
+    );
   return (
     <>
       <div className="page-heading">
@@ -80,56 +93,101 @@ export function Missions({
           </button>
         ))}
       </div>
+      <div className="mission-find">
+        <label className="field">
+          <span>{t("미션 찾기")}</span>
+          <input
+            type="search"
+            value={query}
+            maxLength={40}
+            placeholder={t("예: 점수, 반복, 줄 서기")}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </label>
+        <label className="field">
+          <span>{t("진행 상태")}</span>
+          <select
+            value={state}
+            onChange={(e) => setState(e.target.value as MissionState | "all")}
+          >
+            <option value="all">{t("모든 상태")}</option>
+            {missionStates.map(([id, label]) => (
+              <option key={id} value={id}>
+                {t(label)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <p role="status" className="muted small">
+          {t("미션 {n}개를 보여 줘요.", { n: shown.length })}
+        </p>
+      </div>
+      {shown.length ? null : (
+        <Empty title={t("찾는 미션이 없어요")}>
+          <p>
+            {t("다른 낱말로 찾거나 진행 상태를 ‘모든 상태’로 바꿔 보세요.")}
+          </p>
+        </Empty>
+      )}
       <div className="mission-grid">
-        {missions
-          .map((m) => localizeMission(m, lang))
-          .filter((m) => !valid || m.kind === filter)
-          .map((m) => {
-            const attempts = works.filter((w) => w.missionId === m.id);
-            const done = attempts.some((w) =>
-              stageDone(w.draft).every(Boolean),
-            );
-            return (
-              <button
-                className={`mission-card ${m.kind}`}
-                key={m.id}
-                onClick={() => go(`mission/${m.id}`)}
-              >
-                <div className="project-card-top">
-                  <Pill tone="paper">
-                    {t(kindNames[m.kind])} {m.order}
-                  </Pill>
-                  {m.id === "quiz-1" ? <Pill>{t("첫 미션 추천")}</Pill> : null}
-                  {m.id.startsWith("custom-") ? (
-                    <Pill tone="green">{t("선생님 미션")}</Pill>
-                  ) : null}
-                  {m.learningError ? (
-                    <Pill tone="orange">{t("학습용 오류 포함")}</Pill>
-                  ) : null}
-                </div>
-                <h2>{m.title}</h2>
-                <p>{m.goal}</p>
-                <span className="muted small">
-                  {t("예상 → 실행 → {test} → 수정", { test: m.tests[0].label })}
-                </span>
-                <div className="mission-footer">
-                  <b>
-                    {t(
-                      done
-                        ? "기록 완료"
-                        : attempts.length
-                          ? "진행 중"
-                          : "아직 시작하지 않음",
-                    )}
-                  </b>
-                  <Icon name="arrow" />
-                </div>
-              </button>
-            );
-          })}
+        {shown.map(({ m, state: progress }) => {
+          return (
+            <button
+              className={`mission-card ${m.kind}`}
+              key={m.id}
+              onClick={() => go(`mission/${m.id}`)}
+            >
+              <div className="project-card-top">
+                <Pill tone="paper">
+                  {t(kindNames[m.kind])} {m.order}
+                </Pill>
+                {m.id === "quiz-1" ? <Pill>{t("첫 미션 추천")}</Pill> : null}
+                {m.id.startsWith("custom-") ? (
+                  <Pill tone="green">{t("선생님 미션")}</Pill>
+                ) : null}
+                {m.learningError ? (
+                  <Pill tone="orange">{t("학습용 오류 포함")}</Pill>
+                ) : null}
+              </div>
+              <h2>{m.title}</h2>
+              <p>{m.goal}</p>
+              <span className="muted small">
+                {t("예상 → 실행 → {test} → 수정", { test: m.tests[0].label })}
+              </span>
+              <div className="mission-footer">
+                <b>{t(missionStates.find(([id]) => id === progress)![1])}</b>
+                <Icon name="arrow" />
+              </div>
+            </button>
+          );
+        })}
       </div>
     </>
   );
+}
+// 미션의 진행 상태: 다섯 단계를 다 기록한 작품이 있으면 완료, 작품이 있으면 진행 중.
+export type MissionState = "new" | "doing" | "done";
+export const missionStates: [MissionState, string][] = [
+  ["new", "아직 시작하지 않음"],
+  ["doing", "진행 중"],
+  ["done", "기록 완료"],
+];
+export function missionState(id: string, works: Work[]): MissionState {
+  const attempts = works.filter((w) => w.missionId === id);
+  return attempts.some((w) => stageDone(w.draft).every(Boolean))
+    ? "done"
+    : attempts.length
+      ? "doing"
+      : "new";
+}
+// 띄어쓰기로 나눈 낱말이 모두 제목·목표·할 일·앱 종류 이름 가운데 어딘가에 있으면 찾은 것으로 본다.
+export function missionMatches(m: Mission, query: string, kindName = "") {
+  const text = [m.title, m.goal, m.task, kindName].join(" ").toLowerCase();
+  return query
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean)
+    .every((word) => text.includes(word));
 }
 export function MissionDetail({
   mission: m,

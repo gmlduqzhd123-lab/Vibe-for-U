@@ -180,20 +180,53 @@ const PLAYER = String.raw`
   }
   function loop() {
     var total = c.times + (c.count === "extra" ? 1 : 0), round = 0, value = c.start;
+    function stops() {
+      var u = c.until;
+      return !!u && (u.when === "gte" ? value >= u.value : u.when === "lte" ? value <= u.value : value === u.value);
+    }
+    function over() { return round >= total || stops(); }
     var face = el("p", "clock"), msg = el("p", "note");
     msg.setAttribute("role", "status");
     function update() {
       face.textContent = c.variable + " " + value;
-      msg.textContent = round >= total ? c.doneMessage : fill(T.loopRound, { n: round, m: total, round: c.round });
-      one.disabled = all.disabled = round >= total;
+      msg.textContent = over() ? c.doneMessage : fill(T.loopRound, { n: round, m: total, round: c.round });
+      one.disabled = all.disabled = over();
     }
-    function step() { if (round < total) { round++; value += c.change; } }
+    function step() { if (!over()) { round++; value += c.change; } }
     var one = button(T.loopOne, function () { step(); update(); }, "primary");
-    var all = button(T.loopAll, function () { while (round < total) step(); update(); });
+    var all = button(T.loopAll, function () { while (!over()) step(); update(); });
     var row = el("div", "choices");
     row.appendChild(one); row.appendChild(all);
     row.appendChild(button(T.restart, function () { round = 0; value = c.start; update(); }));
     root.appendChild(face); root.appendChild(msg); root.appendChild(row);
+    update();
+  }
+  function list() {
+    var items = [];
+    var count = el("p", "note"), msg = el("p", "note"), shown = el("ol", "bins");
+    msg.setAttribute("role", "status");
+    function update(text) {
+      count.textContent = c.name + " · " + fill(T.listCount, { n: items.length, m: c.max });
+      msg.textContent = text || "";
+      while (shown.firstChild) shown.removeChild(shown.firstChild);
+      items.forEach(function (x) { shown.appendChild(el("li", null, x)); });
+      take.disabled = !items.length;
+    }
+    var row = el("div", "choices");
+    c.items.forEach(function (x) {
+      row.appendChild(button(x, function () {
+        if (items.length >= c.max) return update(c.fullMessage);
+        if (c.duplicate === "block" && items.indexOf(x) >= 0) return update(fill(T.listHas, { item: x }));
+        items.push(x); update();
+      }, "primary"));
+    });
+    var take = button(T.listTake, function () {
+      if (c.remove === "first") items.shift(); else items.pop();
+      update();
+    });
+    row.appendChild(take);
+    row.appendChild(button(T.restart, function () { items = []; update(); }));
+    root.appendChild(count); root.appendChild(row); root.appendChild(msg); root.appendChild(shown);
     update();
   }
   function sort() {
@@ -247,7 +280,7 @@ const PLAYER = String.raw`
     root.appendChild(next); root.appendChild(row); root.appendChild(list);
     update();
   }
-  ({ quiz: quiz, story: story, timer: timer, pattern: pattern, rule: rule, sort: sort, loop: loop })[c.kind]();
+  ({ quiz: quiz, story: story, timer: timer, pattern: pattern, rule: rule, sort: sort, loop: loop, list: list })[c.kind]();
 })();
 `;
 const STYLE = `
@@ -323,6 +356,9 @@ export function standaloneHtml(w: Work, t: Tr, lang: string) {
     loopRound: t("{round} {n} / {m}"),
     loopOne: t("한 번 반복"),
     loopAll: t("끝까지 반복"),
+    listCount: t("{n}개 / 가장 많이 {m}개"),
+    listHas: t("「{item}」은 이미 목록에 있어요."),
+    listTake: t("하나 빼기"),
   };
   const data = { config: c, texts, ...extra };
   return `<!doctype html>

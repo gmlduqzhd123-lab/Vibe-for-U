@@ -1,7 +1,7 @@
 import { createContext, useContext } from "react";
 // 화면 틀(메뉴·단계·저장 상태·주요 버튼)을 여러 언어로 보여 준다.
 // 한국어 문장을 그대로 열쇠로 쓰고, 번역이 없는 문장은 한국어로 보여 준다.
-// 첫 화면 틀은 여기 두고, 학생 화면 전체 번역(src/i18nEn.ts)은 영어를 고를 때 불러온다.
+// 첫 화면 틀은 여기 두고, 학생 화면 번역(src/i18nEn.ts)과 교사 화면 번역(src/i18nEnTeacher.ts)은 영어를 고를 때 불러온다.
 // 교사 화면·수업 자료·앱이 만든 동작 설명(엔진 기록)은 한국어로 둔다.
 export type Lang = "ko" | "en";
 export const langs: { id: Lang; name: string; html: string }[] = [
