@@ -135,6 +135,8 @@ export const bugNames: Record<string, string> = {
   "story-unreachable": "갈 수 없는 결말",
   "timer-end": "0초가 돼도 안내가 없어요",
   "rule-shadowed": "앞 조건에 가린 조건",
+  "loop-extra": "한 번 더 도는 반복",
+  "loop-goal": "반복이 끝난 값이 목표와 달라요",
   "sort-shadowed": "앞 조건에 가린 바구니",
   "sort-unknown": "없는 바구니 이름",
   "sort-order": "바구니 순서 때문에 다른 곳으로",
@@ -224,4 +226,38 @@ export function parseClassSession(data: unknown, name: string): Entry[] {
         : {}),
     };
   });
+}
+
+// 학급 모으기 걸러 보기·정렬: 평가할 작품을 빨리 찾게 한다.
+export type Filter = "all" | "ungraded" | "unfinished" | "bugs";
+export type Order = "loaded" | "name" | "progress";
+export const filters: [Filter, string][] = [
+  ["all", "모든 작품"],
+  ["ungraded", "평가 전인 작품"],
+  ["unfinished", "다섯 단계를 다 기록하지 않은 작품"],
+  ["bugs", "지금 버그가 남은 작품"],
+];
+export const orders: [Order, string][] = [
+  ["loaded", "읽은 순서"],
+  ["name", "파일 이름 순서"],
+  ["progress", "기록한 단계가 적은 순서"],
+];
+const steps = (w: Work) => stageDone(w.draft).filter(Boolean).length;
+export function arrange(entries: Entry[], filter: Filter, order: Order) {
+  const keep = entries.filter(({ work }) =>
+    filter === "ungraded"
+      ? !graded(work.feedback)
+      : filter === "unfinished"
+        ? steps(work) < stageNames.length
+        : filter === "bugs"
+          ? diagnose(work.draft.config).length > 0
+          : true,
+  );
+  if (order === "loaded") return keep;
+  // 정렬해도 같은 값끼리는 읽은 순서를 지킨다.
+  return [...keep].sort((a, b) =>
+    order === "name"
+      ? a.file.localeCompare(b.file, "ko", { numeric: true })
+      : steps(a.work) - steps(b.work),
+  );
 }

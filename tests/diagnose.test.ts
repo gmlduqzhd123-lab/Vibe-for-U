@@ -13,6 +13,7 @@ describe("맞춤 힌트", () => {
       "pattern-3": "pattern-wrap",
       "rule-3": "rule-shadowed",
       "sort-3": "sort-shadowed",
+      "loop-3": "loop-extra",
     };
     for (const m of missions.filter((m) => m.learningError))
       expect(

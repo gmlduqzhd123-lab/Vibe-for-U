@@ -69,7 +69,8 @@ jobs:
           done
           echo "공개 주소가 5분 안에 $ASSET 을(를) 제공하지 않았어요." >&2
           exit 1
-      - run: npx playwright install --with-deps chromium
+      - timeout-minutes: 12
+        run: npx playwright install --with-deps chromium
       - run: npx playwright test -c playwright.public.config.ts
         env:
           PW_BROWSER: chromium

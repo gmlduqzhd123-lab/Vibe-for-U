@@ -135,3 +135,36 @@ describe("평가 목록 옮기기", () => {
     expect(() => parseClassSession({ format: "x" }, "n")).toThrow();
   });
 });
+describe("학급 모으기 걸러 보기·정렬", () => {
+  it("평가 전·미완료·버그 남은 작품을 거르고, 이름과 진행 순으로 정렬한다", async () => {
+    const { arrange } = await import("../src/classSummary");
+    const entry = (file: string, id: string) => ({
+      key: file,
+      file,
+      work: makeWork(missions.find((m) => m.id === id)!),
+    });
+    const a = entry("10번.json", "quiz-1");
+    const b = entry("2번.json", "quiz-3");
+    const c = entry("1번.json", "story-1");
+    a.work.feedback = { levels: [1, 2, 3, 1], note: "", at: a.work.createdAt };
+    c.work.draft.goalReviewed = true;
+    const list = [a, b, c];
+    expect(arrange(list, "all", "loaded")).toEqual(list);
+    expect(arrange(list, "ungraded", "loaded").map((e) => e.file)).toEqual([
+      "2번.json",
+      "1번.json",
+    ]);
+    // 퀴즈 3은 학습용 오류가 있는 시작 설정이다.
+    expect(arrange(list, "bugs", "loaded").map((e) => e.file)).toEqual([
+      "2번.json",
+    ]);
+    expect(arrange(list, "unfinished", "loaded")).toHaveLength(3);
+    // 숫자를 숫자로 보고 정렬한다(1 → 2 → 10).
+    expect(arrange(list, "all", "name").map((e) => e.file)).toEqual([
+      "1번.json",
+      "2번.json",
+      "10번.json",
+    ]);
+    expect(arrange(list, "all", "progress").at(-1)!.file).toBe("1번.json");
+  });
+});

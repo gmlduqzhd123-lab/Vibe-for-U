@@ -98,6 +98,7 @@ function configTexts(c: Config): [string, string][] {
         ] as [string, string][],
     );
   if (c.kind === "timer") return [["종료 안내", c.endMessage]];
+  if (c.kind === "loop") return [["끝났을 때 문구", c.doneMessage]];
   if (c.kind === "sort")
     return [
       ["분류 특징", c.property],

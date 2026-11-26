@@ -7,6 +7,7 @@ import { PairPanel } from "./Pair";
 import {
   compareSnapshots,
   configSummary,
+  explainDraft,
   updateConfig,
   updatePrediction,
 } from "./learning";
@@ -777,6 +778,30 @@ export function Workspace({
                   )}
                   onChange={(v) => patch({ reflection: v })}
                 />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const draft = explainDraft(d, t);
+                    if (!draft) {
+                      message(
+                        t(
+                          "먼저 ‘예상하고 실행’ 단계에서 눌러 보고 ‘이 기록을 증거로 남기기’를 눌러 주세요.",
+                        ),
+                      );
+                      return;
+                    }
+                    const text = d.reflection.trim();
+                    patch({
+                      reflection: (text ? `${text}\n` : "") + draft,
+                    });
+                    message(
+                      t("설명 틀을 채웠어요. 빈 곳을 내 말로 고쳐 써요."),
+                    );
+                  }}
+                >
+                  <Icon name="spark" />
+                  {t("실행 기록으로 설명 틀 채우기")}
+                </button>
                 <Field
                   area
                   label={t("친구·교사·도구에게 도움받은 내용")}

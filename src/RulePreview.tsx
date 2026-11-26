@@ -34,6 +34,10 @@ export function RulePreview({
         <strong data-testid="rule-value">{s.value}</strong>
       </div>
       <p className="rule-message" role="status">
+        {/* 문구가 그대로여도 값이 바뀐 것을 낭독기가 읽게, 값을 알림 칸 안에 함께 둔다. */}
+        <span className="sr-only">
+          {config.variable} {s.value}.{" "}
+        </span>
         {hit.message}
       </p>
       <SpeakButton

@@ -349,6 +349,18 @@ export function validateConfig(value: unknown): Config {
       );
     return { kind, start, scenes, intendedEndings: endings };
   }
+  if (kind === "loop")
+    return {
+      kind,
+      variable: str(c.variable, "기억하는 값 이름", 40),
+      round: str(c.round, "한 번 반복의 이름", 40),
+      start: num(c.start, "처음 값", -100000, 100000),
+      change: num(c.change, "한 번에 바뀌는 값", -10000, 10000),
+      times: num(c.times, "반복 횟수", 1, 50),
+      count: one(c.count, ["exact", "extra"] as const, "반복 세는 방법"),
+      goal: num(c.goal, "목표 값", -1000000, 1000000),
+      doneMessage: str(c.doneMessage, "끝났을 때 문구", LIMITS.short),
+    };
   if (kind === "sort") {
     const when = ["gte", "lte", "eq"] as const;
     return {

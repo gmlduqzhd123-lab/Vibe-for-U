@@ -621,3 +621,82 @@ button.phrase {
     display: none !important;
   }
 }
+/* 반복 계산기: 반복한 횟수를 점으로 보여 준다. */
+.loop-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0;
+  padding: 0;
+  list-style: none;
+}
+.loop-dots li {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #8a8494;
+  border-radius: 50%;
+}
+.loop-dots li.on {
+  background: #1f8a5b;
+  border-color: #1f8a5b;
+}
+/* 작품 나란히 비교 */
+.compare-works {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+.compare-rules {
+  margin: 10px 0;
+  padding-left: 18px;
+  font-size: 0.8125rem;
+}
+.compare-rules li.changed {
+  background: #fff4d6;
+  border-radius: 4px;
+}
+/* 학기 요약 한 장(학급 모으기): 그 인쇄 때만 보인다. */
+.term-sheet {
+  display: none;
+}
+.term-summary {
+  color: #000;
+  font-size: 10.5pt;
+}
+.term-summary h2 {
+  margin: 0 0 2mm;
+  font-size: 16pt;
+}
+.term-summary h3 {
+  margin: 5mm 0 1.5mm;
+  font-size: 11.5pt;
+}
+.term-summary table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.term-summary th,
+.term-summary td {
+  padding: 1.2mm 2mm;
+  border: 0.3mm solid #999;
+  text-align: left;
+  font-weight: 400;
+}
+.term-summary thead th {
+  font-weight: 700;
+}
+.term-summary footer {
+  margin-top: 5mm;
+  font-size: 9pt;
+}
+@media print {
+  :root[data-print="term"] .term-sheet {
+    display: block;
+  }
+  :root[data-print="term"]
+    main
+    :not(:has(.term-sheet)):not(.term-sheet):not(.term-sheet *) {
+    display: none !important;
+  }
+}

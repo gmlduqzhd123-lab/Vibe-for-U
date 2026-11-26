@@ -619,4 +619,95 @@ export const missionsEn: Record<string, MissionText> = {
     ],
     closing: "For a safety rule, which fits better, “and” or “or”?",
   },
+  "loop-1": {
+    title: "A week of saving",
+    goal: "Use a loop to find out how much you have after saving 500 won a day for 7 days.",
+    prediction:
+      "After pressing “Repeat once” 3 times, how much is in the piggy bank? And after 7?",
+    tests: [
+      {
+        label: "Repeat one at a time",
+        expected: "It grows by 500 won each press.",
+      },
+      {
+        label: "Repeat to the end",
+        expected: "It repeats 7 times and stops at 3500 won.",
+      },
+    ],
+    task: "Change the daily saving to 700 won, fix the goal value to match, then check again.",
+    hints: [
+      "The value the app remembers is the money in the piggy bank.",
+      "Each repeat adds the same amount.",
+      "The goal value is “change per repeat × number of repeats”.",
+    ],
+    closing:
+      "How is writing the same thing 7 times different from writing “repeat 7 times”?",
+  },
+  "loop-2": {
+    title: "When there is a starting value",
+    goal: "You already read 20 pages. Find the page you reach after reading 15 more pages a day for 4 days.",
+    prediction: "After 4 repeats, is it 60 pages or 80 pages?",
+    tests: [
+      {
+        label: "Starting value",
+        expected: "It starts at 20 pages before any repeat.",
+      },
+      {
+        label: "Final value",
+        expected: "After 4 repeats it is 80 pages.",
+      },
+    ],
+    task: "Change the starting value to 0 and see how the final value changes, then set it back to 20 and write why.",
+    hints: [
+      "A loop starts from the starting value.",
+      "15 pages 4 times adds 60 pages.",
+      "The final value is the starting value plus what was added.",
+    ],
+    closing:
+      "Which three things do you need to know to work out the final value in advance?",
+  },
+  "loop-3": {
+    title: "Huh? It jumped one more time!",
+    goal: "It should do 5 sets of 10 jumps, but it ends at 60. Find out why and fix it.",
+    prediction: "How many jumps will there be after “Repeat to the end”?",
+    tests: [
+      {
+        label: "Number of repeats",
+        expected: "It does only 5 sets and stops.",
+      },
+      {
+        label: "Final value",
+        expected: "It ends at 50 jumps.",
+      },
+    ],
+    task: "Fix “How repeats are counted” so it stops at 5 sets, then check again.",
+    hints: [
+      "Count how many dots are lit.",
+      "The app should count the repeats and stop when it reaches the set number.",
+      "In the settings, change how repeats are counted to “exactly the set number”.",
+    ],
+    closing: "Why is it easy to make a loop run one time too many or too few?",
+  },
+  "loop-4": {
+    title: "A loop that counts down",
+    goal: "Share 20 candies with 6 friends, 3 each, and find out how many are left.",
+    prediction: "How many candies are left after 6 repeats?",
+    tests: [
+      {
+        label: "Decreasing value",
+        expected: "It goes down by 3 each press.",
+      },
+      {
+        label: "Final value",
+        expected: "After 6 repeats, 2 are left.",
+      },
+    ],
+    task: "Change it to 7 friends and see what happens, then fix the numbers so the candies don't run out.",
+    hints: [
+      "The change per repeat is −3.",
+      "3 each for 6 friends takes away 18.",
+      "7 friends need 21, so the value goes below 0.",
+    ],
+    closing: "When a value must not go below 0, what should the app check?",
+  },
 };

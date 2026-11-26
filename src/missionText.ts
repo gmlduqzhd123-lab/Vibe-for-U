@@ -44,6 +44,13 @@ export function localizeConfig(c: Config, lang: Lang): Config {
       })),
     };
   if (c.kind === "timer") return { ...c, endMessage: t(c.endMessage) };
+  if (c.kind === "loop")
+    return {
+      ...c,
+      variable: t(c.variable),
+      round: t(c.round),
+      doneMessage: t(c.doneMessage),
+    };
   if (c.kind === "sort")
     return {
       ...c,
@@ -82,6 +89,7 @@ export function configStrings(c: Config): string[] {
       ...s.choices.map((ch) => ch.label),
     ]);
   if (c.kind === "timer") return [c.endMessage];
+  if (c.kind === "loop") return [c.variable, c.round, c.doneMessage];
   if (c.kind === "sort")
     return [
       c.property,

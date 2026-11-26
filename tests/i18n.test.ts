@@ -5,7 +5,7 @@ import { stageNames, kindNames, aiStatus, makeWork } from "../src/model";
 import { dirNames, autoChecks } from "../src/engines";
 import { missions, quiz, story, timer } from "../src/data";
 import { lessons, rubric } from "../src/lessonData";
-import { bugNames, levelNames } from "../src/classSummary";
+import { bugNames, filters, levelNames, orders } from "../src/classSummary";
 import { debugFields } from "../src/model";
 import { builtInPhrases } from "../src/Phrases";
 import { stageGuides } from "../src/Workspace";
@@ -37,6 +37,13 @@ describe("학생 화면 전체 번역", () => {
       ...Object.values(bugNames),
       ...debugFields.flatMap(([, label, hint]) => [label, hint]),
       ...builtInPhrases.flat(),
+      // 미션 추천 이유(recommend.ts)와 학급 모으기 걸러 보기·정렬 이름
+      "하던 미션을 이어서 해요.",
+      "방금 끝낸 종류의 다음 미션이에요.",
+      "아직 안 해 본 종류예요.",
+      "처음이라면 여기서 시작해요.",
+      ...filters.map(([, label]) => label),
+      ...orders.map(([, label]) => label),
       // 포트폴리오의 빠진 기록 안내(learning.ts의 portfolioGaps가 돌려주는 문장)
       "「{stage}」 단계에 기록할 내용이 남았어요.",
       "예상이 맞았는지 아직 표시하지 않았어요.",

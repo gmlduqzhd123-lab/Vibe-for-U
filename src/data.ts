@@ -3,6 +3,7 @@ import type {
   Kind,
   Mission,
   PatternConfig,
+  LoopConfig,
   RuleConfig,
   SortConfig,
 } from "./model";
@@ -311,8 +312,9 @@ const specifications: Record<
     closing: string;
   }[]
 > = {
-  // 분류 앱의 미션은 아래에서 채운다(시작 설정과 나란히 읽히도록).
+  // 분류 앱·반복 계산기의 미션은 아래에서 채운다(시작 설정과 나란히 읽히도록).
   sort: [],
+  loop: [],
   quiz: [
     {
       title: "선택이 정답을 만났을 때",
@@ -891,6 +893,146 @@ specifications.sort.push(
       "안전을 위한 규칙에는 ‘그리고’와 ‘또는’ 가운데 무엇이 더 알맞을까요?",
   },
 );
+// 반복 계산기의 시작 설정: 같은 만큼 바꾸는 일을 정한 횟수만큼 되풀이한다.
+const loopStarters: LoopConfig[] = [
+  {
+    kind: "loop",
+    variable: "저금통(원)",
+    round: "일째",
+    start: 0,
+    change: 500,
+    times: 7,
+    count: "exact",
+    goal: 3500,
+    doneMessage: "일주일 저금 끝! 3500원을 모았어요.",
+  },
+  {
+    kind: "loop",
+    variable: "읽은 쪽수",
+    round: "일째",
+    start: 20,
+    change: 15,
+    times: 4,
+    count: "exact",
+    goal: 80,
+    doneMessage: "80쪽까지 읽었어요!",
+  },
+  // 학습용 오류: 정한 횟수보다 한 번 더 돌아 줄넘기가 60개가 된다.
+  {
+    kind: "loop",
+    variable: "줄넘기(개)",
+    round: "세트",
+    start: 0,
+    change: 10,
+    times: 5,
+    count: "extra",
+    goal: 50,
+    doneMessage: "줄넘기 50개 끝!",
+  },
+  {
+    kind: "loop",
+    variable: "남은 사탕(개)",
+    round: "번째 친구",
+    start: 20,
+    change: -3,
+    times: 6,
+    count: "exact",
+    goal: 2,
+    doneMessage: "친구 6명에게 나눠 주고 2개가 남았어요.",
+  },
+];
+specifications.loop.push(
+  {
+    title: "일주일 저금통",
+    goal: "하루에 500원씩 7일 동안 저금하면 얼마가 되는지 반복으로 알아봐요.",
+    prediction:
+      "‘한 번 반복’을 3번 누르면 저금통에 얼마가 있을까요? 7번이면요?",
+    tests: [
+      {
+        label: "한 번씩 반복",
+        expected: "누를 때마다 500원씩 늘어난다.",
+      },
+      {
+        label: "끝까지 반복",
+        expected: "7번 반복하고 3500원에서 멈춘다.",
+      },
+    ],
+    task: "하루 저금을 700원으로 바꾸고 목표 값도 맞게 고친 뒤 다시 확인하세요.",
+    hints: [
+      "앱이 기억하는 값은 저금통의 돈이에요.",
+      "한 번 반복할 때마다 같은 만큼 늘어나요.",
+      "목표 값은 ‘한 번에 바뀌는 값 × 횟수’예요.",
+    ],
+    closing:
+      "같은 일을 7번 적는 것과 ‘7번 반복’이라고 적는 것은 무엇이 다를까요?",
+  },
+  {
+    title: "처음 값이 있을 때",
+    goal: "이미 20쪽을 읽은 책을 하루 15쪽씩 4일 더 읽으면 몇 쪽인지 알아봐요.",
+    prediction: "4번 반복이 끝나면 60쪽일까요, 80쪽일까요?",
+    tests: [
+      {
+        label: "처음 값",
+        expected: "반복하기 전에 20쪽에서 시작한다.",
+      },
+      {
+        label: "끝난 값",
+        expected: "4번 반복하면 80쪽이 된다.",
+      },
+    ],
+    task: "처음 값을 0으로 바꿔 끝난 값이 어떻게 달라지는지 보고, 다시 20으로 돌려 이유를 적으세요.",
+    hints: [
+      "반복은 처음 값에서 시작해요.",
+      "15쪽씩 4번이면 60쪽이 늘어나요.",
+      "끝난 값은 처음 값 + 늘어난 값이에요.",
+    ],
+    closing: "반복이 끝난 값을 미리 계산하려면 무엇 세 가지를 알아야 할까요?",
+  },
+  {
+    title: "어라? 한 번 더 뛰었어요!",
+    goal: "줄넘기 10개씩 5세트만 해야 하는데 60개가 되는 까닭을 찾아 고쳐요.",
+    prediction: "‘끝까지 반복’을 누르면 줄넘기는 몇 개가 될까요?",
+    tests: [
+      {
+        label: "반복 횟수",
+        expected: "5세트만 하고 멈춘다.",
+      },
+      {
+        label: "끝난 값",
+        expected: "줄넘기 50개에서 끝난다.",
+      },
+    ],
+    task: "‘반복 세는 방법’을 고쳐 5세트에서 멈추게 하고 다시 확인하세요.",
+    hints: [
+      "점이 몇 개 켜졌는지 세어 봐요.",
+      "앱은 몇 번 했는지 세다가 정한 횟수가 되면 멈춰야 해요.",
+      "설정의 ‘반복 세는 방법’을 ‘정한 횟수만큼’으로 바꿔요.",
+    ],
+    closing: "반복이 한 번 더 돌거나 덜 도는 실수는 왜 생기기 쉬울까요?",
+  },
+  {
+    title: "줄어드는 반복",
+    goal: "사탕 20개를 친구 6명에게 3개씩 나눠 주면 몇 개가 남는지 알아봐요.",
+    prediction: "6번 반복하면 사탕은 몇 개 남을까요?",
+    tests: [
+      {
+        label: "줄어드는 값",
+        expected: "누를 때마다 3개씩 줄어든다.",
+      },
+      {
+        label: "끝난 값",
+        expected: "6번 반복하면 2개가 남는다.",
+      },
+    ],
+    task: "친구를 7명으로 바꾸면 어떤 일이 생기는지 보고, 사탕이 모자라지 않게 숫자를 고치세요.",
+    hints: [
+      "한 번에 바뀌는 값이 −3이에요.",
+      "3개씩 6번이면 18개가 줄어요.",
+      "7명이면 21개가 필요해서 값이 0보다 작아져요.",
+    ],
+    closing: "값이 0보다 작아지면 안 될 때 앱은 무엇을 확인해야 할까요?",
+  },
+);
 export const missions: Mission[] = kinds.flatMap((kind) =>
   specifications[kind].map((s, i) => {
     const starter = structuredClone(
@@ -904,7 +1046,9 @@ export const missions: Mission[] = kinds.flatMap((kind) =>
               ? ruleStarters[i]
               : kind === "sort"
                 ? sortStarters[i]
-                : patternStarters[i],
+                : kind === "loop"
+                  ? loopStarters[i]
+                  : patternStarters[i],
     );
     if (kind === "quiz" && starter.kind === "quiz") {
       if (i === 2) starter.scoring = "attempt";

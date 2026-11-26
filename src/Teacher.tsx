@@ -7,6 +7,7 @@ import { kindNames } from "./model";
 import type { Kind, Mission } from "./model";
 import { Icon, Pill } from "./ui";
 import { ClassReview } from "./ClassReview";
+import { RubricEditor } from "./RubricEditor";
 import { TranslationFix } from "./TranslationFix";
 import type { Navigate } from "./Pages";
 import { useLang, useT } from "./i18n";
@@ -527,6 +528,7 @@ export function Teacher({
           </p>
         </div>
       ) : null}
+      {tab === "rubric" ? <RubricEditor message={message} /> : null}
       {tab === "class" ? <ClassReview message={message} /> : null}
       {tab === "maker" ? (
         <MissionMaker

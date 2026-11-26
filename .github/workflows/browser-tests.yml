@@ -13,6 +13,7 @@ jobs:
   quality:
     # 파일 이름 대소문자 충돌, ESLint, Prettier 서식, 타입 검사
     runs-on: ubuntu-24.04
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -23,6 +24,8 @@ jobs:
       - run: npm run check
   e2e:
     runs-on: ubuntu-24.04
+    # 브라우저 설치가 멈추면 몇 시간씩 남지 않게 작업 전체에 제한 시간을 둔다(보통 7분 안팎).
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -40,8 +43,20 @@ jobs:
       - run: npm run build
       # 성능 예산: 첫 화면 파일 크기가 정한 한도를 넘으면 실패한다.
       - run: npm run budget
+      # 내려받은 브라우저는 Playwright 버전(package-lock)이 같을 때 다시 쓴다.
       - if: matrix.browser != 'msedge'
+        id: browsers
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ matrix.browser }}-${{ hashFiles('package-lock.json') }}
+      - if: matrix.browser != 'msedge' && steps.browsers.outputs.cache-hit != 'true'
+        timeout-minutes: 12
         run: npx playwright install --with-deps ${{ matrix.browser }}
+      # 브라우저를 캐시에서 꺼냈으면 시스템 라이브러리만 설치한다.
+      - if: matrix.browser != 'msedge' && steps.browsers.outputs.cache-hit == 'true'
+        timeout-minutes: 12
+        run: npx playwright install-deps ${{ matrix.browser }}
       # Edge는 러너 이미지에 이미 있으므로 버전만 기록하고, 없을 때만 설치한다.
       - if: matrix.browser == 'msedge'
         run: |

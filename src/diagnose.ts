@@ -11,6 +11,7 @@ import {
   runPattern,
   shadowedRules,
   binMatches,
+  runLoop,
   shadowedBins,
   sortBin,
   sortMismatches,
@@ -70,6 +71,28 @@ export function diagnose(c: Config): Finding[] {
         id: "timer-end",
         problem: "0초가 돼도 끝났다는 안내가 나오지 않아요.",
         hint: "설정의 ‘0초가 되면 종료 안내 표시’를 켜 보세요.",
+      });
+  } else if (c.kind === "loop") {
+    const done = runLoop(c);
+    if (c.count === "extra")
+      out.push({
+        id: "loop-extra",
+        problem: "{n}번만 반복해야 하는데 {m}번 반복해요.",
+        hint: "설정의 ‘반복 세는 방법’을 ‘정한 횟수만큼 (정상 규칙)’으로 바꿔 보세요. 앱은 몇 번 했는지 세다가 정한 횟수가 되면 멈춰야 해요.",
+        vars: { n: c.times, m: done.round },
+      });
+    else if (done.value !== c.goal)
+      out.push({
+        id: "loop-goal",
+        problem: "반복이 끝난 값 {v}이 목표 {goal}과 달라요.",
+        hint: "처음 값 {start}에 한 번에 바뀌는 값 {change}을 {n}번 더하면 얼마인지 계산해 보세요. 횟수나 바뀌는 값, 목표 값 가운데 하나를 고쳐요.",
+        vars: {
+          v: done.value,
+          goal: c.goal,
+          start: c.start,
+          change: c.change,
+          n: c.times,
+        },
       });
   } else if (c.kind === "sort") {
     const hidden = shadowedBins(c);

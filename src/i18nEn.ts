@@ -2444,4 +2444,152 @@ export const en: Record<string, string> = {
   수요일: "Wednesday",
   목요일: "Thursday",
   금요일: "Friday",
+  "선생님 평가표를 이 기기에 저장했어요.":
+    "A teacher's assessment rubric was saved on this device.",
+  "작품 나란히 비교": "Compare works side by side",
+  "학급 과정 평가 요약": "Class process assessment summary",
+  "과정 평가 평균 (1 시작 · 2 수행 · 3 설명·적용)":
+    "Process assessment averages (1 starting · 2 doing · 3 explaining and applying)",
+  "둘 다 평가한 작품": "Works assessed by both",
+  "만난 학생 {n}명 · 지금은 고침 {m}명": "{n} students met it · {m} fixed now",
+  "작품 {n}개 · 다섯 단계 완료 {m}개":
+    "{n} works · {m} with all five steps done",
+  "기록을 근거로 교사가 직접 매긴 평가의 요약이에요. 앱은 점수를 자동으로 매기지 않으며, 이 요약에는 학생 이름과 작품 글을 넣지 않았어요.":
+    "This summarizes assessments the teacher gave based on the records. The app never scores automatically, and no student names or work text are included.",
+  "학기 요약 한 장 인쇄": "Print one-page term summary",
+  "걸러 보기": "Filter",
+  정렬: "Sort",
+  "작품 {n}개 가운데 {m}개를 보고 있어요.": "Showing {m} of {n} works.",
+  "비교하려면 작품이 두 개 있어야 해요.": "You need two works to compare.",
+  "미션 고르러 가기": "Go pick a mission",
+  "작품 두 개를 골라 규칙이 어떻게 다른지 보고 나란히 눌러 봐요. 여기서 누른 것은 작품에 기록하지 않아요.":
+    "Pick two works to see how their rules differ and try them side by side. What you press here is not recorded in the works.",
+  "왼쪽 작품": "Left work",
+  "오른쪽 작품": "Right work",
+  "같은 작품이에요. 다른 작품을 골라 주세요.":
+    "That's the same work. Pick a different one.",
+  "종류가 다른 작품이에요. 규칙을 한 줄씩 비교하지는 못하지만 나란히 실행해 볼 수 있어요.":
+    "These works are different kinds. Their rules can't be compared line by line, but you can run them side by side.",
+  "두 작품의 규칙이 같아요.": "The two works have the same rules.",
+  "규칙이 다른 곳 {n}줄을 아래에 표시했어요.":
+    "{n} lines where the rules differ are marked below.",
+  "다른 곳": "Different",
+  "이 작품 열기": "Open this work",
+  "준비된 반복 계산기 템플릿": "Ready-made loop calculator template",
+  "반복한 횟수": "Number of repeats done",
+  "{n}번째 했어요": "Repeat {n} done",
+  "{n}번째 아직": "Repeat {n} not yet",
+  "한 번 반복": "Repeat once",
+  "끝까지 반복": "Repeat to the end",
+  "{round}마다 {name}이 {change}씩 바뀌어요. {n}번 하면 멈춰요.":
+    "Every {round}, {name} changes by {change}. It stops after {n} repeats.",
+  "한 번 반복의 이름 (예: 일, 바퀴)": "Name of one repeat (e.g. day, lap)",
+  "한 번에 바뀌는 값": "Change per repeat",
+  "반복 횟수 (1~50)": "Number of repeats (1–50)",
+  "반복 세는 방법": "How repeats are counted",
+  "정한 횟수만큼 (정상 규칙)": "Exactly the set number (correct rule)",
+  "한 번 더 반복 (학습용 규칙)": "One extra repeat (learning rule)",
+  "목표 값 (반복이 끝났을 때)": "Goal value (when the loop ends)",
+  "끝났을 때 문구": "Message when it ends",
+  "다음에 해 볼 미션": "Missions to try next",
+  "오늘 미션을 여는 QR 코드": "QR code that opens today's mission",
+  "기기 카메라로 비추면 오늘 미션이 열려요.":
+    "Scan with the device camera to open today's mission.",
+  "지금 할 일": "Do now",
+  "평가표를 저장하지 못했어요. 네 항목의 이름과 세 단계를 모두 적어 주세요.":
+    "Couldn't save the rubric. Fill in the name and all three levels for each of the four items.",
+  "평가표 고쳐 쓰기 · 지금 이 기기는 고친 평가표를 써요":
+    "Edit the rubric · this device is using an edited rubric",
+  "평가표 고쳐 쓰기 · 우리 학교 기준에 맞추기":
+    "Edit the rubric · fit it to your school",
+  "항목 네 개의 이름과 단계 설명을 고칠 수 있어요. 항목 수와 단계 수는 평가 기록과 맞아야 해서 바꾸지 않아요. 고친 평가표는 이 기기의 평가 화면·포트폴리오·CSV에 쓰여요.":
+    "You can edit the names and level descriptions of the four items. The number of items and levels stays fixed so it matches the assessment records. The edited rubric is used in this device's assessment screens, portfolio and CSV.",
+  "항목 {n}": "Item {n}",
+  "항목 {n} 이름": "Item {n} name",
+  "항목 {n} · {level}": "Item {n} · {level}",
+  "고친 평가표를 이 기기에 저장했어요.":
+    "Saved the edited rubric on this device.",
+  "평가표 저장": "Save rubric",
+  "평가표 파일 내려받기": "Download rubric file",
+  "평가표 파일 가져오기": "Import rubric file",
+  "기본 평가표로 되돌렸어요.": "Restored the default rubric.",
+  "기본 평가표로 되돌리기": "Restore default rubric",
+  "평가표 JSON 파일": "Rubric JSON file",
+  "평가표 파일을 가져와 저장했어요.": "Imported and saved the rubric file.",
+  "평가표 파일을 골라 주세요.": "Choose a rubric file.",
+  "먼저 ‘예상하고 실행’ 단계에서 눌러 보고 ‘이 기록을 증거로 남기기’를 눌러 주세요.":
+    "First press the app in “Predict and run”, then press “Save this log as evidence”.",
+  "설명 틀을 채웠어요. 빈 곳을 내 말로 고쳐 써요.":
+    "The explanation frame is filled in. Rewrite the blanks in your own words.",
+  "실행 기록으로 설명 틀 채우기": "Fill the explanation frame from the run log",
+  "{a}번 반복한 뒤 → 값": "After {a} repeats → value",
+  "끝까지 반복하기 → 마지막 값": "Repeat to the end → final value",
+  "{n}번째 {round} → {name} {a} → {b} → {rule}":
+    "{round} {n} → {name} {a} → {b} → {rule}",
+  "반복 {n}번을 채워 멈춤": "stopped after {n} repeats",
+  "아직 {n}번 남음": "{n} repeats left",
+  "{n}번 반복하고 멈춘다": "Repeats {n} times and stops",
+  "{n}번 반복함": "Repeated {n} times",
+  "값이 더 바뀌지 않는다": "The value doesn't change any more",
+  "한 번({round})에 {change}씩 · {n}번 반복":
+    "{change} per repeat ({round}) · {n} repeats",
+  "반복 세는 방법: {v}": "How repeats are counted: {v}",
+  "정한 횟수만큼": "exactly the set number",
+  "한 번 더 반복 (학습용 오류)": "one extra repeat (learning bug)",
+  "목표 값: {v} · 끝났을 때 「{msg}」":
+    "Goal value: {v} · when it ends “{msg}”",
+  "내가 누른 것: {v}": "What I pressed: {v}",
+  "앱이 따른 규칙: {v}": "The rule the app followed: {v}",
+  "앱이 기억한 값: {v}": "The value the app remembered: {v}",
+  "그래서 화면에 나온 결과: ": "So the result on screen: ",
+  "내가 알게 된 것: ": "What I found out: ",
+  "한 번 반복의 이름": "name of one repeat",
+  "목표 값": "goal value",
+  "같은 일을 정한 횟수만큼 되풀이해요.":
+    "Repeat the same thing a set number of times.",
+  "한 번 할 때마다 값이 같은 만큼 바뀌어요.":
+    "The value changes by the same amount each time.",
+  "다 하면 끝났다고 알려 줘요.": "It tells you when it is finished.",
+  "정한 횟수가 되면 멈춰요.": "It stops when it reaches the set number.",
+  "처음으로 누르면 처음 값에서 다시 해요.":
+    "Pressing Start over begins again from the starting value.",
+  "{n}번만 반복해야 하는데 {m}번 반복해요.":
+    "It should repeat only {n} times but repeats {m} times.",
+  "설정의 ‘반복 세는 방법’을 ‘정한 횟수만큼 (정상 규칙)’으로 바꿔 보세요. 앱은 몇 번 했는지 세다가 정한 횟수가 되면 멈춰야 해요.":
+    "In the settings, change “How repeats are counted” to “Exactly the set number (correct rule)”. The app should count the repeats and stop when it reaches the set number.",
+  "반복이 끝난 값 {v}이 목표 {goal}과 달라요.":
+    "The value when the loop ends, {v}, differs from the goal {goal}.",
+  "처음 값 {start}에 한 번에 바뀌는 값 {change}을 {n}번 더하면 얼마인지 계산해 보세요. 횟수나 바뀌는 값, 목표 값 가운데 하나를 고쳐요.":
+    "Work out the starting value {start} plus the change {change} added {n} times. Then fix the number of repeats, the change, or the goal value.",
+  "반복 계산기": "Loop calculator",
+  "한 번 더 도는 반복": "Loop runs one extra time",
+  "반복이 끝난 값이 목표와 달라요": "Final loop value differs from the goal",
+  "하던 미션을 이어서 해요.": "Continue the mission you started.",
+  "방금 끝낸 종류의 다음 미션이에요.":
+    "The next mission of the kind you just finished.",
+  "아직 안 해 본 종류예요.": "A kind you haven't tried yet.",
+  "처음이라면 여기서 시작해요.": "Start here if this is your first time.",
+  "모든 작품": "All works",
+  "평가 전인 작품": "Works not assessed yet",
+  "다섯 단계를 다 기록하지 않은 작품": "Works without all five steps recorded",
+  "지금 버그가 남은 작품": "Works with a bug still present",
+  "읽은 순서": "Order loaded",
+  "파일 이름 순서": "By file name",
+  "기록한 단계가 적은 순서": "Fewest recorded steps first",
+  "저금통(원)": "piggy bank (won)",
+  일째: "day",
+  "일주일 저금 끝! 3500원을 모았어요.":
+    "A week of saving done! You saved 3500 won.",
+  "읽은 쪽수": "pages read",
+  "80쪽까지 읽었어요!": "You read up to page 80!",
+  "줄넘기(개)": "jumps",
+  세트: "set",
+  "줄넘기 50개 끝!": "50 jumps done!",
+  "남은 사탕(개)": "candies left",
+  "번째 친구": "friend",
+  "친구 6명에게 나눠 주고 2개가 남았어요.":
+    "Shared with 6 friends and 2 are left.",
+  "정한 횟수만큼 반복": "Repeats the set number of times",
+  "반복이 끝난 값": "Value when the loop ends",
+  "끝난 뒤 더 누르기": "Pressing after it ends",
 };

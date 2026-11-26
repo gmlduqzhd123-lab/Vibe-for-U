@@ -8,6 +8,7 @@ import { SpeakButton } from "./Speak";
 import { dateLocale, useLang, useT } from "./i18n";
 import { localizeMission } from "./missionText";
 import { BACKUP_EVENT, backupDue, snoozeBackup } from "./backupReminder";
+import { recommend } from "./recommend";
 export type Navigate = (path: string) => void;
 export { RoleHome as Home } from "./RoleHome";
 export function Missions({
@@ -22,6 +23,7 @@ export function Missions({
   const valid = (kinds as string[]).includes(filter ?? "");
   const t = useT();
   const lang = useLang();
+  const picks = useMemo(() => recommend(works), [works]);
   return (
     <>
       <div className="page-heading">
@@ -42,6 +44,29 @@ export function Missions({
           </button>
         </div>
       </div>
+      {picks.length ? (
+        <section className="mission-picks" aria-labelledby="picks-title">
+          <h2 id="picks-title">{t("다음에 해 볼 미션")}</h2>
+          <ul>
+            {picks.map(({ mission, reason }) => {
+              const m = localizeMission(mission, lang);
+              return (
+                <li key={m.id}>
+                  <button onClick={() => go(`mission/${m.id}`)}>
+                    <Icon name={m.kind} />
+                    <span>
+                      <b>
+                        {t(kindNames[m.kind])} {m.order} · {m.title}
+                      </b>
+                      <small>{t(reason)}</small>
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ) : null}
       <div className="filter-row">
         {["all", ...kinds].map((k) => (
           <button
@@ -241,6 +266,9 @@ export function Library({
           <button onClick={importFile}>
             <Icon name="folder" />
             {t("파일 가져오기")}
+          </button>
+          <button disabled={works.length < 2} onClick={() => go("compare")}>
+            {t("작품 나란히 비교")}
           </button>
           <button onClick={() => go("growth")}>
             <Icon name="print" />

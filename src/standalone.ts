@@ -178,6 +178,24 @@ const PLAYER = String.raw`
     root.appendChild(face); root.appendChild(msg); root.appendChild(row);
     update();
   }
+  function loop() {
+    var total = c.times + (c.count === "extra" ? 1 : 0), round = 0, value = c.start;
+    var face = el("p", "clock"), msg = el("p", "note");
+    msg.setAttribute("role", "status");
+    function update() {
+      face.textContent = c.variable + " " + value;
+      msg.textContent = round >= total ? c.doneMessage : fill(T.loopRound, { n: round, m: total, round: c.round });
+      one.disabled = all.disabled = round >= total;
+    }
+    function step() { if (round < total) { round++; value += c.change; } }
+    var one = button(T.loopOne, function () { step(); update(); }, "primary");
+    var all = button(T.loopAll, function () { while (round < total) step(); update(); });
+    var row = el("div", "choices");
+    row.appendChild(one); row.appendChild(all);
+    row.appendChild(button(T.restart, function () { round = 0; value = c.start; update(); }));
+    root.appendChild(face); root.appendChild(msg); root.appendChild(row);
+    update();
+  }
   function sort() {
     var placed = [];
     function matches(b, v) {
@@ -229,7 +247,7 @@ const PLAYER = String.raw`
     root.appendChild(next); root.appendChild(row); root.appendChild(list);
     update();
   }
-  ({ quiz: quiz, story: story, timer: timer, pattern: pattern, rule: rule, sort: sort })[c.kind]();
+  ({ quiz: quiz, story: story, timer: timer, pattern: pattern, rule: rule, sort: sort, loop: loop })[c.kind]();
 })();
 `;
 const STYLE = `
@@ -302,6 +320,9 @@ export function standaloneHtml(w: Work, t: Tr, lang: string) {
     empty: t("비어 있어요"),
     putOne: t("한 장 넣기"),
     putAll: t("모두 넣기"),
+    loopRound: t("{round} {n} / {m}"),
+    loopOne: t("한 번 반복"),
+    loopAll: t("끝까지 반복"),
   };
   const data = { config: c, texts, ...extra };
   return `<!doctype html>
