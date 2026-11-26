@@ -479,4 +479,7 @@ export const enTeacher: Record<string, string> = {
   "목록에 같은 낱말이 두 번": "The same word twice in a list",
   "스스로 평가와 선생님 평가가 다른 작품":
     "Works where self and teacher ratings differ",
+  "어디에서 멈췄나요": "Where did they stop?",
+  " 밖에 {n}명": " and {n} more",
+  "가장 많이 멈춘 단계": "Most stopped here",
 };

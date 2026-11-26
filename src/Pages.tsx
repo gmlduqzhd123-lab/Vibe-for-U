@@ -37,6 +37,35 @@ export function Missions({
         (state === "all" || x.state === state) &&
         missionMatches(x.m, query, t(kindNames[x.m.kind])),
     );
+  const card = ({ m, state: progress }: (typeof shown)[number]) => (
+    <button
+      className={`mission-card ${m.kind}`}
+      key={m.id}
+      onClick={() => go(`mission/${m.id}`)}
+    >
+      <div className="project-card-top">
+        <Pill tone="paper">
+          {t(kindNames[m.kind])} {m.order}
+        </Pill>
+        {m.id === "quiz-1" ? <Pill>{t("첫 미션 추천")}</Pill> : null}
+        {m.id.startsWith("custom-") ? (
+          <Pill tone="green">{t("선생님 미션")}</Pill>
+        ) : null}
+        {m.learningError ? (
+          <Pill tone="orange">{t("학습용 오류 포함")}</Pill>
+        ) : null}
+      </div>
+      <h2>{m.title}</h2>
+      <p>{m.goal}</p>
+      <span className="muted small">
+        {t("예상 → 실행 → {test} → 수정", { test: m.tests[0].label })}
+      </span>
+      <div className="mission-footer">
+        <b>{t(missionStates.find(([id]) => id === progress)![1])}</b>
+        <Icon name="arrow" />
+      </div>
+    </button>
+  );
   return (
     <>
       <div className="page-heading">
@@ -129,39 +158,37 @@ export function Missions({
           </p>
         </Empty>
       )}
-      <div className="mission-grid">
-        {shown.map(({ m, state: progress }) => {
-          return (
-            <button
-              className={`mission-card ${m.kind}`}
-              key={m.id}
-              onClick={() => go(`mission/${m.id}`)}
-            >
-              <div className="project-card-top">
-                <Pill tone="paper">
-                  {t(kindNames[m.kind])} {m.order}
-                </Pill>
-                {m.id === "quiz-1" ? <Pill>{t("첫 미션 추천")}</Pill> : null}
-                {m.id.startsWith("custom-") ? (
-                  <Pill tone="green">{t("선생님 미션")}</Pill>
-                ) : null}
-                {m.learningError ? (
-                  <Pill tone="orange">{t("학습용 오류 포함")}</Pill>
-                ) : null}
-              </div>
-              <h2>{m.title}</h2>
-              <p>{m.goal}</p>
-              <span className="muted small">
-                {t("예상 → 실행 → {test} → 수정", { test: m.tests[0].label })}
-              </span>
-              <div className="mission-footer">
-                <b>{t(missionStates.find(([id]) => id === progress)![1])}</b>
-                <Icon name="arrow" />
-              </div>
-            </button>
-          );
-        })}
-      </div>
+      {valid ? (
+        <div className="mission-grid">{shown.map(card)}</div>
+      ) : (
+        // 앱 종류별로 묶어 접고 펼친다. 묶음 이름 옆에 그 종류에서 기록을 마친 미션 수를 보여 준다.
+        kinds
+          .map((k) => ({ k, list: shown.filter((x) => x.m.kind === k) }))
+          .filter((g) => g.list.length)
+          .map(({ k, list }) => {
+            const all = missions.filter((m) => m.kind === k);
+            const done = all.filter(
+              (m) => missionState(m.id, works) === "done",
+            ).length;
+            return (
+              <details className="mission-group" key={k} open>
+                <summary>
+                  <Icon name={k} />
+                  <b>{t(kindNames[k])}</b>
+                  <span className="muted small">
+                    {t("기록 완료 {n} / {m}", { n: done, m: all.length })}
+                  </span>
+                  <progress
+                    max={all.length}
+                    value={done}
+                    aria-label={t("{kind} 진행", { kind: t(kindNames[k]) })}
+                  />
+                </summary>
+                <div className="mission-grid">{list.map(card)}</div>
+              </details>
+            );
+          })
+      )}
     </>
   );
 }

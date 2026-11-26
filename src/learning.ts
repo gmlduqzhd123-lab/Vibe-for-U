@@ -101,6 +101,15 @@ export function configSummary(c: Config, t: Tr = ko): string[] {
       ...(c.until
         ? [t("멈춤 조건: 값이 {cond} 멈추기", { cond: loopUntil(c, t) })]
         : []),
+      ...(c.bonus
+        ? [
+            t("반복 안의 조건: 만약 {n}의 배수 번째이면 {change} 더", {
+              n: c.bonus.every,
+              change:
+                c.bonus.change > 0 ? `+${c.bonus.change}` : c.bonus.change,
+            }),
+          ]
+        : []),
       t("목표 값: {v} · 끝났을 때 「{msg}」", {
         v: c.goal,
         msg: c.doneMessage,

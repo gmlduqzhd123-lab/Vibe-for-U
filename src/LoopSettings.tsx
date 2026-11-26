@@ -89,6 +89,50 @@ export function LoopSettings({
             <option value="eq">{t("값이 얼마와 같으면 멈추기")}</option>
           </select>
         </label>
+        <label className="field">
+          <span>{t("반복 안의 조건 (몇 번째마다 더 바꾸기)")}</span>
+          <select
+            value={config.bonus ? config.bonus.every : 0}
+            onChange={(e) => {
+              const every = Number(e.target.value);
+              if (!every) {
+                const rest = { ...config };
+                delete rest.bonus;
+                onChange(rest);
+              } else
+                edit({
+                  bonus: {
+                    every,
+                    change: config.bonus?.change ?? config.change,
+                  },
+                });
+            }}
+          >
+            <option value={0}>{t("없음")}</option>
+            {[2, 3, 4, 5, 10].map((n) => (
+              <option key={n} value={n}>
+                {t("{n}의 배수 번째마다", { n })}
+              </option>
+            ))}
+          </select>
+        </label>
+        {config.bonus ? (
+          <label className="field">
+            <span>{t("그때 더 바뀌는 값")}</span>
+            <input
+              type="number"
+              value={config.bonus.change}
+              onChange={(e) =>
+                edit({
+                  bonus: {
+                    every: config.bonus!.every,
+                    change: num(e.target.value, -10000, 10000),
+                  },
+                })
+              }
+            />
+          </label>
+        ) : null}
         {config.until ? (
           <label className="field">
             <span>{t("멈춤 조건의 값")}</span>

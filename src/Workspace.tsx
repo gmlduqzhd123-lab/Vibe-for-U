@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { Inspection } from "./Inspection";
 import { RunEvidenceContext } from "./runHistory";
 import { PairPanel } from "./Pair";
+import { diagnose } from "./diagnose";
+import { challenges } from "./challenges";
 import { Tour } from "./Tour";
 import {
   compareSnapshots,
@@ -40,6 +42,7 @@ import { ShareButton } from "./Share";
 import { standaloneHtml } from "./standalone";
 import { QrSendButton } from "./QrShare";
 import { peerPayload, workPayload } from "./qrTransfer";
+const ruleKinds = ["rule", "sort", "loop", "list"];
 export const stageGuides = [
   "누가, 어떤 순간에 쓸 앱인지 약속해요.",
   "내 말로 적고, 검사할 수 있는 요청으로 정리해요.",
@@ -94,6 +97,26 @@ export function Workspace({
   const d = w.draft;
   const done = stageDone(d);
   const predictionRef = useRef<HTMLDivElement>(null);
+  // 보내기·내보내기 메뉴: 바깥을 누르거나 Esc를 누르면 닫는다(QR 창이 열려 있을 때는 그대로 둔다).
+  const menuRef = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    const close = (e: Event) => {
+      const menu = menuRef.current;
+      if (!menu?.open || menu.querySelector("dialog[open]")) return;
+      if (
+        e instanceof KeyboardEvent
+          ? e.key === "Escape"
+          : !menu.contains(e.target as Node)
+      )
+        menu.open = false;
+    };
+    addEventListener("pointerdown", close);
+    addEventListener("keydown", close);
+    return () => {
+      removeEventListener("pointerdown", close);
+      removeEventListener("keydown", close);
+    };
+  }, []);
   const focusWhenReady = useRef(false);
   useEffect(() => {
     if (step === 2 && focusWhenReady.current) {
@@ -176,39 +199,47 @@ export function Workspace({
             <Icon name="download" />
             {t("파일 백업")}
           </button>
-          <button
-            onClick={() =>
-              guard([w], () => {
-                downloadText(
-                  `뚝딱-앱-${d.title || "작품"}.html`,
-                  standaloneHtml(w, t, lang),
-                  "text/html",
-                );
-                message(
-                  t(
-                    "앱 파일(HTML)을 내려받았어요. 인터넷 없이 브라우저에서 열려요.",
-                  ),
-                );
-              })
-            }
-          >
-            <Icon name="download" />
-            {t("앱 파일로 내보내기")}
-          </button>
-          <ShareButton
-            works={[w]}
-            name={`뚝딱-작품-${d.title || "작품"}.json`}
-            text={() => backupFiles([w])[0]}
-            onShared={() => markBackedUp([w])}
-            title={d.title || "뚝딱 작품"}
-            message={message}
-          />
-          <QrSendButton
-            works={[w]}
-            payload={() => workPayload(w)}
-            label={t("QR로 보내기")}
-            message={message}
-          />
+          <details className="more-menu" ref={menuRef}>
+            <summary>
+              <Icon name="send" />
+              {t("보내기·내보내기")}
+            </summary>
+            <div className="more-menu-items">
+              <button
+                onClick={() =>
+                  guard([w], () => {
+                    downloadText(
+                      `뚝딱-앱-${d.title || "작품"}.html`,
+                      standaloneHtml(w, t, lang),
+                      "text/html",
+                    );
+                    message(
+                      t(
+                        "앱 파일(HTML)을 내려받았어요. 인터넷 없이 브라우저에서 열려요.",
+                      ),
+                    );
+                  })
+                }
+              >
+                <Icon name="download" />
+                {t("앱 파일로 내보내기")}
+              </button>
+              <ShareButton
+                works={[w]}
+                name={`뚝딱-작품-${d.title || "작품"}.json`}
+                text={() => backupFiles([w])[0]}
+                onShared={() => markBackedUp([w])}
+                title={d.title || "뚝딱 작품"}
+                message={message}
+              />
+              <QrSendButton
+                works={[w]}
+                payload={() => workPayload(w)}
+                label={t("QR로 보내기")}
+                message={message}
+              />
+            </div>
+          </details>
           <button onClick={() => go(`portfolio/${w.id}`)}>
             {t("과정 포트폴리오")} <Icon name="arrow" />
           </button>
@@ -261,7 +292,9 @@ export function Workspace({
         (d.config.kind === "pattern" && d.config.edge === "wrap") ||
         (m.learningError &&
           d.config.kind === "story" &&
-          d.config.scenes[0]?.choices[1]?.to === "tree") ? (
+          d.config.scenes[0]?.choices[1]?.to === "tree") ||
+        // 만약 규칙·분류·반복·목록은 맞춤 힌트와 같은 규칙으로 본다(가린 조건, 한 번 더 도는 반복 등).
+        (ruleKinds.includes(d.config.kind) && diagnose(d.config).length > 0) ? (
           <Pill tone="orange">{t("학습용 오류 규칙 포함")}</Pill>
         ) : (
           <Pill tone="green">{t("현재 설정으로 검사해 보세요")}</Pill>
@@ -770,6 +803,37 @@ export function Workspace({
             ) : null}
             {step === 4 ? (
               <>
+                <details className="panel challenge-panel">
+                  <summary>
+                    {t("더 해 보기 · 도전 과제 {n}개", {
+                      n: challenges[d.config.kind].length,
+                    })}
+                  </summary>
+                  <p className="small">
+                    {t(
+                      "정답이 하나가 아니에요. 설정을 바꿔 조건에 맞는 앱을 만들면 여기에 달성 표시가 생겨요.",
+                    )}
+                  </p>
+                  <ul className="challenge-list">
+                    {challenges[d.config.kind].map((c) => {
+                      const met = c.met(d.config);
+                      return (
+                        <li key={c.id} className={met ? "met" : ""}>
+                          <span>{t(c.text)}</span>
+                          <Pill tone={met ? "green" : "paper"}>
+                            {t(met ? "달성!" : "아직")}
+                          </Pill>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  <button
+                    className="subtle"
+                    onClick={() => go(`work/${w.id}/2`)}
+                  >
+                    {t("설정 바꾸러 가기")} <Icon name="arrow" />
+                  </button>
+                </details>
                 <div className="prompt-question">{m.closing}</div>
                 <Field
                   area

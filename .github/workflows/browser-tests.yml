@@ -23,6 +23,7 @@ jobs:
       - run: npm ci
       - run: npm run check
   e2e:
+    name: e2e (${{ matrix.browser }})
     runs-on: ubuntu-24.04
     # 브라우저 설치가 멈추면 몇 시간씩 남지 않게 작업 전체에 제한 시간을 둔다(보통 7분 안팎).
     timeout-minutes: 30
@@ -31,7 +32,17 @@ jobs:
       matrix:
         # msedge는 학교 PC에서 많이 쓰는 실제 Edge(러너에 설치된 정식판),
         # Chromium은 크롬·웨일과 같은 엔진, WebKit은 아이폰·아이패드 Safari와 같은 엔진이다.
-        browser: [msedge, chromium, webkit]
+        # Chromium·WebKit은 브라우저와 시스템 라이브러리가 이미 들어 있는 Playwright 공식 이미지에서 돌린다.
+        # 러너에서 라이브러리 170여 개를 내려받다 제한 시간에 걸리던 일을 없앤다.
+        # 이미지 버전은 설치된 Playwright와 같아야 한다(tests/ci.test.ts가 확인한다).
+        include:
+          - browser: msedge
+            container: ""
+          - browser: chromium
+            container: mcr.microsoft.com/playwright:v1.64.1-noble
+          - browser: webkit
+            container: mcr.microsoft.com/playwright:v1.64.1-noble
+    container: ${{ matrix.container }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -43,20 +54,6 @@ jobs:
       - run: npm run build
       # 성능 예산: 첫 화면 파일 크기가 정한 한도를 넘으면 실패한다.
       - run: npm run budget
-      # 내려받은 브라우저는 Playwright 버전(package-lock)이 같을 때 다시 쓴다.
-      - if: matrix.browser != 'msedge'
-        id: browsers
-        uses: actions/cache@v5
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ matrix.browser }}-${{ hashFiles('package-lock.json') }}
-      - if: matrix.browser != 'msedge' && steps.browsers.outputs.cache-hit != 'true'
-        timeout-minutes: 12
-        run: npx playwright install --with-deps ${{ matrix.browser }}
-      # 브라우저를 캐시에서 꺼냈으면 시스템 라이브러리만 설치한다.
-      - if: matrix.browser != 'msedge' && steps.browsers.outputs.cache-hit == 'true'
-        timeout-minutes: 12
-        run: npx playwright install-deps ${{ matrix.browser }}
       # Edge는 러너 이미지에 이미 있으므로 버전만 기록하고, 없을 때만 설치한다.
       - if: matrix.browser == 'msedge'
         run: |
@@ -68,6 +65,8 @@ jobs:
       - run: npx playwright test
         env:
           PW_BROWSER: ${{ matrix.browser }}
+          # 컨테이너는 root로 돌아 HOME이 달라진다(브라우저가 설정 폴더를 만들 수 있게 맞춘다).
+          HOME: ${{ matrix.container && '/root' || '/home/runner' }}
       # 화면 모습 검사가 찍은 휴대전화·태블릿·PC 사진(한국어·영어)을 사람이 훑어볼 수 있게 남긴다.
       - if: always() && matrix.browser == 'chromium'
         uses: actions/upload-artifact@v6

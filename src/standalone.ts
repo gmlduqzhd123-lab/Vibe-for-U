@@ -192,7 +192,11 @@ const PLAYER = String.raw`
       msg.textContent = over() ? c.doneMessage : fill(T.loopRound, { n: round, m: total, round: c.round });
       one.disabled = all.disabled = over();
     }
-    function step() { if (!over()) { round++; value += c.change; } }
+    function step() {
+      if (over()) return;
+      round++; value += c.change;
+      if (c.bonus && round % c.bonus.every === 0) value += c.bonus.change;
+    }
     var one = button(T.loopOne, function () { step(); update(); }, "primary");
     var all = button(T.loopAll, function () { while (!over()) step(); update(); });
     var row = el("div", "choices");
@@ -224,6 +228,15 @@ const PLAYER = String.raw`
       if (c.remove === "first") items.shift(); else items.pop();
       update();
     });
+    row.appendChild(button(T.listFill, function () {
+      var last = "";
+      c.items.forEach(function (x) {
+        if (items.length >= c.max) { last = c.fullMessage; return; }
+        if (c.duplicate === "block" && items.indexOf(x) >= 0) return;
+        items.push(x);
+      });
+      update(last);
+    }));
     row.appendChild(take);
     row.appendChild(button(T.restart, function () { items = []; update(); }));
     root.appendChild(count); root.appendChild(row); root.appendChild(msg); root.appendChild(shown);
@@ -359,6 +372,7 @@ export function standaloneHtml(w: Work, t: Tr, lang: string) {
     listCount: t("{n}개 / 가장 많이 {m}개"),
     listHas: t("「{item}」은 이미 목록에 있어요."),
     listTake: t("하나 빼기"),
+    listFill: t("모두 차례로 넣기"),
   };
   const data = { config: c, texts, ...extra };
   return `<!doctype html>

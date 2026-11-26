@@ -51,20 +51,50 @@ export function Tour() {
     el?.scrollIntoView?.({ block: "nearest" });
     return () => el?.classList.remove("tour-target");
   }, [step]);
-  const open = () => {
-    setAt(0);
-    setFresh(false);
+  const remember = () => {
     try {
       localStorage.setItem(SEEN_KEY, "1");
     } catch {
       // 기억하지 못해도 둘러보기는 그대로 쓸 수 있다.
     }
   };
+  const open = () => {
+    setAt(0);
+    setFresh(false);
+    remember();
+  };
+  // 처음 온 학생에게는 한 번만 물어본다. 괜찮다고 하면 조용한 버튼으로 바뀐다.
+  if (!step && fresh)
+    return (
+      <section
+        className="tour tour-ask no-print"
+        aria-label={t("화면 둘러보기")}
+      >
+        <p>
+          <b>{t("처음 오셨나요?")}</b>{" "}
+          {t("이 화면의 다섯 곳을 차례로 짚어 드릴게요. 1분이면 돼요.")}
+        </p>
+        <div className="button-row">
+          <button className="primary" onClick={open}>
+            {t("둘러보기 시작")}
+          </button>
+          <button
+            className="text-button"
+            onClick={() => {
+              setFresh(false);
+              remember();
+            }}
+          >
+            {t("괜찮아요, 바로 할게요")}
+          </button>
+        </div>
+      </section>
+    );
   if (!step)
     return (
       <p className="tour-start no-print">
-        <button className={fresh ? "tour-fresh" : "text-button"} onClick={open}>
-          {t(fresh ? "처음이라면 화면 둘러보기" : "화면 둘러보기")}
+        <button className="text-button" onClick={open}>
+          {t("화면 둘러보기")}
         </button>
       </p>
     );

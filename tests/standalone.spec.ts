@@ -8,6 +8,7 @@ async function exportApp(page: Page, mission: string, title: string) {
     .click();
   await page.getByLabel("작품 제목", { exact: true }).fill(title);
   const download = page.waitForEvent("download");
+  await page.locator(".more-menu summary").click();
   await page.getByRole("button", { name: "앱 파일로 내보내기" }).click();
   const file = await download;
   // 내려받은 임시 파일에는 확장자가 없어 .html로 저장해 연다.

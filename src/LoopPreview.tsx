@@ -100,6 +100,20 @@ export function LoopPreview({
             n: total,
           })}
         </p>
+        {config.bonus ? (
+          <p>
+            {t(
+              "반복 안에서 확인해요: 만약 {n}의 배수 번째이면 {change}을 더 바꿔요.",
+              {
+                n: config.bonus.every,
+                change:
+                  config.bonus.change > 0
+                    ? `+${config.bonus.change}`
+                    : config.bonus.change,
+              },
+            )}
+          </p>
+        ) : null}
         {config.until ? (
           <p>
             {t(

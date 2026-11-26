@@ -360,6 +360,24 @@ export function validateConfig(value: unknown): Config {
       count: one(c.count, ["exact", "extra"] as const, "반복 세는 방법"),
       goal: num(c.goal, "목표 값", -1000000, 1000000),
       doneMessage: str(c.doneMessage, "끝났을 때 문구", LIMITS.short),
+      ...(c.bonus === undefined || c.bonus === null
+        ? {}
+        : {
+            bonus: {
+              every: num(
+                obj(c.bonus, "보너스 조건").every,
+                "보너스 간격",
+                2,
+                10,
+              ),
+              change: num(
+                obj(c.bonus, "보너스 조건").change,
+                "보너스 값",
+                -10000,
+                10000,
+              ),
+            },
+          }),
       ...(c.until === undefined || c.until === null
         ? {}
         : {

@@ -12,6 +12,7 @@ test("QR로 보내기: 받기 주소를 다른 기기에서 열어 새 작품으
     .getByRole("button", { name: "이 미션 시작하기", exact: true })
     .click();
   await page.getByLabel("작품 제목", { exact: true }).fill("QR 이야기");
+  await page.locator(".more-menu summary").click();
   await page.getByRole("button", { name: "QR로 보내기" }).click();
   const dialog = page.getByRole("dialog", { name: "QR로 보내기" });
   await expect(

@@ -68,6 +68,7 @@ test("분류 앱도 앱 파일(HTML)로 내보내 그대로 실행된다", async
     .getByRole("button", { name: "이 미션 시작하기", exact: true })
     .click();
   const download = page.waitForEvent("download");
+  await page.locator(".more-menu summary").click();
   await page.getByRole("button", { name: "앱 파일로 내보내기" }).click();
   const file = await (await download).path();
   const html = await (await import("node:fs/promises")).readFile(file!, "utf8");

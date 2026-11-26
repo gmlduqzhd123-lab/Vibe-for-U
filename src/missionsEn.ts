@@ -851,4 +851,48 @@ export const missionsEn: Record<string, MissionText> = {
     closing:
       "Where would you use a list that takes from the front, and one that takes from the end?",
   },
+  "loop-7": {
+    title: "An “if” inside a loop",
+    goal: "Make a loop that gives 1 sticker a day, plus 3 bonus stickers on every 5th day.",
+    prediction:
+      "In 10 days, how many times do you get the bonus? How many stickers in all?",
+    tests: [
+      { label: "Bonus days", expected: "Only day 5 and day 10 give 3 more." },
+      {
+        label: "Final value",
+        expected: "After 10 days there are 16 stickers.",
+      },
+    ],
+    task: "Change the bonus to every 3rd time, work out the final value, and fix the goal value to match.",
+    hints: [
+      "On each repeat, the app checks which repeat number it is.",
+      "The multiples of 5 are 5 and 10, so twice.",
+      "The final value is 10 daily stickers plus 6 bonus stickers.",
+    ],
+    closing: "What can you do by putting an “if” inside a loop?",
+  },
+  "list-5": {
+    title: "Add them all with a loop",
+    goal: "Instead of pressing each word, use a loop to add them in order and make a speaking order.",
+    prediction:
+      "If you press “Add all in order”, how many of the six people get on the list?",
+    tests: [
+      {
+        label: "Adding with a loop",
+        expected: "The first four go in, in order.",
+      },
+      {
+        label: "When it is full",
+        expected: "From the fifth on, nothing goes in and a message appears.",
+      },
+    ],
+    task: "Change the most items to 6 so everyone fits, then press “Take one out” twice and check who is left.",
+    hints: [
+      "“Add all in order” repeats “add” for every word.",
+      "Before each add, it first checks whether the list is full.",
+      "The most items is 4, so it stops at four people.",
+    ],
+    closing:
+      "How is pressing the same thing many times different from leaving it to a loop?",
+  },
 };

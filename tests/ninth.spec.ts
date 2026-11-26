@@ -136,7 +136,7 @@ test("미션 찾기: 낱말과 진행 상태로 걸러 본다", async ({ page })
   await expect(page.getByText("기기에 저장됨", { exact: true })).toBeVisible();
   await page.goto("#/missions");
   const cards = page.locator(".mission-card");
-  await expect(cards).toHaveCount(37);
+  await expect(cards).toHaveCount(39);
   await page.getByLabel("미션 찾기").fill("급식 줄");
   await expect(cards).toHaveCount(1);
   await expect(cards).toContainText("먼저 온 사람 먼저");
@@ -151,7 +151,7 @@ test("미션 찾기: 낱말과 진행 상태로 걸러 본다", async ({ page })
   // 앱 종류 걸러 보기와 함께 쓴다.
   await page.getByLabel("진행 상태").selectOption("all");
   await page.getByRole("button", { name: "목록 만들기", exact: true }).click();
-  await expect(cards).toHaveCount(4);
+  await expect(cards).toHaveCount(5);
   await axe(page, ".mission-find");
   expect(await problems(page)).toEqual([]);
 });
@@ -160,7 +160,10 @@ test("화면 둘러보기: 다섯 곳을 차례로 짚고, 본 뒤에는 조용�
   page,
 }) => {
   const id = await start(page, "quiz-1");
-  const open = page.getByRole("button", { name: "처음이라면 화면 둘러보기" });
+  // 처음 온 학생에게는 한 번 물어본다.
+  const ask = page.locator(".tour-ask");
+  await expect(ask).toContainText("처음 오셨나요?");
+  const open = ask.getByRole("button", { name: "둘러보기 시작" });
   await open.click();
   const tour = page.getByRole("region", { name: "화면 둘러보기" });
   await expect(tour).toContainText("둘러보기 1 / 5 · 다섯 단계");
@@ -179,7 +182,7 @@ test("화면 둘러보기: 다섯 곳을 차례로 짚고, 본 뒤에는 조용�
   await expect(
     page.getByRole("button", { name: "화면 둘러보기", exact: true }),
   ).toBeVisible();
-  await expect(open).toHaveCount(0);
+  await expect(ask).toHaveCount(0);
 });
 
 test("강제 색상 모드에서도 고른 단계와 켜진 점이 테두리·시스템 색으로 보인다", async ({
@@ -269,6 +272,7 @@ test("목록 작품을 혼자 열리는 HTML로 내보내 앱 없이 눌러 본�
 }) => {
   await start(page, "list-2");
   const download = page.waitForEvent("download");
+  await page.locator(".more-menu summary").click();
   await page.getByRole("button", { name: "앱 파일로 내보내기" }).click();
   const path = test.info().outputPath("list-2.html");
   await (await download).saveAs(path);

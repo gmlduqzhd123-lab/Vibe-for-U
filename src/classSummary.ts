@@ -230,6 +230,18 @@ export function parseClassSession(data: unknown, name: string): Entry[] {
   });
 }
 
+// 멈춘 곳 한눈에 보기: 단계마다 "아직 기록하지 않은 첫 단계"가 그 단계인 작품(파일 이름)을 모은다.
+// done은 다섯 단계를 모두 기록한 작품이다. 도움이 필요한 학생을 표를 훑지 않고 찾게 한다.
+export function stuckByStage(entries: Entry[]) {
+  const stages = stageNames.map((name) => ({ name, files: [] as string[] }));
+  const done: string[] = [];
+  for (const e of entries) {
+    const at = stageDone(e.work.draft).findIndex((x) => !x);
+    (at < 0 ? done : stages[at].files).push(e.file);
+  }
+  return { stages, done };
+}
+
 // 스스로 평가와 선생님 평가 비교: 둘 다 고른 항목 가운데 단계가 다른 것을 돌려준다.
 // big은 한 항목이라도 두 단계 차이(시작 ↔ 설명·적용)가 나는지다. 상담할 학생을 빨리 찾게 한다.
 export function assessmentGaps(w: Work) {

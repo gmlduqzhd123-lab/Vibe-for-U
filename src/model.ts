@@ -111,6 +111,8 @@ export type LoopConfig = {
   goal: number;
   doneMessage: string;
   until?: { when: RuleCondition; value: number };
+  // 반복 안의 조건: 반복 횟수가 every의 배수일 때마다 값을 change만큼 더 바꾼다(예: 5일째마다 보너스 3개).
+  bonus?: { every: number; change: number };
 };
 // 목록 앱: 낱말 버튼을 누르면 목록 맨 뒤에 차례로 들어간다. 목록은 순서와 개수를 기억한다.
 // duplicate가 "allow"이면 이미 있는 낱말도 또 들어간다(학습용 오류). max는 담을 수 있는 가장 많은 개수,

@@ -25,6 +25,7 @@ test("내보내기 전에 개인정보처럼 보이는 글을 알리고, 확인�
   expect(downloads).toBe(0);
 
   const download = page.waitForEvent("download");
+  await page.locator(".more-menu summary").click();
   await page.getByRole("button", { name: "앱 파일로 내보내기" }).click();
   await dialog.getByRole("button", { name: "그대로 보내기" }).click();
   await download;

@@ -34,6 +34,7 @@ import {
   lessonProgress,
   levelNames,
   assessmentGaps,
+  stuckByStage,
   summarize,
   toCSV,
 } from "./classSummary";
@@ -676,6 +677,7 @@ export function ClassReview({ message }: { message: (s: string) => void }) {
                 },
               )}
             </p>
+            <StuckStrip entries={entries} />
             <div
               className="table-scroll"
               tabIndex={0}
@@ -939,5 +941,42 @@ function ReviewCard({
         {t("로 열면 포트폴리오에서 평가와 의견을 볼 수 있어요.")}
       </p>
     </details>
+  );
+}
+
+// 멈춘 곳 한눈에 보기: 단계마다 거기서 멈춘 작품 수와 파일 이름을 보여 준다.
+function StuckStrip({ entries }: { entries: Entry[] }) {
+  const t = useT();
+  const { stages, done } = stuckByStage(entries);
+  const most = Math.max(0, ...stages.map((s) => s.files.length));
+  return (
+    <section className="stuck-strip" aria-labelledby="stuck-title">
+      <h3 id="stuck-title">{t("어디에서 멈췄나요")}</h3>
+      <ol>
+        {stages.map((s) => (
+          <li
+            key={s.name}
+            className={most > 0 && s.files.length === most ? "most" : ""}
+          >
+            <b>{t(s.name)}</b>
+            <span>{t("{n}명", { n: s.files.length })}</span>
+            {s.files.length ? (
+              <small>
+                {s.files.slice(0, 6).join(", ")}
+                {s.files.length > 6
+                  ? t(" 밖에 {n}명", { n: s.files.length - 6 })
+                  : ""}
+              </small>
+            ) : null}
+            {most > 0 && s.files.length === most ? (
+              <em>{t("가장 많이 멈춘 단계")}</em>
+            ) : null}
+          </li>
+        ))}
+      </ol>
+      <p className="small">
+        {t("다섯 단계를 모두 기록한 작품 {n}개", { n: done.length })}
+      </p>
+    </section>
   );
 }

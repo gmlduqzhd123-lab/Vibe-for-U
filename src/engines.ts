@@ -283,11 +283,17 @@ export type LoopState = { round: number; value: number; event: string };
 const loopMax = (c: LoopConfig) => c.times + (c.count === "extra" ? 1 : 0);
 export const loopStops = (c: LoopConfig, value: number) =>
   Boolean(c.until && ruleMatches(c.until, value));
+// n번째 반복에서 값이 바뀌는 양: 보너스 조건(n이 every의 배수)에 맞으면 더 바뀐다.
+export const loopBonus = (c: LoopConfig, round: number) =>
+  c.bonus && round % c.bonus.every === 0 ? c.bonus.change : 0;
 export function loopRounds(c: LoopConfig) {
   const max = loopMax(c);
   if (!c.until) return max;
-  for (let n = 0; n < max; n++)
-    if (loopStops(c, c.start + c.change * n)) return n;
+  let value = c.start;
+  for (let n = 0; n < max; n++) {
+    if (loopStops(c, value)) return n;
+    value += c.change + loopBonus(c, n + 1);
+  }
   return max;
 }
 export const loopUntil = (c: LoopConfig, t: Tr = ko) =>
@@ -301,7 +307,8 @@ export function stepLoop(c: LoopConfig, s: LoopState, t: Tr = ko): LoopState {
   const total = loopMax(c);
   if (s.round >= total || loopStops(c, s.value)) return s;
   const round = s.round + 1;
-  const value = s.value + c.change;
+  const bonus = loopBonus(c, round);
+  const value = s.value + c.change + bonus;
   return {
     round,
     value,
@@ -310,7 +317,14 @@ export function stepLoop(c: LoopConfig, s: LoopState, t: Tr = ko): LoopState {
       round: c.round,
       name: c.variable,
       a: s.value,
-      b: value,
+      b:
+        c.bonus && bonus
+          ? t("{v} ({every}의 배수라 {bonus} 더)", {
+              v: value,
+              every: c.bonus.every,
+              bonus: bonus > 0 ? `+${bonus}` : bonus,
+            })
+          : value,
       rule: loopStops(c, value)
         ? t("멈춤 조건 「{cond}」에 맞아 멈춤", { cond: loopUntil(c, t) })
         : round >= total

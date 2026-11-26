@@ -968,6 +968,19 @@ const loopStarters: LoopConfig[] = [
     doneMessage: "물통이 찼어요. 그만 부어요!",
     until: { when: "eq", value: 1000 },
   },
+  // 반복 안의 조건: 5일째마다 보너스 스티커 3개를 더 받는다.
+  {
+    kind: "loop",
+    variable: "칭찬 스티커(개)",
+    round: "일째",
+    start: 0,
+    change: 1,
+    times: 10,
+    count: "exact",
+    goal: 16,
+    doneMessage: "열흘 동안 스티커 16개를 모았어요!",
+    bonus: { every: 5, change: 3 },
+  },
 ];
 // 목록 만들기의 시작 설정: 낱말을 차례로 넣고 빼며 순서와 개수를 본다.
 const listStarters: ListConfig[] = [
@@ -1007,6 +1020,16 @@ const listStarters: ListConfig[] = [
     max: 4,
     remove: "first",
     fullMessage: "줄이 가득 찼어요.",
+  },
+  // 반복으로 목록 채우기: 낱말 여섯 개를 차례로 넣다가 네 개에서 가득 찬다.
+  {
+    kind: "list",
+    name: "발표 순서",
+    items: ["하늘", "바다", "나무", "구름", "노을", "별"],
+    duplicate: "block",
+    max: 4,
+    remove: "first",
+    fullMessage: "오늘 발표는 네 명까지예요.",
   },
 ];
 specifications.loop.push(
@@ -1145,6 +1168,28 @@ specifications.loop.push(
     ],
     closing: "멈춤 조건에 ‘같으면’을 쓰면 왜 위험할 수 있을까요?",
   },
+  {
+    title: "반복 안의 만약",
+    goal: "하루에 스티커 1개씩 받고 5일째마다 보너스 3개를 더 받는 반복을 만들어요.",
+    prediction: "10일 동안 보너스는 몇 번 받을까요? 스티커는 모두 몇 개일까요?",
+    tests: [
+      {
+        label: "보너스 받는 날",
+        expected: "5일째와 10일째에만 3개를 더 받는다.",
+      },
+      {
+        label: "끝난 값",
+        expected: "10일 뒤 스티커는 16개다.",
+      },
+    ],
+    task: "보너스를 3의 배수 번째마다 받게 바꾸고, 끝난 값을 계산해 목표 값도 맞게 고치세요.",
+    hints: [
+      "앱은 반복할 때마다 ‘몇 번째인지’를 확인해요.",
+      "5의 배수는 5와 10, 두 번이에요.",
+      "끝난 값은 날마다 받는 10개에 보너스 6개를 더한 값이에요.",
+    ],
+    closing: "반복 안에 ‘만약’을 넣으면 어떤 일을 할 수 있을까요?",
+  },
 );
 specifications.list.push(
   {
@@ -1237,6 +1282,30 @@ specifications.list.push(
     ],
     closing:
       "맨 앞에서 꺼내는 목록과 맨 뒤에서 꺼내는 목록은 각각 어디에 쓰일까요?",
+  },
+  {
+    title: "반복으로 한꺼번에 넣기",
+    goal: "낱말을 하나씩 누르는 대신 반복으로 차례로 넣어 발표 순서를 만들어요.",
+    prediction:
+      "‘모두 차례로 넣기’를 누르면 여섯 명 가운데 몇 명이 목록에 들어갈까요?",
+    tests: [
+      {
+        label: "반복으로 넣기",
+        expected: "앞에서부터 차례로 네 명이 들어간다.",
+      },
+      {
+        label: "가득 찼을 때",
+        expected: "다섯 번째부터는 들어가지 않고 안내가 나온다.",
+      },
+    ],
+    task: "가장 많은 개수를 6으로 바꿔 모두 들어가게 한 뒤, ‘하나 빼기’를 두 번 눌러 누가 남는지 확인하세요.",
+    hints: [
+      "‘모두 차례로 넣기’는 낱말마다 ‘넣기’를 되풀이해요.",
+      "넣을 때마다 가득 찼는지 먼저 확인해요.",
+      "가장 많은 개수가 4라서 네 명에서 멈춰요.",
+    ],
+    closing:
+      "같은 일을 여러 번 누르는 것과 반복에게 맡기는 것은 무엇이 다를까요?",
   },
 );
 export const missions: Mission[] = kinds.flatMap((kind) =>
