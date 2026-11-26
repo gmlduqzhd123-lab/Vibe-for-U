@@ -85,6 +85,24 @@ export function configSummary(c: Config, t: Tr = ko): string[] {
         : []),
       t("목표 칸 {n}개", { n: c.target.length }),
     ];
+  if (c.kind === "loop")
+    return [
+      t("기억하는 값: {name} · 처음 {v}", { name: c.variable, v: c.start }),
+      t("한 번({round})에 {change}씩 · {n}번 반복", {
+        round: c.round,
+        change: c.change > 0 ? `+${c.change}` : c.change,
+        n: c.times,
+      }),
+      t("반복 세는 방법: {v}", {
+        v: t(
+          c.count === "exact" ? "정한 횟수만큼" : "한 번 더 반복 (학습용 오류)",
+        ),
+      }),
+      t("목표 값: {v} · 끝났을 때 「{msg}」", {
+        v: c.goal,
+        msg: c.doneMessage,
+      }),
+    ];
   if (c.kind === "sort")
     return [
       t("비교하는 특징: {name} · 카드 {n}장", {
@@ -196,4 +214,24 @@ export function portfolioGaps(w: Work): Gap[] {
   if (!w.selfAssessment || w.selfAssessment.levels.some((l) => l === 0))
     out.push({ text: "스스로 평가를 아직 다 고르지 않았어요.", step: 4 });
   return out;
+}
+
+// 설명 문장 도우미: 증거로 남긴 실행 기록과 지금 규칙으로 "누른 것 → 규칙 → 기억한 값 → 결과" 틀을 채운다.
+// 규칙으로만 만들며(AI 없음) 학생이 자기 말로 고쳐 쓰는 출발점이다. 실행 기록이 없으면 null.
+export function explainDraft(d: Snapshot, t: Tr = ko): string | null {
+  const log = d.runLog;
+  if (!log?.steps.length) return null;
+  const pressed = [...new Set(log.steps.map((s) => s.label))]
+    .slice(0, 4)
+    .join(", ");
+  const last = log.steps[log.steps.length - 1];
+  return [
+    t("내가 누른 것: {v}", { v: pressed }),
+    t("앱이 따른 규칙: {v}", {
+      v: configSummary(d.config, t).slice(0, 2).join(" / "),
+    }),
+    t("앱이 기억한 값: {v}", { v: last.state }),
+    t("그래서 화면에 나온 결과: "),
+    t("내가 알게 된 것: "),
+  ].join("\n");
 }

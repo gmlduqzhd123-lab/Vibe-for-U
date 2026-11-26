@@ -5,6 +5,7 @@ import type {
   Check,
   Config,
   Direction,
+  LoopConfig,
   PatternConfig,
   QuizConfig,
   RuleCondition,
@@ -275,6 +276,45 @@ export function sortMismatches(c: SortConfig) {
       : [{ index: i, got, want: card.expect.trim() }];
   });
 }
+// 반복 계산기: 한 번 반복할 때마다 값이 change만큼 바뀐다. 정한 횟수(학습용 오류면 한 번 더)를 채우면 멈춘다.
+export type LoopState = { round: number; value: number; event: string };
+export const loopRounds = (c: LoopConfig) =>
+  c.times + (c.count === "extra" ? 1 : 0);
+export const initialLoop = (c: LoopConfig, t: Tr = ko): LoopState => ({
+  round: 0,
+  value: c.start,
+  event: t("처음 값 {v}에서 시작해요.", { v: c.start }),
+});
+export function stepLoop(c: LoopConfig, s: LoopState, t: Tr = ko): LoopState {
+  const total = loopRounds(c);
+  if (s.round >= total) return s;
+  const round = s.round + 1;
+  const value = s.value + c.change;
+  return {
+    round,
+    value,
+    event: t("{n}번째 {round} → {name} {a} → {b} → {rule}", {
+      n: round,
+      round: c.round,
+      name: c.variable,
+      a: s.value,
+      b: value,
+      rule:
+        round >= total
+          ? t("반복 {n}번을 채워 멈춤", { n: total })
+          : t("아직 {n}번 남음", { n: total - round }),
+    }),
+  };
+}
+export function runLoop(c: LoopConfig, s = initialLoop(c), t: Tr = ko) {
+  let state = s;
+  while (state.round < loopRounds(c)) state = stepLoop(c, state, t);
+  return state;
+}
+export const resetLoop = (c: LoopConfig, t: Tr = ko): LoopState => ({
+  ...initialLoop(c, t),
+  event: t("처음으로 → {name} {v}", { name: c.variable, v: c.start }),
+});
 export function reachable(c: StoryConfig) {
   const seen = new Set<string>();
   const visit = (id: string) => {
@@ -596,6 +636,39 @@ export function autoChecks(c: Config, revision: string, t: Tr = ko): Check[] {
           at: cell(reset.x, reset.y),
         }),
         pass: reset.painted.length === 1 && reset.x === 0 && reset.y === 0,
+      },
+    );
+  } else if (c.kind === "loop") {
+    const done = runLoop(c, initialLoop(c, t), t);
+    const again = stepLoop(c, done, t);
+    const reset = resetLoop(c, t);
+    rows.push(
+      {
+        label: "정한 횟수만큼 반복",
+        expected: t("{n}번 반복하고 멈춘다", { n: c.times }),
+        actual: t("{n}번 반복함", { n: done.round }),
+        pass: done.round === c.times,
+      },
+      {
+        label: "반복이 끝난 값",
+        expected: t("{name} {v}", { name: c.variable, v: c.goal }),
+        actual: t("{name} {v}", { name: c.variable, v: done.value }),
+        pass: done.value === c.goal,
+      },
+      {
+        label: "끝난 뒤 더 누르기",
+        expected: t("값이 더 바뀌지 않는다"),
+        actual: t("{name} {v}", { name: c.variable, v: again.value }),
+        pass: again.value === done.value,
+      },
+      {
+        label: "처음으로 다시",
+        expected: t("{name} {v}에서 다시 시작", {
+          name: c.variable,
+          v: c.start,
+        }),
+        actual: t("{name} {v}", { name: c.variable, v: reset.value }),
+        pass: reset.value === c.start && reset.round === 0,
       },
     );
   } else if (c.kind === "sort") {

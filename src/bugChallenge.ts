@@ -47,6 +47,13 @@ const mutations: Record<Kind, Mutation[]> = {
           }
         : null,
   ],
+  loop: [
+    // 정한 횟수보다 한 번 더 돌게 한다.
+    (c) => (c.kind === "loop" ? { ...c, count: "extra" } : null),
+    // 횟수를 하나 줄여 목표 값에 못 미치게 한다.
+    (c) =>
+      c.kind === "loop" && c.times > 1 ? { ...c, times: c.times - 1 } : null,
+  ],
   sort: [
     // 바구니 순서를 거꾸로 놓아 좁은 조건이 넓은 조건에 가리게 한다.
     (c) =>

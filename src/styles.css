@@ -3906,3 +3906,50 @@ pre {
     padding-right: 8px;
   }
 }
+/* 미션 추천: 다음에 해 볼 미션을 셋까지 보여 준다. */
+.mission-picks {
+  margin: 0 0 18px;
+}
+.mission-picks h2 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+.mission-picks ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.mission-picks button {
+  width: 100%;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  text-align: left;
+}
+.mission-picks span {
+  display: grid;
+  gap: 2px;
+}
+.mission-picks small {
+  color: var(--muted);
+  font-weight: 400;
+}
+/* 수업 진행 화면: 오늘 미션 QR과 지금 할 일 */
+.present-qr {
+  margin: 14px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.present-qr svg {
+  width: 9rem;
+  height: 9rem;
+  flex: none;
+}
+.present-now {
+  margin: 6px 0;
+  font-size: 1.125rem;
+}

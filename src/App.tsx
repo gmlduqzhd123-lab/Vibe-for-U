@@ -14,7 +14,7 @@ import {
   saveCustomMission,
 } from "./customMissions";
 import type { MissionUpdate } from "./customMissions";
-import { errorText } from "./appError";
+import { AppError, errorText } from "./appError";
 import {
   lazy,
   Suspense,
@@ -48,7 +48,17 @@ import {
   saveWork,
   jsonBytes,
 } from "./storage";
-import { Home, Library, Missions, MissionDetail } from "./Pages";
+import { RoleHome as Home } from "./RoleHome";
+// 미션 목록·미션 안내·작품 선반은 첫 화면(홈)에 필요 없어 나눠 불러온다(첫 화면 묶음을 가볍게).
+const Missions = lazy(() =>
+  import("./Pages").then((m) => ({ default: m.Missions })),
+);
+const MissionDetail = lazy(() =>
+  import("./Pages").then((m) => ({ default: m.MissionDetail })),
+);
+const Library = lazy(() =>
+  import("./Pages").then((m) => ({ default: m.Library })),
+);
 import { Icon, Mascot, Empty, Field } from "./ui";
 
 import { announceChange, useChanges, useWorkLock } from "./tabLock";
@@ -77,6 +87,9 @@ import type { Lang } from "./i18n";
 const SharePage = lazy(() => import("./SharePage"));
 const Receive = lazy(() =>
   import("./QrShare").then((m) => ({ default: m.Receive })),
+);
+const CompareWorks = lazy(() =>
+  import("./CompareWorks").then((m) => ({ default: m.CompareWorks })),
 );
 const Growth = lazy(() =>
   import("./Growth").then((m) => ({ default: m.Growth })),
@@ -614,6 +627,8 @@ export default function App() {
         await clearWorks();
         await clearClassSession().catch(() => {});
         forgetCustomMissions();
+        // 고쳐 쓴 평가표도 기본으로 되돌린다(저장소의 값은 위에서 지웠다).
+        void import("./lessonData").then((m) => m.resetRubric());
         histories.current.clear();
         forgetHistory();
         announceChange();
@@ -829,6 +844,20 @@ export default function App() {
         go(`mission/${m.id}`);
         return;
       }
+      // 선생님이 나눠 준 평가표: 이 기기의 자기 평가·포트폴리오가 같은 평가표를 쓴다.
+      if (
+        (data as { format?: unknown } | null)?.format === "ttukttak-vibe-rubric"
+      ) {
+        const { saveRubric } = await import("./lessonData");
+        try {
+          saveRubric((data as { rubric?: unknown }).rubric);
+        } catch {
+          throw new AppError("평가표 파일 형식을 알 수 없어요.");
+        }
+        dispatchEvent(new Event(TRANSLATION_EVENT));
+        message(t("선생님 평가표를 이 기기에 저장했어요."));
+        return;
+      }
       // 선생님이 나눠 준 미션 묶음(코스): 담긴 선생님 미션을 먼저 더하고, 코스를 이 기기에 둔다.
       if ((data as { format?: unknown } | null)?.format === COURSE_FORMAT) {
         const { course, missions: list } = parseCourseFile(data);
@@ -922,6 +951,7 @@ export default function App() {
             "wrapup",
             "bughunt",
             "growth",
+            "compare",
           ].includes(parts[0])
         ? "library"
         : "missions";
@@ -947,17 +977,19 @@ export default function App() {
                       ? "오늘 수업 키트"
                       : parts[0] === "map"
                         ? "나의 미션 지도"
-                        : parts[0] === "growth"
-                          ? "학기말 성장 포트폴리오"
-                          : parts[0] === "receive"
-                            ? "QR로 받기"
-                            : navActive === "home"
-                              ? "공작소 홈"
-                              : navActive === "missions"
-                                ? "미션 공작대"
-                                : navActive === "library"
-                                  ? "내 작품 선반"
-                                  : "교사 자료실",
+                        : parts[0] === "compare"
+                          ? "작품 나란히 비교"
+                          : parts[0] === "growth"
+                            ? "학기말 성장 포트폴리오"
+                            : parts[0] === "receive"
+                              ? "QR로 받기"
+                              : navActive === "home"
+                                ? "공작소 홈"
+                                : navActive === "missions"
+                                  ? "미션 공작대"
+                                  : navActive === "library"
+                                    ? "내 작품 선반"
+                                    : "교사 자료실",
   );
   const pageTitle =
     parts[0] === "work" && active
@@ -1307,6 +1339,8 @@ export default function App() {
                       }}
                       go={go}
                     />
+                  ) : parts[0] === "compare" ? (
+                    <CompareWorks works={visible} go={go} />
                   ) : parts[0] === "growth" ? (
                     <Growth works={visible} go={go} />
                   ) : parts[0] === "map" ? (

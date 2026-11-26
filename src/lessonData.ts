@@ -111,7 +111,7 @@ export const lessons = [
       "종이에 요청문과 검사 계획을 작성하고 모의 실행으로 결과를 기록한다.",
   },
 ];
-export const rubric = [
+export const defaultRubric: string[][] = [
   [
     "문제와 요구사항",
     "사용할 사람과 불편한 점을 고른다.",
@@ -137,3 +137,54 @@ export const rubric = [
     "다른 조건의 과제에 배운 방법을 옮겨 설명한다.",
   ],
 ];
+// 평가 기준 맞춤: 학교 기준에 맞게 고친 평가표를 이 기기에 두고(localStorage) 기본 평가표 대신 쓴다.
+// 항목은 늘 네 개, 항목마다 이름과 세 단계 설명이다(평가 기록의 단계 값과 자리가 맞아야 한다).
+// rubric은 같은 배열을 그 자리에서 고쳐, 이미 불러온 모든 화면이 다음에 그릴 때 새 글을 쓴다.
+export const RUBRIC_FORMAT = "ttukttak-vibe-rubric";
+const RUBRIC_KEY = "ttukttak-vibe:rubric";
+export function validateRubric(data: unknown): string[][] {
+  if (
+    !Array.isArray(data) ||
+    data.length !== defaultRubric.length ||
+    data.some(
+      (row) =>
+        !Array.isArray(row) ||
+        row.length !== 4 ||
+        row.some(
+          (cell) =>
+            typeof cell !== "string" || !cell.trim() || cell.length > 200,
+        ),
+    )
+  )
+    throw new Error("평가표 형식을 알 수 없어요.");
+  return (data as string[][]).map((row) => row.map((cell) => cell.trim()));
+}
+function stored(): string[][] | null {
+  try {
+    const raw = localStorage.getItem(RUBRIC_KEY);
+    return raw ? validateRubric(JSON.parse(raw)) : null;
+  } catch {
+    return null;
+  }
+}
+export const rubric: string[][] = defaultRubric.map((row) => [...row]);
+const apply = (rows: string[][]) =>
+  rows.forEach((row, i) => rubric[i].splice(0, 4, ...row));
+export const isCustomRubric = () => stored() !== null;
+export function saveRubric(rows: unknown) {
+  const next = validateRubric(rows);
+  localStorage.setItem(RUBRIC_KEY, JSON.stringify(next));
+  apply(next);
+}
+export function resetRubric() {
+  try {
+    localStorage.removeItem(RUBRIC_KEY);
+  } catch {
+    // 지울 수 없으면 이번 화면에서만 기본으로 돌아간다.
+  }
+  apply(defaultRubric);
+}
+{
+  const custom = typeof localStorage === "undefined" ? null : stored();
+  if (custom) apply(custom);
+}

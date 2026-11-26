@@ -8,8 +8,8 @@ import { dateLocale, translate, useLang, useT } from "./i18n";
 import { localizeMission } from "./missionText";
 import { PraiseCards, ShowCase } from "./ShowCase";
 import { adoptMissions } from "./customMissions";
-import { ClassCharts } from "./ClassCharts";
-import { memo, useEffect, useRef, useState } from "react";
+import { ClassCharts, classStats } from "./ClassCharts";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { LIMITS, debugFields, debugFilled, now, stageDone } from "./model";
 import type { Feedback, Work } from "./model";
 import {
@@ -24,6 +24,9 @@ import {
 import {
   emptyFeedback,
   CLASS_FORMAT,
+  arrange,
+  filters,
+  orders,
   classBugs,
   classSessionFiles,
   graded,
@@ -33,7 +36,7 @@ import {
   summarize,
   toCSV,
 } from "./classSummary";
-import type { Entry } from "./classSummary";
+import type { Entry, Filter, Order } from "./classSummary";
 import { Empty, Field, Icon, Pill } from "./ui";
 import { RubricChoices } from "./Rubric";
 import { missions } from "./data";
@@ -77,6 +80,125 @@ function BugBoard({ works }: { works: Work[] }) {
         <p>{t("읽은 작품에서 맞춤 힌트가 찾는 버그가 없었어요.")}</p>
       )}
     </div>
+  );
+}
+// 학기 요약 한 장: 학급 전체의 단계 완료, 많이 만난 버그, 평가 평균, 차시별 진행을 A4 한 장에 모은다.
+// 학년 협의회·상담 자료용이라 학생 이름과 작품 글은 넣지 않는다.
+function TermSummary({ works }: { works: Work[] }) {
+  const t = useT();
+  const lang = useLang();
+  const total = works.length;
+  const stages = works.map((w) => stageDone(w.draft));
+  const { levels } = classStats(works);
+  const bugs = classBugs(works).slice(0, 5);
+  const lessonRows = lessonProgress(works).filter((r) => r.works);
+  const avg = (v: number | null) => (v === null ? "–" : v.toFixed(1));
+  return (
+    <article className="term-summary">
+      <header>
+        <h2>{t("학급 과정 평가 요약")}</h2>
+        <p>
+          {new Date().toLocaleDateString(dateLocale(lang))} ·{" "}
+          {t(
+            "작품 {n}개 · 다섯 단계 모두 기록 {done}개 · 평가 완료 {graded}개",
+            {
+              n: total,
+              done: stages.filter((s) => s.every(Boolean)).length,
+              graded: works.filter((w) => graded(w.feedback)).length,
+            },
+          )}
+        </p>
+      </header>
+      <section>
+        <h3>{t("단계별 완료")}</h3>
+        <table>
+          <tbody>
+            {stageNames.map((name, i) => (
+              <tr key={name}>
+                <th>
+                  {i + 1}. {t(name)}
+                </th>
+                <td>
+                  {stages.filter((s) => s[i]).length} / {total}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+      <section>
+        <h3>{t("과정 평가 평균 (1 시작 · 2 수행 · 3 설명·적용)")}</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>{t("관찰 항목")}</th>
+              <th>{t("스스로")}</th>
+              <th>{t("선생님")}</th>
+              <th>{t("둘 다 평가한 작품")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {levels.map((r) => (
+              <tr key={r.label}>
+                <th>{t(r.label)}</th>
+                <td>{avg(r.self)}</td>
+                <td>{avg(r.teacher)}</td>
+                <td>{t("{n}개", { n: r.n })}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+      <section>
+        <h3>{t("우리 반이 많이 만난 버그")}</h3>
+        {bugs.length ? (
+          <table>
+            <tbody>
+              {bugs.map((b) => (
+                <tr key={b.id}>
+                  <th>{t(b.name)}</th>
+                  <td>
+                    {t("만난 학생 {n}명 · 지금은 고침 {m}명", {
+                      n: b.met,
+                      m: b.fixed,
+                    })}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p>{t("읽은 작품에서 맞춤 힌트가 찾는 버그가 없었어요.")}</p>
+        )}
+      </section>
+      {lessonRows.length ? (
+        <section>
+          <h3>{t("차시별 진행")}</h3>
+          <table>
+            <tbody>
+              {lessonRows.map((r) => (
+                <tr key={r.number}>
+                  <th>
+                    {t("{n}차시", { n: r.number })} · {t(r.title)}
+                  </th>
+                  <td>
+                    {t("작품 {n}개 · 다섯 단계 완료 {m}개", {
+                      n: r.works,
+                      m: r.done,
+                    })}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      ) : null}
+      <footer>
+        {t(
+          "기록을 근거로 교사가 직접 매긴 평가의 요약이에요. 앱은 점수를 자동으로 매기지 않으며, 이 요약에는 학생 이름과 작품 글을 넣지 않았어요.",
+        )}
+      </footer>
+    </article>
   );
 }
 // 그래프·차시별 진행·많이 만난 버그는 작품 목록과 평가 단계가 바뀔 때만 다시 계산한다.
@@ -314,6 +436,19 @@ export function ClassReview({ message }: { message: (s: string) => void }) {
       "application/json",
     );
   const summaries = entries.map((e) => summarize(e.work));
+  // 걸러 보기·정렬: 표의 줄과 평가 카드에 함께 적용한다(위의 합계와 그래프는 전체 기준).
+  const [filter, setFilter] = useState<Filter>("all");
+  const [order, setOrder] = useState<Order>("loaded");
+  const shown = arrange(entries, filter, order);
+  // 작품 목록과 평가 단계가 바뀔 때만 다시 계산할 것들의 열쇠(의견을 칠 때는 그대로다).
+  const signature = entries
+    .map((e) => `${e.key}:${e.work.feedback?.levels.join("")}`)
+    .join("|");
+  const counts = useMemo(
+    () => filters.map(([id]) => arrange(entries, id, "loaded").length),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [signature],
+  );
   return (
     <section className="class-review" aria-labelledby="class-review-title">
       {showing && entries.length ? (
@@ -321,6 +456,12 @@ export function ClassReview({ message }: { message: (s: string) => void }) {
       ) : null}
       <div className="praise-sheet" aria-hidden="true">
         <PraiseCards entries={entries} />
+      </div>
+      {/* 학기 요약 한 장: 그 인쇄 때만 보인다. 학생 이름이나 작품 글은 넣지 않는다. */}
+      <div className="term-sheet">
+        {entries.length ? (
+          <TermSummary works={entries.map((e) => e.work)} />
+        ) : null}
       </div>
       {/* 보호자용 소개 카드 모두 인쇄: 그 인쇄 때만 보인다(A4 한 장에 두 명). */}
       <div className="families-sheet">
@@ -406,6 +547,22 @@ export function ClassReview({ message }: { message: (s: string) => void }) {
             {t("작품 발표 화면")}
           </button>
           <button
+            disabled={!entries.length}
+            onClick={() => {
+              // 학기 요약 한 장만 인쇄한다(인쇄가 끝나면 원래대로).
+              document.documentElement.dataset.print = "term";
+              addEventListener(
+                "afterprint",
+                () => delete document.documentElement.dataset.print,
+                { once: true },
+              );
+              window.print();
+            }}
+          >
+            <Icon name="print" />
+            {t("학기 요약 한 장 인쇄")}
+          </button>
+          <button
             onClick={() => {
               // 칭찬·질문 카드만 인쇄한다(인쇄가 끝나면 원래대로).
               document.documentElement.dataset.print = "cards";
@@ -472,6 +629,42 @@ export function ClassReview({ message }: { message: (s: string) => void }) {
         <>
           <div className="panel">
             <h3>{t("한눈에 보기")}</h3>
+            <div className="form-grid class-filter">
+              <label className="field">
+                <span>{t("걸러 보기")}</span>
+                <select
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value as Filter)}
+                >
+                  {filters.map(([id, label], i) => (
+                    <option key={id} value={id}>
+                      {`${t(label)} (${counts[i]})`}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="field">
+                <span>{t("정렬")}</span>
+                <select
+                  value={order}
+                  onChange={(e) => setOrder(e.target.value as Order)}
+                >
+                  {orders.map(([id, label]) => (
+                    <option key={id} value={id}>
+                      {t(label)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            {shown.length < entries.length ? (
+              <p className="small" role="status">
+                {t("작품 {n}개 가운데 {m}개를 보고 있어요.", {
+                  n: entries.length,
+                  m: shown.length,
+                })}
+              </p>
+            ) : null}
             <p>
               {t(
                 "작품 {n}개 · 다섯 단계 모두 기록 {done}개 · 평가 완료 {graded}개",
@@ -505,8 +698,8 @@ export function ClassReview({ message }: { message: (s: string) => void }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {entries.map((e, k) => {
-                    const s = summaries[k];
+                  {shown.map((e) => {
+                    const s = summarize(e.work);
                     const found = missions.find(
                       (m) => m.id === e.work.missionId,
                     );
@@ -568,14 +761,9 @@ export function ClassReview({ message }: { message: (s: string) => void }) {
               </table>
             </div>
           </div>
-          <Summaries
-            works={entries.map((e) => e.work)}
-            signature={entries
-              .map((e) => `${e.key}:${e.work.feedback?.levels.join("")}`)
-              .join("|")}
-          />
+          <Summaries works={entries.map((e) => e.work)} signature={signature} />
           <div className="class-cards">
-            {entries.map((e) => (
+            {shown.map((e) => (
               <ReviewCard
                 key={e.key}
                 entry={e}

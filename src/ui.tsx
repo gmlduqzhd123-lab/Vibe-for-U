@@ -106,6 +106,11 @@ export function Icon({ name, size = 20 }: { name: string; size?: number }) {
         <path d="M4 6h7M4 12h5M4 18h7M14 5l6 7-6 7M17 12h-6" />
       </>
     ),
+    loop: (
+      <>
+        <path d="M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3" />
+      </>
+    ),
     sort: (
       <>
         <path d="M4 4h6v6H4zM14 4h6v6h-6zM3 15h18l-2 6H5zM7 10v5M17 10v5" />

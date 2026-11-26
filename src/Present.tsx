@@ -7,6 +7,7 @@ import type { Mission, TimerConfig } from "./model";
 import { kindNames } from "./model";
 import type { Navigate } from "./Pages";
 import { Icon, Pill } from "./ui";
+import { qrPath } from "./qrTransfer";
 // 교사용 수업 진행 화면: 프로젝터에 미션을 단계별로 크게 보여 주고, 활동 타이머와 짝 역할 교대를 알린다.
 export type Slide = { title: string; lines: string[] };
 type Translate = (
@@ -42,6 +43,27 @@ export function slidesFor(
     },
   ];
   return slides;
+}
+// 차시 안내의 활동 글("목표 정하기 7분 → 예상·실행 10분 → …")을 할 일과 분으로 나눈다.
+export function activitySteps(activity: string) {
+  return activity
+    .split("→")
+    .map((part) => part.trim().match(/^(.*?)\s*(\d+)\s*(?:분|min)$/))
+    .flatMap((m) => (m ? [{ text: m[1].trim(), minutes: Number(m[2]) }] : []));
+}
+// 지난 시간에 맞는 "지금 할 일"을 고른다. 정한 활동 시간이 차시 안내와 달라도 비율로 맞춘다.
+export function currentStep(
+  list: { text: string; minutes: number }[],
+  elapsedMs: number,
+  totalMs: number,
+) {
+  const sum = list.reduce((n, s) => n + s.minutes, 0);
+  let at = (Math.min(elapsedMs, totalMs - 1) / totalMs) * sum;
+  for (let i = 0; i < list.length; i++) {
+    if (at < list[i].minutes) return { index: i, text: list[i].text, list };
+    at -= list[i].minutes;
+  }
+  return { index: list.length - 1, text: list[list.length - 1].text, list };
 }
 // 활동 시간 중 지난 시간으로 역할 교대 횟수와 다음 교대까지 남은 시간을 계산한다.
 export function roleState(elapsedMs: number, everyMs: number) {
@@ -149,6 +171,26 @@ export function Present({
     setSeenSwaps(0);
   };
   const slide = slides[index];
+  // 학생이 기기 카메라로 비추면 오늘 미션이 바로 열리는 QR(첫 장면에 보인다)
+  const qr = useMemo(
+    () =>
+      qrPath(`${location.origin}${location.pathname}#/mission/${mission.id}`),
+    [mission.id],
+  );
+  const total = minutes * 60 * 1000;
+  const started = timer.running || timer.remaining < total;
+  // 차시 안내의 활동 글을 화면 언어로 바꾼 뒤 나눈다. 없으면 뒤 세 단계를 시간에 고르게 나눈다.
+  const fromLesson = lesson ? activitySteps(t(lesson.activity)) : [];
+  const now = currentStep(
+    fromLesson.length
+      ? fromLesson
+      : ["예상하고 실행", "검사하고 수정", "설명하고 저장"].map((text) => ({
+          text: t(text),
+          minutes: 1,
+        })),
+    total - timer.remaining,
+    total,
+  );
   return (
     <section className="present" aria-labelledby="present-title">
       <header className="present-top">
@@ -189,6 +231,22 @@ export function Present({
             {line}
           </p>
         ))}
+        {index === 0 ? (
+          <figure className="present-qr">
+            <svg
+              role="img"
+              aria-label={t("오늘 미션을 여는 QR 코드")}
+              viewBox={`0 0 ${qr.size} ${qr.size}`}
+              shapeRendering="crispEdges"
+            >
+              <rect width={qr.size} height={qr.size} fill="#fff" />
+              <path d={qr.d} fill="#000" />
+            </svg>
+            <figcaption>
+              {t("기기 카메라로 비추면 오늘 미션이 열려요.")}
+            </figcaption>
+          </figure>
+        ) : null}
       </article>
       <nav className="present-nav button-row" aria-label={t("진행 단계")}>
         <button
@@ -221,6 +279,12 @@ export function Present({
         <div className="present-clock" data-testid="present-clock">
           {clock(timer.remaining)}
         </div>
+        {started && timer.remaining > 0 ? (
+          <p className="present-now" role="status">
+            <b>{t("지금 할 일")}</b> {now.index + 1} / {now.list.length} ·{" "}
+            {now.text}
+          </p>
+        ) : null}
         <div className="button-row">
           {(lesson ? [5, 30, 5] : [5, 10, 20]).map((n, i) => (
             <button key={i} onClick={() => reset(n)}>

@@ -9,6 +9,9 @@ import {
   patternMatch,
   pressRule,
   binName,
+  initialLoop,
+  loopRounds,
+  stepLoop,
   ruleMessage,
   runPattern,
   runSort,
@@ -85,6 +88,21 @@ export function designActions(c: Config, t: Tr): Action[] {
         {
           id: "pattern-run",
           label: t("명령을 모두 실행하기 → 칠한 칸 수"),
+          params: [],
+        },
+      ];
+    case "loop":
+      return [
+        {
+          id: "loop-rounds",
+          label: t("{a}번 반복한 뒤 → 값"),
+          params: [
+            { key: "a", label: t("반복한 횟수"), min: 0, max: loopRounds(c) },
+          ],
+        },
+        {
+          id: "loop-all",
+          label: t("끝까지 반복하기 → 마지막 값"),
           params: [],
         },
       ];
@@ -224,6 +242,18 @@ export function runDesign(c: Config, d: Design, t: Tr): DesignRun | null {
           m: m.missing.length + m.extra.length,
         }),
         values: [s.painted.length, m.missing.length + m.extra.length],
+      };
+    }
+    case "loop-rounds":
+    case "loop-all": {
+      if (c.kind !== "loop") return null;
+      let s = initialLoop(c, t);
+      const n = d.action === "loop-all" ? loopRounds(c) : a;
+      for (let i = 0; i < n; i++) s = stepLoop(c, s, t);
+      return {
+        label,
+        actual: t("{name} {v}", { name: c.variable, v: s.value }),
+        values: [s.value],
       };
     }
     case "sort-card": {

@@ -1,4 +1,5 @@
-export type Kind = "quiz" | "story" | "timer" | "pattern" | "rule" | "sort";
+export type Kind =
+  "quiz" | "story" | "timer" | "pattern" | "rule" | "sort" | "loop";
 export const kinds: Kind[] = [
   "quiz",
   "story",
@@ -6,6 +7,7 @@ export const kinds: Kind[] = [
   "pattern",
   "rule",
   "sort",
+  "loop",
 ];
 // easy: 3~4학년용. 어린이 모드 안내에 낱말 블록·읽어 주기·큰 글씨를 더한다.
 export type Mode = "child" | "adult" | "easy";
@@ -94,7 +96,21 @@ export type SortConfig = {
   bins: SortBin[];
   otherwise: string;
 };
+// 반복 계산기: 처음 값에서 시작해 같은 만큼 바꾸는 일을 정한 횟수만큼 되풀이한다(예: 매일 500원씩 7일 저금).
+// count가 "extra"이면 정한 횟수보다 한 번 더 돈다(학습용 오류). goal은 반복이 끝났을 때 되어야 할 값이다.
+export type LoopConfig = {
+  kind: "loop";
+  variable: string;
+  round: string;
+  start: number;
+  change: number;
+  times: number;
+  count: "exact" | "extra";
+  goal: number;
+  doneMessage: string;
+};
 export type Config =
+  | LoopConfig
   | QuizConfig
   | StoryConfig
   | TimerConfig
@@ -287,6 +303,7 @@ export const kindNames: Record<Kind, string> = {
   pattern: "패턴 그리기",
   rule: "만약 규칙",
   sort: "분류하기",
+  loop: "반복 계산기",
 };
 const promiseText: Record<
   Kind,
@@ -308,6 +325,12 @@ const promiseText: Record<
     input: "값을 늘리거나 줄이는 버튼 누르기",
     exceptions:
       "조건은 위에서부터 처음 맞는 것 하나만 쓰고, 값이 가장 작은 값보다 작아지지 않기",
+  },
+  loop: {
+    features: "같은 만큼 바꾸는 일을 정한 횟수만큼 되풀이해 값 쌓기",
+    input: "한 번 반복이나 끝까지 반복 버튼 누르기",
+    exceptions:
+      "정한 횟수만큼만 반복하고 멈추며, 처음으로 누르면 처음 값에서 다시 시작하기",
   },
   sort: {
     features: "카드를 특징 값에 따라 알맞은 바구니에 나눠 담기",
@@ -400,6 +423,7 @@ export function makeWork(mission: Mission, normal = false): Work {
     // 정상 규칙: 좁은 조건(같으면 → 큰 값 이상 → 작은 값 이하)을 먼저 확인한다.
     if (config.kind === "rule") config.rules = narrowFirst(config.rules);
     if (config.kind === "sort") config.bins = narrowFirst(config.bins);
+    if (config.kind === "loop") config.count = "exact";
     if (config.kind === "story") {
       const start = config.scenes.find((s) => s.id === config.start)!;
       if (start.choices[1]) start.choices[1].to = "sun";

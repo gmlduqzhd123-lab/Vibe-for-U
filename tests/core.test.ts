@@ -307,8 +307,8 @@ describe("파일 신뢰 경계와 저장", () => {
     ).rejects.toThrow();
     expect((await listWorks()).length).toBe(0);
   });
-  it("모든 27개 미션은 유효한 시작 데이터를 갖는다", () => {
-    expect(missions).toHaveLength(27);
+  it("모든 31개 미션은 유효한 시작 데이터를 갖는다", () => {
+    expect(missions).toHaveLength(31);
     for (const m of missions)
       expect(validateConfig(m.starter)).toEqual(m.starter);
   });
@@ -330,5 +330,26 @@ describe("포트폴리오의 빠진 기록 안내", () => {
     expect(has()).toBe(false);
     w.draft.runLog = { ...w.draft.runLog, revision: "지난-판" };
     expect(has()).toBe(true);
+  });
+});
+describe("설명 문장 도우미", () => {
+  it("실행 기록과 규칙으로 설명 틀을 만들고, 기록이 없으면 만들지 않는다", async () => {
+    const { explainDraft } = await import("../src/learning");
+    const d = makeWork(missions.find((m) => m.id === "loop-1")!).draft;
+    expect(explainDraft(d)).toBeNull();
+    d.runLog = {
+      revision: d.revision,
+      at: new Date().toISOString(),
+      steps: [
+        { label: "한 번 반복", state: "저금통(원) 0 → 500" },
+        { label: "한 번 반복", state: "저금통(원) 500 → 1000" },
+        { label: "끝까지 반복", state: "저금통(원) 1000 → 3500" },
+      ],
+    };
+    const lines = explainDraft(d)!.split("\n");
+    expect(lines[0]).toBe("내가 누른 것: 한 번 반복, 끝까지 반복");
+    expect(lines[1]).toContain("기억하는 값: 저금통(원) · 처음 0");
+    expect(lines[2]).toBe("앱이 기억한 값: 저금통(원) 1000 → 3500");
+    expect(lines).toHaveLength(5);
   });
 });

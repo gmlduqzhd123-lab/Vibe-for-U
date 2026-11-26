@@ -24,6 +24,21 @@ export function useRunHistory() {
   };
   return { steps, at, setAt, record, reset };
 }
+// 화면 낭독기 알림: 누를 때마다 무슨 일이 일어났는지 읽어 준다.
+// 알림 칸은 처음부터 화면에 있어야 바뀐 글이 읽히므로(나중에 끼워 넣은 칸은 읽히지 않을 수 있다) 늘 그려 둔다.
+// 눈에 보이는 상태 칸이 늘 있는 실행 화면(규칙·분류·반복·타이머·패턴)에는 쓰지 않는다.
+export function RunAnnouncer({
+  history,
+}: {
+  history: ReturnType<typeof useRunHistory>;
+}) {
+  const last = history.steps[history.steps.length - 1];
+  return (
+    <p className="sr-only" role="status" data-testid="run-announcer">
+      {last ? `${last.label}. ${last.state}. ${last.event}` : ""}
+    </p>
+  );
+}
 export function RunHistory({
   history,
 }: {

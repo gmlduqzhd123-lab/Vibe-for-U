@@ -1,4 +1,5 @@
-import { RunHistory, useRunHistory } from "./runHistory";
+import { LoopPreview } from "./LoopPreview";
+import { RunAnnouncer, RunHistory, useRunHistory } from "./runHistory";
 import { SpeakButton } from "./Speak";
 import { RulePreview } from "./RulePreview";
 import { SortPreview } from "./SortPreview";
@@ -54,6 +55,8 @@ export function Preview({
     return <PatternPreview config={config} onRun={onRun} />;
   if (config.kind === "rule")
     return <RulePreview config={config} onRun={onRun} />;
+  if (config.kind === "loop")
+    return <LoopPreview config={config} onRun={onRun} />;
   if (config.kind === "sort")
     return <SortPreview config={config} onRun={onRun} />;
   if (config.kind === "quiz") {
@@ -118,7 +121,8 @@ export function Preview({
             </div>
             {q.answered ? (
               <>
-                <p role="status" className="feedback">
+                {/* 낭독기 알림은 아래의 늘 있는 알림 칸(RunAnnouncer)이 맡는다. */}
+                <p className="feedback">
                   {q.selected === question.correct
                     ? config.correctFeedback
                     : config.wrongFeedback}
@@ -177,6 +181,7 @@ export function Preview({
         >
           {t("↺ 다시 시작")}
         </button>
+        <RunAnnouncer history={history} />
         <RunHistory history={history} />
         <details className="trace" open>
           <summary>{t("동작 설명 · 지금 앱이 기억하는 값")}</summary>
@@ -267,6 +272,7 @@ export function Preview({
         >
           {t("↺ 처음으로 돌아가기")}
         </button>
+        <RunAnnouncer history={history} />
         <RunHistory history={history} />
         <details className="trace" open>
           <summary>{t("동작 설명 · 장면의 연결")}</summary>
