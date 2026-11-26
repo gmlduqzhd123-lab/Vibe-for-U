@@ -12,7 +12,7 @@ import { loadEnglishMissions } from "./missionText";
 import { downloadText } from "./storage";
 import { Icon } from "./ui";
 // 영어 번역 고치기: 자동 번역으로 넣은 영어 문장 가운데 어색한 것을 교사가 바로 고친다.
-// 고친 문장은 이 기기에만 두고, 파일로 내보내 저장소의 번역표(src/i18nEn.ts)에 반영한다.
+// 고친 문장은 이 기기에만 두고, 파일로 내보내 저장소의 번역표(src/i18nEn.ts·src/i18nEnTeacher.ts)에 반영한다.
 export const FIXES_FORMAT = "ttukttak-vibe-en-fixes";
 const SHOW = 30;
 export function TranslationFix({ message }: { message: (s: string) => void }) {

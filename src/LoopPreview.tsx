@@ -5,6 +5,8 @@ import { useState } from "react";
 import {
   initialLoop,
   loopRounds,
+  loopStops,
+  loopUntil,
   resetLoop,
   runLoop,
   stepLoop,
@@ -23,8 +25,11 @@ export function LoopPreview({
   const t = useT();
   const [s, setS] = useState(() => initialLoop(config, t));
   const history = useRunHistory();
-  const total = loopRounds(config);
-  const done = s.round >= total;
+  // 멈춤 조건이 있으면 언제 멈출지 미리 보여 주지 않고, 넘지 않을 가장 많은 횟수만큼 점을 그린다.
+  const total = config.until
+    ? config.times + (config.count === "extra" ? 1 : 0)
+    : loopRounds(config);
+  const done = s.round >= total || loopStops(config, s.value);
   const act = (label: string, next: typeof s) => {
     onRun();
     setS(next);
@@ -95,6 +100,14 @@ export function LoopPreview({
             n: total,
           })}
         </p>
+        {config.until ? (
+          <p>
+            {t(
+              "반복하기 전에 먼저 확인해요: 만약 {name}이 {cond} 횟수가 남아도 멈춰요.",
+              { name: config.variable, cond: loopUntil(config, t) },
+            )}
+          </p>
+        ) : null}
         <p>{s.event}</p>
       </details>
     </div>

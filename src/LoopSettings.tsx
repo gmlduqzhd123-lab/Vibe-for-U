@@ -1,5 +1,5 @@
 import "./late.css";
-import type { LoopConfig } from "./model";
+import type { LoopConfig, RuleCondition } from "./model";
 import { LIMITS } from "./model";
 import { Field } from "./ui";
 import { useT } from "./i18n";
@@ -64,7 +64,56 @@ export function LoopSettings({
           </select>
         </label>
         {number(t("목표 값 (반복이 끝났을 때)"), "goal", -1000000, 1000000)}
+        <label className="field">
+          <span>{t("멈추는 방법")}</span>
+          <select
+            value={config.until ? config.until.when : "none"}
+            onChange={(e) => {
+              const when = e.target.value;
+              if (when === "none") {
+                const rest = { ...config };
+                delete rest.until;
+                onChange(rest);
+              } else
+                edit({
+                  until: {
+                    when: when as RuleCondition,
+                    value: config.until?.value ?? config.goal,
+                  },
+                });
+            }}
+          >
+            <option value="none">{t("횟수를 다 채우면 멈추기")}</option>
+            <option value="gte">{t("값이 얼마 이상이면 멈추기")}</option>
+            <option value="lte">{t("값이 얼마 이하이면 멈추기")}</option>
+            <option value="eq">{t("값이 얼마와 같으면 멈추기")}</option>
+          </select>
+        </label>
+        {config.until ? (
+          <label className="field">
+            <span>{t("멈춤 조건의 값")}</span>
+            <input
+              type="number"
+              value={config.until.value}
+              onChange={(e) =>
+                edit({
+                  until: {
+                    when: config.until!.when,
+                    value: num(e.target.value, -1000000, 1000000),
+                  },
+                })
+              }
+            />
+          </label>
+        ) : null}
       </div>
+      {config.until ? (
+        <small>
+          {t(
+            "멈춤 조건이 있으면 ‘반복 횟수’는 넘지 않을 가장 많은 횟수예요. 조건에 맞으면 그 전에 멈춰요.",
+          )}
+        </small>
+      ) : null}
       <Field
         label={t("끝났을 때 문구")}
         max={LIMITS.short}

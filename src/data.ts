@@ -4,6 +4,7 @@ import type {
   Mission,
   PatternConfig,
   LoopConfig,
+  ListConfig,
   RuleConfig,
   SortConfig,
 } from "./model";
@@ -315,6 +316,7 @@ const specifications: Record<
   // 분류 앱·반복 계산기의 미션은 아래에서 채운다(시작 설정과 나란히 읽히도록).
   sort: [],
   loop: [],
+  list: [],
   quiz: [
     {
       title: "선택이 정답을 만났을 때",
@@ -940,6 +942,72 @@ const loopStarters: LoopConfig[] = [
     goal: 2,
     doneMessage: "친구 6명에게 나눠 주고 2개가 남았어요.",
   },
+  // 조건 반복: 3000원 이상이 되면 횟수가 남아도 멈춘다.
+  {
+    kind: "loop",
+    variable: "모은 돈(원)",
+    round: "주째",
+    start: 0,
+    change: 700,
+    times: 10,
+    count: "exact",
+    goal: 3500,
+    doneMessage: "3000원을 넘었어요! 이제 살 수 있어요.",
+    until: { when: "gte", value: 3000 },
+  },
+  // 학습용 오류: 300씩 늘면 1000을 건너뛰어 ‘같으면’ 조건에 한 번도 맞지 않는다.
+  {
+    kind: "loop",
+    variable: "물통(mL)",
+    round: "컵째",
+    start: 0,
+    change: 300,
+    times: 8,
+    count: "exact",
+    goal: 1200,
+    doneMessage: "물통이 찼어요. 그만 부어요!",
+    until: { when: "eq", value: 1000 },
+  },
+];
+// 목록 만들기의 시작 설정: 낱말을 차례로 넣고 빼며 순서와 개수를 본다.
+const listStarters: ListConfig[] = [
+  {
+    kind: "list",
+    name: "소풍 준비물",
+    items: ["도시락", "물", "돗자리", "모자"],
+    duplicate: "block",
+    max: 6,
+    remove: "last",
+    fullMessage: "준비물 목록이 가득 찼어요!",
+  },
+  {
+    kind: "list",
+    name: "작은 가방",
+    items: ["공책", "필통", "물통", "우산", "간식"],
+    duplicate: "block",
+    max: 3,
+    remove: "last",
+    fullMessage: "가방이 가득 찼어요. 하나를 빼야 넣을 수 있어요.",
+  },
+  // 학습용 오류: 같은 이름을 또 누르면 명단에 두 번 들어간다.
+  {
+    kind: "list",
+    name: "출석 명단",
+    items: ["하늘", "바다", "나무", "구름"],
+    duplicate: "allow",
+    max: 8,
+    remove: "last",
+    fullMessage: "명단이 가득 찼어요.",
+  },
+  {
+    kind: "list",
+    name: "급식 줄",
+    items: ["하늘 모둠", "바다 모둠", "나무 모둠", "구름 모둠"],
+    duplicate: "block",
+    max: 4,
+    remove: "first",
+    fullMessage: "줄이 가득 찼어요.",
+  },
 ];
 specifications.loop.push(
   {
@@ -1032,6 +1100,144 @@ specifications.loop.push(
     ],
     closing: "값이 0보다 작아지면 안 될 때 앱은 무엇을 확인해야 할까요?",
   },
+  {
+    title: "목표에 닿으면 그만",
+    goal: "일주일에 700원씩 모으다가 3000원 이상이 되면 멈추는 반복을 만들어요.",
+    prediction: "‘끝까지 반복’을 누르면 몇 주째에, 얼마에서 멈출까요?",
+    tests: [
+      {
+        label: "멈춤 조건",
+        expected: "3000원 이상이 되면 횟수가 남아도 멈춘다.",
+      },
+      {
+        label: "멈춘 값",
+        expected: "5주째에 3500원에서 멈춘다.",
+      },
+    ],
+    task: "멈춤 조건의 값을 5000으로 바꾸고, 멈추는 값을 계산해 목표 값도 맞게 고치세요.",
+    hints: [
+      "앱은 반복하기 전에 값이 조건에 맞는지 먼저 확인해요.",
+      "2800원은 3000원 이상이 아니라서 한 번 더 반복해요.",
+      "반복 횟수 10은 넘지 않을 가장 많은 횟수예요.",
+    ],
+    closing:
+      "‘7번 반복’과 ‘3000원이 될 때까지 반복’은 언제 각각 쓰면 좋을까요?",
+  },
+  {
+    title: "어라? 멈추지 않아요!",
+    goal: "물통이 1000mL가 되면 멈춰야 하는데 끝까지 붓는 까닭을 찾아 고쳐요.",
+    prediction: "한 컵에 300mL씩 부으면 물통이 딱 1000mL가 되는 때가 있을까요?",
+    tests: [
+      {
+        label: "멈춤 조건",
+        expected: "1000mL 이상이 되면 멈춘다.",
+      },
+      {
+        label: "멈춘 값",
+        expected: "4컵째에 1200mL에서 멈춘다.",
+      },
+    ],
+    task: "멈춤 조건을 ‘이상이면’으로 고쳐 물이 넘치기 전에 멈추게 하고 다시 확인하세요.",
+    hints: [
+      "값은 300, 600, 900, 1200으로 바뀌어요.",
+      "딱 1000이 되는 때가 없어서 ‘같으면’ 조건에 맞지 않아요.",
+      "설정의 ‘멈추는 방법’을 ‘값이 얼마 이상이면 멈추기’로 바꿔요.",
+    ],
+    closing: "멈춤 조건에 ‘같으면’을 쓰면 왜 위험할 수 있을까요?",
+  },
+);
+specifications.list.push(
+  {
+    title: "소풍 준비물 목록",
+    goal: "소풍에 가져갈 준비물을 차례로 넣어 목록을 만들어요.",
+    prediction:
+      "‘물’을 먼저 넣고 ‘도시락’을 넣으면 1번 자리에는 무엇이 있을까요?",
+    tests: [
+      {
+        label: "넣는 순서",
+        expected: "누른 순서대로 목록 맨 뒤에 들어간다.",
+      },
+      {
+        label: "목록의 개수",
+        expected: "넣을 때마다 개수가 1씩 늘어난다.",
+      },
+    ],
+    task: "낱말을 내가 챙길 준비물로 바꾸고, 낱말을 하나 더 추가한 뒤 다시 확인하세요.",
+    hints: [
+      "목록은 넣은 순서를 기억해요.",
+      "새 낱말은 언제나 맨 뒤에 들어가요.",
+      "설정에서 낱말을 고치고 ‘+ 낱말 추가’를 눌러요.",
+    ],
+    closing: "목록이 순서를 기억하면 어떤 점이 편리할까요?",
+  },
+  {
+    title: "가득 차면 그만",
+    goal: "세 개만 들어가는 작은 가방에 물건을 넣으며 가득 찼을 때를 살펴봐요.",
+    prediction: "물건 세 개를 넣은 뒤 네 번째 물건을 누르면 어떻게 될까요?",
+    tests: [
+      {
+        label: "가득 찼을 때",
+        expected: "네 번째 물건은 들어가지 않고 안내가 나온다.",
+      },
+      {
+        label: "빼고 다시 넣기",
+        expected: "하나를 빼면 다른 물건을 넣을 수 있다.",
+      },
+    ],
+    task: "가장 많은 개수를 4로 바꾸고 가득 찼을 때 문구를 친절하게 고친 뒤 다시 확인하세요.",
+    hints: [
+      "앱은 넣기 전에 목록의 개수를 세어 봐요.",
+      "개수가 가장 많은 개수와 같으면 넣지 않아요.",
+      "‘하나 빼기’는 맨 뒤에 있는 물건을 꺼내요.",
+    ],
+    closing: "앱이 넣기 전에 개수를 확인하지 않으면 어떤 일이 생길까요?",
+  },
+  {
+    title: "어라? 이름이 두 번!",
+    goal: "출석 명단에 같은 이름이 두 번 들어가는 까닭을 찾아 고쳐요.",
+    prediction: "‘하늘’을 두 번 누르면 명단에는 모두 몇 명이 있을까요?",
+    tests: [
+      {
+        label: "같은 이름 다시 넣기",
+        expected: "같은 이름은 한 번만 들어간다.",
+      },
+      {
+        label: "다른 이름 넣기",
+        expected: "다른 이름은 맨 뒤에 들어간다.",
+      },
+    ],
+    task: "‘같은 낱말을 또 넣으면’을 고쳐 이름이 한 번만 들어가게 하고 다시 확인하세요.",
+    hints: [
+      "‘하늘’을 두 번 누르고 개수를 세어 봐요.",
+      "앱은 넣기 전에 목록에 이미 있는지 확인해야 해요.",
+      "설정의 ‘같은 낱말을 또 넣으면’을 ‘넣지 않기’로 바꿔요.",
+    ],
+    closing: "같은 것이 두 번 들어가면 안 되는 목록에는 무엇이 있을까요?",
+  },
+  {
+    title: "먼저 온 사람 먼저",
+    goal: "급식 줄처럼 먼저 넣은 것이 먼저 나오는 목록을 만들어요.",
+    prediction:
+      "하늘, 바다, 나무 모둠을 차례로 넣고 ‘하나 빼기’를 누르면 누가 나올까요?",
+    tests: [
+      {
+        label: "먼저 넣은 것 빼기",
+        expected: "맨 앞에 있는 모둠이 먼저 나온다.",
+      },
+      {
+        label: "자리 당겨지기",
+        expected: "하나가 나오면 뒤에 있던 모둠이 앞으로 온다.",
+      },
+    ],
+    task: "‘하나 빼기가 꺼내는 곳’을 맨 뒤로 바꿔 무엇이 달라지는지 보고, 급식 줄에 맞는 쪽으로 돌려놓으세요.",
+    hints: [
+      "줄은 먼저 선 사람이 먼저 나가요.",
+      "맨 앞이 빠지면 2번이 1번이 돼요.",
+      "접시 쌓기는 맨 뒤(위)에서 꺼내는 목록이에요.",
+    ],
+    closing:
+      "맨 앞에서 꺼내는 목록과 맨 뒤에서 꺼내는 목록은 각각 어디에 쓰일까요?",
+  },
 );
 export const missions: Mission[] = kinds.flatMap((kind) =>
   specifications[kind].map((s, i) => {
@@ -1048,7 +1254,9 @@ export const missions: Mission[] = kinds.flatMap((kind) =>
                 ? sortStarters[i]
                 : kind === "loop"
                   ? loopStarters[i]
-                  : patternStarters[i],
+                  : kind === "list"
+                    ? listStarters[i]
+                    : patternStarters[i],
     );
     if (kind === "quiz" && starter.kind === "quiz") {
       if (i === 2) starter.scoring = "attempt";
@@ -1065,7 +1273,8 @@ export const missions: Mission[] = kinds.flatMap((kind) =>
       order: i + 1,
       guide: `먼저 예상한 뒤 실행해 보세요. ${s.task}`,
       completion: `예상 기록 → ${s.tests.map((t) => t.label).join(", ")} 직접 확인 → 수정 이유와 원리 설명`,
-      learningError: i === 2 || (kind === "quiz" && i === 3),
+      learningError:
+        i === 2 || (kind === "quiz" && i === 3) || (kind === "loop" && i === 5),
       starter,
     };
   }),

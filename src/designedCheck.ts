@@ -10,6 +10,11 @@ import {
   pressRule,
   binName,
   initialLoop,
+  initialList,
+  addList,
+  removeList,
+  fillList,
+  listText,
   loopRounds,
   stepLoop,
   ruleMessage,
@@ -104,6 +109,22 @@ export function designActions(c: Config, t: Tr): Action[] {
           id: "loop-all",
           label: t("끝까지 반복하기 → 마지막 값"),
           params: [],
+        },
+      ];
+    case "list":
+      return [
+        {
+          id: "list-add",
+          label: t("{a}번 낱말을 {b}번 넣기 → 목록에 든 개수"),
+          params: [
+            { key: "a", label: t("낱말 번호"), min: 1, max: c.items.length },
+            { key: "b", label: t("누르는 횟수"), min: 1, max: 12 },
+          ],
+        },
+        {
+          id: "list-take",
+          label: t("낱말을 모두 넣고 {a}번 빼기 → 남은 개수"),
+          params: [{ key: "a", label: t("빼는 횟수"), min: 1, max: 12 }],
         },
       ];
     case "sort":
@@ -254,6 +275,25 @@ export function runDesign(c: Config, d: Design, t: Tr): DesignRun | null {
         label,
         actual: t("{name} {v}", { name: c.variable, v: s.value }),
         values: [s.value],
+      };
+    }
+    case "list-add":
+    case "list-take": {
+      if (c.kind !== "list") return null;
+      let s = initialList(t);
+      if (d.action === "list-add")
+        for (let i = 0; i < b; i++) s = addList(c, s, a - 1, t);
+      else {
+        s = fillList(c, s, t);
+        for (let i = 0; i < a; i++) s = removeList(c, s, t);
+      }
+      return {
+        label,
+        actual: t("모두 {n}개 · {list}", {
+          n: s.list.length,
+          list: listText(s.list, t),
+        }),
+        values: [s.list.length],
       };
     }
     case "sort-card": {

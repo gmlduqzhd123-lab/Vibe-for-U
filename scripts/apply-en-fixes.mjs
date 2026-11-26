@@ -1,6 +1,6 @@
 // 교사가 앱의 "영어 번역 고치기"에서 내보낸 고침 파일을 저장소의 영어 번역표에 합친다.
 // 사용: node scripts/apply-en-fixes.mjs 뚝딱-영어-번역-고침-2026-11-18.json
-//       그다음 npx prettier --write src/i18n.tsx src/i18nEn.ts && npx vitest run tests/i18n.test.ts
+//       그다음 npx prettier --write src/i18n.tsx src/i18nEn.ts src/i18nEnTeacher.ts && npx vitest run tests/i18n.test.ts
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
@@ -50,7 +50,11 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   }
   const fixes = readFixes(JSON.parse(readFileSync(file, "utf8")));
   const left = { ...fixes };
-  for (const path of ["src/i18n.tsx", "src/i18nEn.ts"]) {
+  for (const path of [
+    "src/i18n.tsx",
+    "src/i18nEn.ts",
+    "src/i18nEnTeacher.ts",
+  ]) {
     const { source, done } = applyFixes(readFileSync(path, "utf8"), left);
     writeFileSync(path, source);
     for (const k of done) delete left[k];

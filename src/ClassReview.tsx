@@ -33,6 +33,7 @@ import {
   parseClassSession,
   lessonProgress,
   levelNames,
+  assessmentGaps,
   summarize,
   toCSV,
 } from "./classSummary";
@@ -743,6 +744,9 @@ export function ClassReview({ message }: { message: (s: string) => void }) {
                           ) : (
                             <Pill tone="paper">{t("평가 전")}</Pill>
                           )}
+                          {assessmentGaps(e.work).big ? (
+                            <Pill tone="orange">{t("평가 차이 큼")}</Pill>
+                          ) : null}
                         </td>
                       </tr>
                     );
@@ -799,6 +803,7 @@ function ReviewCard({
   const d = e.work.draft;
   const f = e.work.feedback!;
   const done = stageDone(d);
+  const gaps = assessmentGaps(e.work);
   return (
     <details className="panel review-card">
       <summary>
@@ -878,6 +883,29 @@ function ReviewCard({
               : ""}
           </dd>
         </div>
+        {gaps.items.length ? (
+          <div className="assessment-gap">
+            <dt>
+              {t("평가가 다른 항목")}{" "}
+              {gaps.big ? (
+                <Pill tone="orange">
+                  {t("두 단계 차이 · 이야기 나눠 보기")}
+                </Pill>
+              ) : null}
+            </dt>
+            <dd>
+              {gaps.items
+                .map((x) =>
+                  t("{name}: 스스로 {a} · 선생님 {b}", {
+                    name: t(x.name),
+                    a: t(levelNames[x.self]),
+                    b: t(levelNames[x.teacher]),
+                  }),
+                )
+                .join(" / ")}
+            </dd>
+          </div>
+        ) : null}
       </dl>
       <h3>{t("과정 평가")}</h3>
       <RubricChoices

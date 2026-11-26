@@ -12,6 +12,8 @@ import {
   shadowedRules,
   binMatches,
   runLoop,
+  loopStops,
+  loopUntil,
   shadowedBins,
   sortBin,
   sortMismatches,
@@ -74,12 +76,31 @@ export function diagnose(c: Config): Finding[] {
       });
   } else if (c.kind === "loop") {
     const done = runLoop(c);
-    if (c.count === "extra")
+    if (c.count === "extra" && done.round > c.times)
       out.push({
         id: "loop-extra",
         problem: "{n}번만 반복해야 하는데 {m}번 반복해요.",
         hint: "설정의 ‘반복 세는 방법’을 ‘정한 횟수만큼 (정상 규칙)’으로 바꿔 보세요. 앱은 몇 번 했는지 세다가 정한 횟수가 되면 멈춰야 해요.",
         vars: { n: c.times, m: done.round },
+      });
+    else if (c.until && !loopStops(c, done.value))
+      out.push({
+        id: "loop-never",
+        problem:
+          "멈춤 조건 「{cond}」에 한 번도 맞지 않아 {n}번을 다 돌았어요.",
+        hint: "값이 {change}씩 바뀌면 딱 그 숫자를 건너뛸 수 있어요. 멈춤 조건을 ‘이상이면’이나 ‘이하이면’으로 바꾸거나, 값이 닿을 수 있는 숫자로 고쳐 보세요.",
+        vars: {
+          cond: loopUntil(c),
+          n: done.round,
+          change: c.change > 0 ? `+${c.change}` : c.change,
+        },
+      });
+    else if (done.value !== c.goal && c.until)
+      out.push({
+        id: "loop-goal",
+        problem: "반복이 끝난 값 {v}이 목표 {goal}과 달라요.",
+        hint: "멈춤 조건에 맞아 멈춘 값이 {v}이에요. 목표 값을 실제로 멈추는 값으로 고치거나, 멈춤 조건의 숫자를 바꿔 보세요.",
+        vars: { v: done.value, goal: c.goal },
       });
     else if (done.value !== c.goal)
       out.push({
@@ -93,6 +114,13 @@ export function diagnose(c: Config): Finding[] {
           change: c.change,
           n: c.times,
         },
+      });
+  } else if (c.kind === "list") {
+    if (c.duplicate === "allow")
+      out.push({
+        id: "list-duplicate",
+        problem: "같은 낱말을 또 누르면 목록에 두 번 들어가요.",
+        hint: "설정의 ‘같은 낱말을 또 넣으면’을 ‘넣지 않기 (정상 규칙)’로 바꿔 보세요. 앱은 넣기 전에 목록에 이미 있는지 확인해야 해요.",
       });
   } else if (c.kind === "sort") {
     const hidden = shadowedBins(c);

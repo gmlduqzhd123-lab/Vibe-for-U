@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Inspection } from "./Inspection";
 import { RunEvidenceContext } from "./runHistory";
 import { PairPanel } from "./Pair";
+import { Tour } from "./Tour";
 import {
   compareSnapshots,
   configSummary,
@@ -213,6 +214,7 @@ export function Workspace({
           </button>
         </div>
       </div>
+      <Tour />
       <PairPanel
         pair={d.pair}
         step={step}

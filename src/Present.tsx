@@ -60,10 +60,24 @@ export function currentStep(
   const sum = list.reduce((n, s) => n + s.minutes, 0);
   let at = (Math.min(elapsedMs, totalMs - 1) / totalMs) * sum;
   for (let i = 0; i < list.length; i++) {
-    if (at < list[i].minutes) return { index: i, text: list[i].text, list };
+    // leftMs: 이 활동이 끝날 때까지 남은 시간, next: 다음 활동 이름(마지막이면 없음)
+    if (at < list[i].minutes)
+      return {
+        index: i,
+        text: list[i].text,
+        list,
+        leftMs: ((list[i].minutes - at) / sum) * totalMs,
+        next: list[i + 1]?.text ?? "",
+      };
     at -= list[i].minutes;
   }
-  return { index: list.length - 1, text: list[list.length - 1].text, list };
+  return {
+    index: list.length - 1,
+    text: list[list.length - 1].text,
+    list,
+    leftMs: 0,
+    next: "",
+  };
 }
 // 활동 시간 중 지난 시간으로 역할 교대 횟수와 다음 교대까지 남은 시간을 계산한다.
 export function roleState(elapsedMs: number, everyMs: number) {
@@ -283,6 +297,12 @@ export function Present({
           <p className="present-now" role="status">
             <b>{t("지금 할 일")}</b> {now.index + 1} / {now.list.length} ·{" "}
             {now.text}
+          </p>
+        ) : null}
+        {started && timer.remaining > 0 ? (
+          <p className="present-step-left" data-testid="present-step-left">
+            {t("이 활동 남은 시간 {time}", { time: clock(now.leftMs) })}
+            {now.next ? ` · ${t("다음: {next}", { next: now.next })}` : ""}
           </p>
         ) : null}
         <div className="button-row">

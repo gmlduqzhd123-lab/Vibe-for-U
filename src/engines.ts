@@ -6,6 +6,7 @@ import type {
   Config,
   Direction,
   LoopConfig,
+  ListConfig,
   PatternConfig,
   QuizConfig,
   RuleCondition,
@@ -277,17 +278,28 @@ export function sortMismatches(c: SortConfig) {
   });
 }
 // 반복 계산기: 한 번 반복할 때마다 값이 change만큼 바뀐다. 정한 횟수(학습용 오류면 한 번 더)를 채우면 멈춘다.
+// 멈춤 조건(until)이 있으면 반복하기 전에 값을 확인해, 조건에 맞는 순간 횟수가 남아도 멈춘다.
 export type LoopState = { round: number; value: number; event: string };
-export const loopRounds = (c: LoopConfig) =>
-  c.times + (c.count === "extra" ? 1 : 0);
+const loopMax = (c: LoopConfig) => c.times + (c.count === "extra" ? 1 : 0);
+export const loopStops = (c: LoopConfig, value: number) =>
+  Boolean(c.until && ruleMatches(c.until, value));
+export function loopRounds(c: LoopConfig) {
+  const max = loopMax(c);
+  if (!c.until) return max;
+  for (let n = 0; n < max; n++)
+    if (loopStops(c, c.start + c.change * n)) return n;
+  return max;
+}
+export const loopUntil = (c: LoopConfig, t: Tr = ko) =>
+  c.until ? t(conditionWords[c.until.when], { v: c.until.value }) : "";
 export const initialLoop = (c: LoopConfig, t: Tr = ko): LoopState => ({
   round: 0,
   value: c.start,
   event: t("처음 값 {v}에서 시작해요.", { v: c.start }),
 });
 export function stepLoop(c: LoopConfig, s: LoopState, t: Tr = ko): LoopState {
-  const total = loopRounds(c);
-  if (s.round >= total) return s;
+  const total = loopMax(c);
+  if (s.round >= total || loopStops(c, s.value)) return s;
   const round = s.round + 1;
   const value = s.value + c.change;
   return {
@@ -299,22 +311,90 @@ export function stepLoop(c: LoopConfig, s: LoopState, t: Tr = ko): LoopState {
       name: c.variable,
       a: s.value,
       b: value,
-      rule:
-        round >= total
+      rule: loopStops(c, value)
+        ? t("멈춤 조건 「{cond}」에 맞아 멈춤", { cond: loopUntil(c, t) })
+        : round >= total
           ? t("반복 {n}번을 채워 멈춤", { n: total })
-          : t("아직 {n}번 남음", { n: total - round }),
+          : c.until
+            ? t("멈춤 조건에 아직 안 맞아 계속")
+            : t("아직 {n}번 남음", { n: total - round }),
     }),
   };
 }
 export function runLoop(c: LoopConfig, s = initialLoop(c), t: Tr = ko) {
   let state = s;
-  while (state.round < loopRounds(c)) state = stepLoop(c, state, t);
-  return state;
+  for (;;) {
+    const next = stepLoop(c, state, t);
+    if (next === state) return state;
+    state = next;
+  }
 }
 export const resetLoop = (c: LoopConfig, t: Tr = ko): LoopState => ({
   ...initialLoop(c, t),
   event: t("처음으로 → {name} {v}", { name: c.variable, v: c.start }),
 });
+// 목록 앱: 낱말을 맨 뒤에 넣고, 정한 곳(맨 앞·맨 뒤)에서 하나씩 뺀다.
+export type ListState = { list: string[]; event: string };
+export const initialList = (t: Tr = ko): ListState => ({
+  list: [],
+  event: t("빈 목록에서 시작해요."),
+});
+export function addList(
+  c: ListConfig,
+  s: ListState,
+  index: number,
+  t: Tr = ko,
+): ListState {
+  const item = c.items[index];
+  if (item === undefined) return s;
+  if (s.list.length >= c.max)
+    return {
+      list: s.list,
+      event: t("「{item}」 넣기 → 이미 {n}개로 가득 참 → 넣지 않음", {
+        item,
+        n: c.max,
+      }),
+    };
+  if (c.duplicate === "block" && s.list.includes(item))
+    return {
+      list: s.list,
+      event: t("「{item}」 넣기 → 이미 목록에 있음 → 넣지 않음", { item }),
+    };
+  const list = [...s.list, item];
+  return {
+    list,
+    event: t("「{item}」 넣기 → {n}번 자리에 들어감 → 모두 {n}개", {
+      item,
+      n: list.length,
+    }),
+  };
+}
+export function removeList(c: ListConfig, s: ListState, t: Tr = ko): ListState {
+  if (!s.list.length)
+    return { list: s.list, event: t("하나 빼기 → 목록이 비어 있어 그대로") };
+  const first = c.remove === "first";
+  const item = first ? s.list[0] : s.list[s.list.length - 1];
+  const list = first ? s.list.slice(1) : s.list.slice(0, -1);
+  return {
+    list,
+    event: t(
+      first
+        ? "하나 빼기 → 맨 앞 「{item}」이 빠짐 → 모두 {n}개"
+        : "하나 빼기 → 맨 뒤 「{item}」이 빠짐 → 모두 {n}개",
+      { item, n: list.length },
+    ),
+  };
+}
+export const resetList = (t: Tr = ko): ListState => ({
+  list: [],
+  event: t("처음으로 → 빈 목록"),
+});
+// 낱말 버튼을 차례로 모두 한 번씩 누른다.
+export function fillList(c: ListConfig, s: ListState, t: Tr = ko) {
+  return c.items.reduce((state, _, i) => addList(c, state, i, t), s);
+}
+export const listText = (list: string[], t: Tr = ko) =>
+  list.length ? list.map((x, i) => `${i + 1}. ${x}`).join(" · ") : t("빈 목록");
 export function reachable(c: StoryConfig) {
   const seen = new Set<string>();
   const visit = (id: string) => {
@@ -643,12 +723,23 @@ export function autoChecks(c: Config, revision: string, t: Tr = ko): Check[] {
     const again = stepLoop(c, done, t);
     const reset = resetLoop(c, t);
     rows.push(
-      {
-        label: "정한 횟수만큼 반복",
-        expected: t("{n}번 반복하고 멈춘다", { n: c.times }),
-        actual: t("{n}번 반복함", { n: done.round }),
-        pass: done.round === c.times,
-      },
+      c.until
+        ? {
+            label: "멈춤 조건에서 멈추기",
+            expected: t("「{cond}」 멈춘다", { cond: loopUntil(c, t) }),
+            actual: t("{n}번 반복하고 {name} {v}", {
+              n: done.round,
+              name: c.variable,
+              v: done.value,
+            }),
+            pass: loopStops(c, done.value) && done.round <= c.times,
+          }
+        : {
+            label: "정한 횟수만큼 반복",
+            expected: t("{n}번 반복하고 멈춘다", { n: c.times }),
+            actual: t("{n}번 반복함", { n: done.round }),
+            pass: done.round === c.times,
+          },
       {
         label: "반복이 끝난 값",
         expected: t("{name} {v}", { name: c.variable, v: c.goal }),
@@ -669,6 +760,48 @@ export function autoChecks(c: Config, revision: string, t: Tr = ko): Check[] {
         }),
         actual: t("{name} {v}", { name: c.variable, v: reset.value }),
         pass: reset.value === c.start && reset.round === 0,
+      },
+    );
+  } else if (c.kind === "list") {
+    const start = initialList(t);
+    const two = addList(c, addList(c, start, 0, t), 1, t);
+    const twice = addList(c, addList(c, start, 0, t), 0, t);
+    const full = fillList(c, fillList(c, start, t), t);
+    const taken = removeList(c, two, t);
+    const empty = removeList(c, start, t);
+    const wantTwo = c.items.slice(0, Math.min(2, c.max));
+    rows.push(
+      {
+        label: "차례로 넣기",
+        expected: listText(wantTwo, t),
+        actual: listText(two.list, t),
+        pass: two.list.join("\n") === wantTwo.join("\n"),
+      },
+      {
+        label: "같은 낱말 다시 넣기",
+        expected: t("한 번만 들어간다 (모두 1개)"),
+        actual: t("모두 {n}개", { n: twice.list.length }),
+        pass: twice.list.length === 1,
+      },
+      {
+        label: "가득 찼을 때",
+        expected: t("{n}개까지만 들어간다", { n: c.max }),
+        actual: t("모두 {n}개", { n: full.list.length }),
+        pass: full.list.length <= c.max,
+      },
+      {
+        label: "하나 빼기",
+        expected: t("하나가 빠져 {n}개가 된다", {
+          n: Math.max(0, two.list.length - 1),
+        }),
+        actual: t("모두 {n}개", { n: taken.list.length }),
+        pass: taken.list.length === Math.max(0, two.list.length - 1),
+      },
+      {
+        label: "빈 목록에서 빼기",
+        expected: t("빈 목록 그대로"),
+        actual: listText(empty.list, t),
+        pass: empty.list.length === 0,
       },
     );
   } else if (c.kind === "sort") {

@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { addTranslations, translate } from "../src/i18n";
-import { en } from "../src/i18nEn";
+import { en as student } from "../src/i18nEn";
+import { enTeacher } from "../src/i18nEnTeacher";
+const en = { ...student, ...enTeacher };
 import { stageNames, kindNames, aiStatus, makeWork } from "../src/model";
 import { dirNames, autoChecks } from "../src/engines";
 import { missions, quiz, story, timer } from "../src/data";
@@ -12,6 +14,7 @@ import { stageGuides } from "../src/Workspace";
 import { blockGroups, predictionStarters } from "../src/BlockPrompt";
 import { codeKeys, listedKeys } from "./i18nKeys";
 import { configStrings } from "../src/missionText";
+import { tourSteps } from "../src/Tour";
 describe("화면 틀 번역", () => {
   it("번역이 없으면 한국어 문장을 그대로 보여 준다", () => {
     expect(translate("ko", "미션 공작대")).toBe("미션 공작대");
@@ -49,6 +52,8 @@ describe("학생 화면 전체 번역", () => {
       "예상이 맞았는지 아직 표시하지 않았어요.",
       "어떻게 눌러 봤는지 실행 기록 증거가 없어요.",
       "스스로 평가를 아직 다 고르지 않았어요.",
+      // 화면 둘러보기의 안내 글(Tour.tsx)
+      ...tourSteps.flatMap((s) => [s.title, s.text]),
       ...predictionStarters,
       "시작 작품 · 현재 편집본",
       "가져온 복사본 · 현재 편집본",

@@ -26,8 +26,8 @@ const classroomDocuments = [
     id: "student-worksheets",
     title: "차시별 학생 활동지 전체",
     description:
-      "1~8차시 예상·관찰·수정·재검사 기록지와 보충 차시(만약 규칙·분류하기 앱) · 차시마다 앞뒤 2쪽",
-    pages: 20,
+      "1~8차시 예상·관찰·수정·재검사 기록지와 보충 차시(만약 규칙·분류하기 앱·반복 계산기) · 차시마다 앞뒤 2쪽",
+    pages: 22,
     downloadName: "뚝딱_바이브_차시별_학생_활동지",
   },
   {
@@ -42,8 +42,8 @@ const classroomDocuments = [
     id: "student-worksheets-en",
     title: "학생 활동지 영어판 (Student worksheets in English)",
     description:
-      "1~8차시와 보충 차시(만약 규칙·분류하기 앱) 활동지를 같은 배치로 옮긴 영어판 · 영어 화면으로 배우는 학생용",
-    pages: 20,
+      "1~8차시와 보충 차시(만약 규칙·분류하기 앱·반복 계산기) 활동지를 같은 배치로 옮긴 영어판 · 영어 화면으로 배우는 학생용",
+    pages: 22,
     downloadName: "Ttukttak_Vibe_student_worksheets_EN",
   },
   {
