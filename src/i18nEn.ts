@@ -2292,4 +2292,73 @@ export const en: Record<string, string> = {
   "같은 낱말 다시 넣기": "Adding the same word again",
   "가득 찼을 때": "When it is full",
   "빈 목록에서 빼기": "Taking out of an empty list",
+  "모두 차례로 넣기": "Add all in order",
+  "낱말 {n}개 고치기": "Edit {n} words",
+  "반복 안에서 확인해요: 만약 {n}의 배수 번째이면 {change}을 더 바꿔요.":
+    "It checks inside the loop: on every repeat that is a multiple of {n}, it changes {change} more.",
+  "반복 안의 조건 (몇 번째마다 더 바꾸기)":
+    "Condition inside the loop (extra change every nth time)",
+  "{n}의 배수 번째마다": "On every multiple of {n}",
+  "그때 더 바뀌는 값": "Extra change at that time",
+  "기록 완료 {n} / {m}": "Recorded {n} / {m}",
+  "{kind} 진행": "{kind} progress",
+  "처음 오셨나요?": "New here?",
+  "이 화면의 다섯 곳을 차례로 짚어 드릴게요. 1분이면 돼요.":
+    "We can point out five places on this screen, one by one. It takes about a minute.",
+  "둘러보기 시작": "Start the tour",
+  "괜찮아요, 바로 할게요": "No thanks, I'll start now",
+  "보내기·내보내기": "Send · export",
+  "더 해 보기 · 도전 과제 {n}개": "Go further · {n} challenges",
+  "정답이 하나가 아니에요. 설정을 바꿔 조건에 맞는 앱을 만들면 여기에 달성 표시가 생겨요.":
+    "There is more than one answer. Change the settings to make an app that fits, and a “Done!” mark appears here.",
+  "달성!": "Done!",
+  아직: "Not yet",
+  "설정 바꾸러 가기": "Go change the settings",
+  "{v} ({every}의 배수라 {bonus} 더)":
+    "{v} (a multiple of {every}, so {bonus} more)",
+  "반복 안의 조건: 만약 {n}의 배수 번째이면 {change} 더":
+    "Condition inside the loop: on every multiple of {n}, {change} more",
+  "개인정보 확인을 준비하지 못했어요. 잠시 뒤 다시 눌러 주세요.":
+    "The personal-information check is not ready. Please press again in a moment.",
+  "보너스 조건": "Bonus condition",
+  "보너스 간격": "Bonus interval",
+  "보너스 값": "Bonus value",
+  "보너스까지 더하면 끝난 값이 {v}이에요. 보너스를 몇 번 받는지 세어 보고, 목표 값이나 보너스 숫자를 고쳐 보세요.":
+    "With the bonus added, the final value is {v}. Count how many times the bonus is given, then fix the goal value or the bonus numbers.",
+  "문제를 3개 이상으로 늘리고, 모두 맞히면 딱 9점이 되게 만들어 보세요.":
+    "Make 3 or more questions so that getting them all right gives exactly 9 points.",
+  "모든 문제의 선택지를 4개 이상으로 만들고, 정답이 모두 1번은 아니게 해 보세요.":
+    "Give every question 4 or more choices, and make sure the right answer is not always number 1.",
+  "결말을 3개 이상 만들고, 모든 결말에 갈 수 있게 길을 이어 보세요.":
+    "Make 3 or more endings and connect the paths so every ending can be reached.",
+  "선택을 세 번 해야 닿는 결말을 하나 만들어 보세요.":
+    "Make one ending that takes three choices to reach.",
+  "딱 1분 30초를 재고, 끝나면 내가 쓴 안내가 나오는 타이머를 만들어 보세요.":
+    "Make a timer that counts exactly 1 minute 30 seconds and shows your own message at the end.",
+  "목표 모양과 똑같이 그리면서, 칠한 칸이 딱 12개가 되게 만들어 보세요.":
+    "Draw exactly the goal shape with exactly 12 painted cells.",
+  "명령은 2개 이하로 쓰고, 반복을 3번 이상 써서 목표 모양을 그려 보세요.":
+    "Draw the goal shape with 2 commands or fewer and 3 or more repeats.",
+  "조건을 3개 이상 만들고, 어떤 조건도 앞 조건에 가리지 않게 순서를 정해 보세요.":
+    "Make 3 or more conditions and order them so none is hidden by an earlier one.",
+  "값을 줄이는 버튼을 넣고, 값이 0보다 작아지지 않게 막아 보세요.":
+    "Add a button that lowers the value, and stop the value from going below 0.",
+  "바구니를 3개 이상 만들고, 모든 카드가 기대한 바구니에 들어가게 해 보세요.":
+    "Make 3 or more baskets so that every card lands in its expected basket.",
+  "나머지 바구니에도 카드가 한 장 이상 들어가고, 모든 카드가 기대한 곳에 가게 해 보세요.":
+    "Make at least one card land in the leftover basket, with every card where it is expected.",
+  "처음 값이 0이 아닌데도 딱 100에서 끝나는 반복을 만들어 보세요.":
+    "Make a loop that ends at exactly 100 even though its starting value is not 0.",
+  "값이 줄어들다가 멈춤 조건에 맞아, 정한 횟수를 다 채우기 전에 멈추는 반복을 만들어 보세요.":
+    "Make a loop that counts down and meets its stop condition before using up all its repeats.",
+  "낱말을 6개 이상 만들고, 5개까지만 들어가며 먼저 넣은 것이 먼저 나오는 목록을 만들어 보세요.":
+    "Make a list with 6 or more words that holds only 5, where the first one added comes out first.",
+  "낱말 버튼이 모두 서로 다르고, 모두 넣어도 가득 차지 않는 목록을 만들어 보세요.":
+    "Make a list where every word button is different and adding them all never fills it.",
+  "칭찬 스티커(개)": "praise stickers",
+  "열흘 동안 스티커 16개를 모았어요!": "16 stickers in ten days!",
+  "발표 순서": "Speaking order",
+  노을: "Noeul",
+  별: "Byeol",
+  "오늘 발표는 네 명까지예요.": "Only four speakers today.",
 };

@@ -40,6 +40,8 @@ test("파일 공유를 지원하는 기기에서는 공유 창으로 작품 파�
     });
   });
   await start(page);
+  // 공유 버튼은 보내기·내보내기 메뉴 안에 있다.
+  await page.locator(".more-menu summary").click();
   const share = page
     .locator(".workspace-heading")
     .getByRole("button", { name: "공유로 보내기" });
@@ -68,6 +70,8 @@ test("파일 공유를 지원하는 기기에서는 공유 창으로 작품 파�
     (window as unknown as { cancelNext: () => void }).cancelNext(),
   );
   await page.locator(".toast button").click();
+  // 메뉴 밖(알림 닫기)을 눌러 메뉴가 닫혔으므로 다시 연다.
+  await page.locator(".more-menu summary").click();
   await share.click();
   await expect(page.locator(".toast")).toHaveCount(0);
 

@@ -1,5 +1,4 @@
 import { SendGuardContext } from "./sendGuard";
-import { scanWorks } from "./privacy";
 import {
   COURSE_FORMAT,
   MISSION_FORMAT,
@@ -75,6 +74,18 @@ import type { History } from "./undoHistory";
 
 // 친구 검사 파일 검사는 파일을 열 때만 불러온다(첫 화면 묶음을 가볍게).
 const peerTools = () => import("./peer");
+// 개인정보 확인 규칙은 보낼 때만 쓰므로 첫 화면 뒤에 미리 받아 둔다(첫 화면 묶음을 가볍게).
+// 받아 둔 뒤에는 누른 그 자리에서 바로 확인하므로, 공유 창처럼 누른 직후에만 열리는 기능도 그대로 쓴다.
+let privacy: typeof import("./privacy") | null = null;
+const privacyTools = () =>
+  import("./privacy").then((m) => {
+    privacy = m;
+    return m;
+  });
+if (typeof window !== "undefined")
+  (window.requestIdleCallback ?? ((f: () => void) => setTimeout(f, 1500)))(
+    () => void privacyTools().catch(() => {}),
+  );
 import type { PeerRequest, PeerResponse } from "./peer";
 import "./Welcome.css";
 import { LangContext, TRANSLATION_EVENT, langs, translate } from "./i18n";
@@ -542,7 +553,18 @@ export default function App() {
   };
   // 개인정보처럼 보이는 글이 있으면 보내기 전에 한 번 확인받는다.
   const guardSend = (items: Work[], send: () => void) => {
-    const hits = scanWorks(items);
+    if (!privacy) {
+      // 아직 받지 못했으면 받은 뒤 확인한다. 받을 수 없으면 확인 없이 보내지 않고 알린다.
+      void privacyTools().then(
+        () => guardSend(items, send),
+        () =>
+          message(
+            "개인정보 확인을 준비하지 못했어요. 잠시 뒤 다시 눌러 주세요.",
+          ),
+      );
+      return;
+    }
+    const hits = privacy.scanWorks(items);
     if (!hits.length) return send();
     ask({
       title: "보내기 전에 확인해요",

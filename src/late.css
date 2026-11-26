@@ -745,11 +745,6 @@ button.phrase {
 .tour-start {
   margin: 0 0 10px;
 }
-.tour-fresh {
-  border: 2px dashed var(--purple);
-  background: transparent;
-  font-size: 0.8125rem;
-}
 .tour {
   margin: 0 0 14px;
   padding: 12px 14px;
@@ -792,4 +787,159 @@ button.phrase {
   padding: 0;
   background: none;
   border: 0;
+}
+/* 작업실의 보내기·내보내기 메뉴 */
+.more-menu {
+  position: relative;
+}
+.more-menu summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+.more-menu summary::-webkit-details-marker {
+  display: none;
+}
+.more-menu[open] summary {
+  border-color: var(--purple);
+}
+.more-menu-items {
+  position: absolute;
+  right: 0;
+  z-index: 5;
+  display: grid;
+  gap: 6px;
+  min-width: 12rem;
+  margin-top: 6px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
+}
+.more-menu-items button {
+  justify-content: flex-start;
+  width: 100%;
+}
+/* 긴 설정은 접을 수 있게 묶고, 실행 화면은 화면 높이를 넘으면 안에서 스크롤해 설정 옆에 머문다. */
+.settings-group {
+  display: grid;
+  gap: 10px;
+}
+.settings-group summary {
+  padding: 6px 0;
+  font-weight: 700;
+  cursor: pointer;
+}
+@media (min-width: 901px) {
+  .preview-panel {
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+  }
+}
+/* 미션 목록의 앱 종류별 묶음 */
+.mission-group {
+  margin-bottom: 22px;
+}
+.mission-group summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+.mission-group summary b {
+  font-size: 1rem;
+}
+.mission-group progress {
+  width: 6rem;
+  height: 0.5rem;
+  margin-left: auto;
+  accent-color: var(--green);
+}
+/* 학급 모으기: 어디에서 멈췄나요 */
+.stuck-strip ol {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 8px;
+  margin: 8px 0;
+  padding: 0;
+  list-style: none;
+}
+.stuck-strip li {
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+}
+.stuck-strip li.most {
+  border: 2px solid var(--orange);
+}
+.stuck-strip li span {
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+.stuck-strip li small {
+  overflow-wrap: anywhere;
+}
+.stuck-strip li em {
+  font-size: 0.75rem;
+  font-style: normal;
+  font-weight: 700;
+}
+/* 도전 과제 */
+.challenge-list {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0;
+  padding: 0;
+  list-style: none;
+}
+.challenge-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+}
+.challenge-list li.met {
+  border: 2px solid var(--green);
+}
+.challenge-list li span {
+  flex: 1 1 14rem;
+}
+/* 좁은 화면에서는 메뉴 버튼이 왼쪽에 있으므로 메뉴를 왼쪽에 맞춰 펼친다. */
+@media (max-width: 900px) {
+  .more-menu-items {
+    right: auto;
+    left: 0;
+  }
+}
+.mission-group summary {
+  list-style: none;
+}
+.mission-group summary::-webkit-details-marker {
+  display: none;
+}
+.mission-group summary::before {
+  content: "▸";
+  color: var(--muted);
+}
+.mission-group[open] summary::before {
+  content: "▾";
 }

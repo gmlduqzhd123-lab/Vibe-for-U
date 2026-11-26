@@ -95,11 +95,13 @@ export function diagnose(c: Config): Finding[] {
           change: c.change > 0 ? `+${c.change}` : c.change,
         },
       });
-    else if (done.value !== c.goal && c.until)
+    else if (done.value !== c.goal && (c.until || c.bonus))
       out.push({
         id: "loop-goal",
         problem: "반복이 끝난 값 {v}이 목표 {goal}과 달라요.",
-        hint: "멈춤 조건에 맞아 멈춘 값이 {v}이에요. 목표 값을 실제로 멈추는 값으로 고치거나, 멈춤 조건의 숫자를 바꿔 보세요.",
+        hint: c.until
+          ? "멈춤 조건에 맞아 멈춘 값이 {v}이에요. 목표 값을 실제로 멈추는 값으로 고치거나, 멈춤 조건의 숫자를 바꿔 보세요."
+          : "보너스까지 더하면 끝난 값이 {v}이에요. 보너스를 몇 번 받는지 세어 보고, 목표 값이나 보너스 숫자를 고쳐 보세요.",
         vars: { v: done.value, goal: c.goal },
       });
     else if (done.value !== c.goal)

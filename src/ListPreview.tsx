@@ -4,6 +4,7 @@ import { SpeakButton } from "./Speak";
 import { useState } from "react";
 import {
   addList,
+  fillList,
   initialList,
   listText,
   removeList,
@@ -72,6 +73,21 @@ export function ListPreview({
         ))}
       </div>
       <div className="button-row">
+        <button
+          onClick={() => {
+            const next = fillList(config, s, t);
+            act(
+              t("모두 차례로 넣기"),
+              next,
+              next.list.length >= config.max &&
+                config.items.some((x) => !next.list.includes(x))
+                ? config.fullMessage
+                : "",
+            );
+          }}
+        >
+          {t("모두 차례로 넣기")}
+        </button>
         <button
           disabled={!s.list.length}
           onClick={() => act(t("하나 빼기"), removeList(config, s, t))}
